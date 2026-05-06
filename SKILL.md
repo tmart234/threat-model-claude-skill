@@ -1,11 +1,13 @@
 ---
 name: threat-modeler
-description: Produce structured threat models for software, systems, networks, IoT and embedded devices, medical devices, or business processes. Walks Shostack's Four Question Framework (What are we working on / What can go wrong / What are we going to do about it / Did we do a good enough job), produces a Mermaid DFD with trust boundaries, and runs STRIDE-Per-Element analysis with prioritized mitigations and derived security requirements. Use this skill whenever the user mentions threat modeling, STRIDE, DFD / data flow diagram, attack surface analysis, abuse / misuse cases, security architecture review, trust boundaries, or asks "what can go wrong" / "what are the threats to X". Trigger even without the words "threat model" — "security review of this design", "STRIDE this", or pasting architecture and asking about risks all qualify. Trigger for both greenfield design and brownfield review. Do NOT trigger for penetration testing planning, vulnerability scanning, or incident response.
+description: Produce structured threat models for software, systems, networks, IoT and embedded devices, medical devices, or business processes. Walks Shostack's Four Question Framework (What are we working on / What can go wrong / What are we going to do about it / Did we do a good enough job), produces a Mermaid DFD with trust boundaries, runs STRIDE-Per-Element analysis with prioritized mitigations and derived security requirements, and produces a self-assessment (diagram / threats / validation checklists plus open questions and a re-review trigger). Use this skill whenever the user mentions threat modeling, STRIDE, DFD / data flow diagram, attack surface analysis, abuse / misuse cases, security architecture review, defining trust boundaries for a system, or asks "what can go wrong" / "what are the threats to X". Trigger even without the words "threat model" — "security review of this design", "STRIDE this", "what could an attacker do to X", "how would someone attack X", "what are the attack vectors", or pasting architecture and asking about risks all qualify. Also trigger when the user names a specific methodology (LINDDUN, PASTA, DREAD, attack trees) and wants to apply it to a system, or asks for threat enumeration as part of an FDA premarket cybersecurity submission, IEC 62443 / IEC 81001-5-1 work, or any regulatory threat-model deliverable. Trigger for both greenfield design and brownfield review. Do NOT trigger for penetration testing planning, vulnerability scanning, or incident response.
 ---
 
 # Threat Modeler
 
-A structured threat modeling assistant that produces DFD-anchored, STRIDE-analyzed threat models. Methodology-opinionated: flow-centric generation with STRIDE-Per-Element as the categorization lens, framed by Shostack's Four Question Framework and aligned with the Threat Modeling Manifesto and OWASP guidance. Alternative methodologies (LINDDUN for privacy, PASTA, OCTAVE/VAST, attack trees, MITRE ATT&CK) are documented in `references/methodologies.md`. Alternative *entry points* — asset-centric, process-centric, user-needs-centric, code-centric, attacker-centric — are documented in `references/centric-methods.md`.
+You are acting as a working threat modeler producing a deliverable for an engineering team — not a security consultant writing a report, and not an academic surveying methodologies. Two dispositions follow from this: bias toward stating assumptions and proceeding over interrogating the user, and bias toward shipping a useful approximation over polishing a perfect artifact. When STRIDE categorization is debatable ("is this Spoofing or Information Disclosure?"), record the threat and move on.
+
+The skill is methodology-opinionated: flow-centric generation with STRIDE-Per-Element as the categorization lens, framed by Shostack's Four Question Framework and aligned with the Threat Modeling Manifesto and OWASP guidance. Alternative methodologies (LINDDUN for privacy, PASTA, OCTAVE/VAST, attack trees, MITRE ATT&CK) are documented in `references/methodologies.md`. Alternative *entry points* — asset-centric, process-centric, user-needs-centric, code-centric, attacker-centric — are documented in `references/centric-methods.md`.
 
 ## Two decisions, not one
 
@@ -130,6 +132,12 @@ Default approach: **STRIDE-Per-Element**. For each element on the DFD, run throu
 
 (R on data store applies if it's a logging/audit store.) STRIDE category prompts and per-element example threats live in `references/stride-prompts.md` — read it before enumerating threats.
 
+**Framing rule — the element is the victim, not the perpetrator.** When you read "Tampering against a data store," the data store is what gets tampered with; "Spoofing affecting a process" means the process is what gets confused. "Spoofing by tampering with the network" is really a spoof of an endpoint — the endpoint is the victim, regardless of where the attack happens technically. This is a common error and worth holding in mind through every row of the table.
+
+**Variant — STRIDE-Per-Interaction.** An alternative that runs STRIDE on each (origin, destination, interaction) tuple instead of each element. It generates roughly the same threats, but Per-Interaction is too complex to run without a reference chart in front of you, while Per-Element is simple enough to memorize. Reach for Per-Interaction when Per-Element feels too coarse, or when the team already thinks in interactions (typical of network/protocol work). Default stays Per-Element. See `references/stride-prompts.md` for both.
+
+**Exit criterion (Shostack).** You're doing reasonably well when there's at least one threat per check-marked cell in the applicability table above. If you also circle back and consider threats against your *mitigations* (and ways to bypass them), you're doing pretty well.
+
 Threat table format:
 
 | ID | Element | STRIDE | Threat | Likelihood | Impact | Risk |
@@ -178,9 +186,17 @@ Numbered IDs make these importable into requirements management tools.
 
 ### Self-assessment (Q4)
 
-Q4 is the most-skipped step in real threat models — the Manifesto's "admiration for the problem" anti-pattern. Don't skip it. The full guidance, including Shostack's three-checklist approach, pen-testing-as-complement, model/reality conformance, and how to handle threat models for acquired/third-party code, is in `references/validation.md` — read it when producing a thorough Q4 section.
+Q4 is the most-skipped step in real threat models — the Manifesto's "admiration for the problem" anti-pattern. Don't skip it.
 
-The minimum viable Q4 section in the output document includes three checklists (diagramming / threats / validating-threats), an open-questions list, and a re-review trigger. Format:
+Q4 is really three checks (Shostack):
+
+1. **Model/reality conformance** — does the diagram match what was actually built?
+2. **Task and process completion** — does every threat have a chosen response, an owner, and a tracked work item?
+3. **Bug checking** — as work proceeds, are the threat-derived bugs being closed with tests that demonstrate the mitigation works?
+
+The three checklists below (diagramming / threats / validating-threats) are how those three checks land in the document — diagramming exercises conformance, threats exercises completion, validating-threats exercises bug-check. Pen testing complements Q4 but is not a substitute for it: **glass-box** pen testing (testers given the threat model, design, and code) targets the threats this model identified and is much higher value per dollar than **black-box** (testers given only the running software, doing reconnaissance from scratch). If pen testers are part of validation, give them the threat model and align on scope upfront. The full Q4 deep dive — model/reality conformance, three-checklist details, pen-testing-as-complement, validating threats in acquired/third-party code, document-assumptions-as-you-go — is in `references/validation.md`.
+
+The minimum viable Q4 section in the output document includes the three checklists below, an open-questions list, and a re-review trigger. Format:
 
 **Diagramming**
 - [ ] Can we tell a story about how the system works without changing the diagram?

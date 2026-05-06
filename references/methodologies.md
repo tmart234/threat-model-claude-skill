@@ -102,7 +102,10 @@ flowchart TD
 
 ## MITRE ATT&CK + Cyber Kill Chain
 
-These are **output characterization layers**, not generative methods. ATT&CK is a knowledge base of adversary tactics, techniques, and procedures (TTPs) — it catalogs *how* attacks happen rather than telling you which attacks apply to your system. The Lockheed Martin Cyber Kill Chain is a 7-stage attack lifecycle: Reconnaissance → Weaponization → Delivery → Exploitation → Installation → Command & Control → Actions on Objectives.
+ATT&CK and the Lockheed Martin Cyber Kill Chain are **output characterization layers**, not generative methods — they organize threats you've already generated, they don't enumerate them. For the full framing of characterization layers vs generation methods (and the rest of the catalog: CAPEC, CWE, CVSS, STRIDE-as-characterization), see `centric-methods.md` § "Output characterization layers (these are not entry points)" — that's the canonical place. The ATT&CK / kill-chain specifics:
+
+- **MITRE ATT&CK** — a knowledge base of adversary tactics, techniques, and procedures (TTPs). Catalogs *how* attacks happen rather than telling you which attacks apply to your system.
+- **Cyber Kill Chain** — a 7-stage attack lifecycle: Reconnaissance → Weaponization → Delivery → Exploitation → Installation → Command & Control → Actions on Objectives.
 
 You generate threats with one of the centric methods, then optionally *map* them to ATT&CK techniques and kill-chain stages for organizational, communication, or detection-coverage purposes. Mapping ≠ generation.
 
@@ -113,12 +116,6 @@ When to use (as a mapping/characterization layer):
 - Communicating to a SOC.
 
 When *not* to use as the primary lens: greenfield design. ATT&CK assumes a system already exists and adversaries are already operating against it; it's not a design-time generative tool. Use STRIDE (or another design-time lens) for design, ATT&CK for ops. They compose well — a STRIDE Spoofing threat at design time may map to ATT&CK techniques like T1078 (Valid Accounts) at operations time.
-
-Other output characterization layers worth knowing about (see `centric-methods.md` for the full taxonomy):
-
-- **CAPEC** — design-level attack pattern catalog. More design-time-friendly than ATT&CK.
-- **CWE** — code-level weakness taxonomy. Maps best to code-centric findings.
-- **CVSS** — vulnerability severity scoring (post-validation, when a threat has become a confirmed vulnerability).
 
 ## OCTAVE / VAST
 
