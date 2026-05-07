@@ -132,11 +132,12 @@ Default approach: **STRIDE-Per-Element**. For each element on the DFD, run throu
 
 (R on data store applies if it's a logging/audit store.) STRIDE category prompts and per-element example threats live in `references/stride-prompts.md` — read it before enumerating threats.
 
-**Framing rule — the element is the victim, not the perpetrator.** When you read "Tampering against a data store," the data store is what gets tampered with; "Spoofing affecting a process" means the process is what gets confused. "Spoofing by tampering with the network" is really a spoof of an endpoint — the endpoint is the victim, regardless of where the attack happens technically. This is a common error and worth holding in mind through every row of the table.
+Two rules from `references/stride-prompts.md` that are load-bearing enough to repeat here:
 
-**Variant — STRIDE-Per-Interaction.** An alternative that runs STRIDE on each (origin, destination, interaction) tuple instead of each element. It generates roughly the same threats, but Per-Interaction is too complex to run without a reference chart in front of you, while Per-Element is simple enough to memorize. Reach for Per-Interaction when Per-Element feels too coarse, or when the team already thinks in interactions (typical of network/protocol work). Default stays Per-Element. See `references/stride-prompts.md` for both.
+- **The element is the victim, not the perpetrator.** When modeling tampering against a data store, the data store is what gets tampered with. When modeling spoofing affecting a process, the process is what gets confused. "Spoofing by tampering with the network" is really a spoof of an endpoint — the endpoint is the victim, regardless of where the attack happens technically.
+- **Per-Element is the default; Per-Interaction is the alternative.** STRIDE-Per-Element runs STRIDE on each diagram element. STRIDE-Per-Interaction runs STRIDE on each (origin, destination, interaction) tuple — more thorough, harder to memorize. Use Per-Interaction when the team is already used to thinking in interactions (typical of network/protocol work) or when Per-Element feels too coarse.
 
-**Exit criterion (Shostack).** You're doing reasonably well when there's at least one threat per check-marked cell in the applicability table above. If you also circle back and consider threats against your *mitigations* (and ways to bypass them), you're doing pretty well.
+A reasonable exit criterion: at least one threat per check-marked cell in the applicability table. If you also circle back to consider threats against your *mitigations*, you're doing pretty well.
 
 Threat table format:
 
@@ -144,7 +145,7 @@ Threat table format:
 |----|---------|--------|--------|------------|--------|------|
 | T1 | Auth Service (P1) | S | Attacker reuses captured session token across boundary | M | H | High |
 
-Use qualitative ratings (L/M/H) by default. Avoid DREAD — OWASP and Shostack both note its scoring is too subjective. If the user asks for quantitative scoring, use OWASP Risk Rating Methodology (linked in `references/risk-rating.md`).
+Use qualitative ratings (L/M/H) by default. For safety-critical systems (medical devices, automotive, industrial control), see `references/risk-rating.md` for the impact-bumping rule before assigning ratings — patient/operator/public safety in play almost always means High impact, regardless of likelihood. Avoid DREAD — OWASP and Shostack both note its scoring is too subjective. If the user asks for quantitative scoring, use OWASP Risk Rating Methodology (linked in `references/risk-rating.md`).
 
 For the highest-risk handful of threats (top 3–5), consider drawing a threat tree showing how the threat could be realized (root cause analysis). One Mermaid tree per top threat is plenty.
 
@@ -186,17 +187,15 @@ Numbered IDs make these importable into requirements management tools.
 
 ### Self-assessment (Q4)
 
-Q4 is the most-skipped step in real threat models — the Manifesto's "admiration for the problem" anti-pattern. Don't skip it.
+Q4 is the most-skipped step in real threat models — the Manifesto's "admiration for the problem" anti-pattern. Don't skip it. Q4 has three checks, not one:
 
-Q4 is really three checks (Shostack):
+1. **Model/reality conformance** — does the diagram match what was actually built or planned?
+2. **Task and process completion** — does every threat have a recorded response (Mitigate / Eliminate / Transfer / Accept), and is each tracked in the team's bug tracker?
+3. **Bug checking** — as the work proceeds, are the threat-derived bugs actually being closed with mitigations tested?
 
-1. **Model/reality conformance** — does the diagram match what was actually built?
-2. **Task and process completion** — does every threat have a chosen response, an owner, and a tracked work item?
-3. **Bug checking** — as work proceeds, are the threat-derived bugs being closed with tests that demonstrate the mitigation works?
+Full guidance — including Shostack's three-checklist approach, pen-testing-as-complement (black-box vs glass-box), model/reality conformance after architectural drift, and how to handle threat models for acquired/third-party code — is in `references/validation.md`. Read it when producing a thorough Q4 section.
 
-The three checklists below (diagramming / threats / validating-threats) are how those three checks land in the document — diagramming exercises conformance, threats exercises completion, validating-threats exercises bug-check. Pen testing complements Q4 but is not a substitute for it: **glass-box** pen testing (testers given the threat model, design, and code) targets the threats this model identified and is much higher value per dollar than **black-box** (testers given only the running software, doing reconnaissance from scratch). If pen testers are part of validation, give them the threat model and align on scope upfront. The full Q4 deep dive — model/reality conformance, three-checklist details, pen-testing-as-complement, validating threats in acquired/third-party code, document-assumptions-as-you-go — is in `references/validation.md`.
-
-The minimum viable Q4 section in the output document includes the three checklists below, an open-questions list, and a re-review trigger. Format:
+The minimum viable Q4 section in the output document includes the three checklists (diagramming / threats / validating-threats) below, an open-questions list, and a re-review trigger.
 
 **Diagramming**
 - [ ] Can we tell a story about how the system works without changing the diagram?
@@ -263,7 +262,8 @@ A few domain-specific gotchas worth surfacing when relevant:
 - **Medical devices** — Safety implications are first-class. Model the patient as an asset (in addition to data). Cite FDA premarket cybersecurity guidance and IEC 62443 / IEC 81001-5-1 if the user is preparing a regulatory submission. Consider clinical workflow misuse scenarios, not just network threats.
 - **IoT / embedded** — Physical attack surface (debug ports, firmware extraction, side channels) belongs in the DFD. The "trust boundary" between the device and the network is often the most consequential.
 - **Cloud-native** — Shared responsibility model matters. Document which controls are the cloud provider's vs. yours. IAM and managed services are usually under-modeled.
-- **AI/ML systems** — STRIDE still works but extend with model-specific threats: prompt injection, training data poisoning, model extraction, prompt-based info disclosure. OWASP has a specific cheat sheet for this; reference it rather than reinventing.
+- **AI/ML systems** — STRIDE still works but extend with model-specific threats: prompt injection, training-data poisoning, model extraction, membership inference, model inversion, adversarial examples, supply-chain on pre-trained weights. The full list and OWASP LLM Top 10 / ML Security Top 10 pointers are in `references/methodologies.md` §ML/AI.
+- **Acquired or third-party code** — when modeling components the team didn't write, see `references/validation.md` §"Validating threats addressed in third-party / acquired code" for the inside-out workflow (enumerate accounts, listening ports, admin interfaces, platform changes). Especially relevant for medical-device work where vendor components are ubiquitous.
 
 ## References
 
