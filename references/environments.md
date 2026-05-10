@@ -28,6 +28,7 @@ For every subgraph in the DFD, name the owner. Use this taxonomy as a starting p
 | **Third-party SaaS** | Anything inside the SaaS boundary — you only get configuration knobs and audit logs |
 | **Integrator / VAR** | Engineering workstation, deployment scripts, custom integration code |
 | **Open-source / upstream** | Library / firmware components you depend on but don't control |
+| **No single owner (public internet, public space)** | Public-internet transit, kiosk-public-area surroundings — no controls available; treat as untrusted. Use the literal label `Unowned` or `Public` in the subgraph |
 
 Mark every subgraph with its owner using the labeling convention from `dfd-mermaid.md` § "Subgraph labeling convention" (`subgraph ID["<owner> | <env-type> | <trust>"]`). If an owner can't be named, record an explicit assumption (e.g. "A2: assumed customer IT owns the on-prem network; correct if otherwise") and proceed — don't block the model on it.
 
@@ -93,7 +94,7 @@ subgraph DMZ["Customer IT | on-prem enterprise (DMZ) | low trust"]
 **Boundaries to expect:**
 
 - **Secure boot / verified boot chain boundaries** — bootloader → kernel → application; each handoff is a trust transition.
-- **Secure element / TEE / TPM boundary** — the boundary between code that holds key material and code that only requests signing. ARM TrustZone, Intel SGX, dedicated SEs (NXP A71CH, Microchip ATECC), TPMs.
+- **Secure element / TEE / TPM boundary** — the boundary between code that holds key material and code that only requests signing. ARM TrustZone (TrustZone-A on Cortex-A, TrustZone-M on Cortex-M); dedicated secure elements (NXP A71CH, Microchip ATECC, Infineon OPTIGA); TPMs. (Server-class TEEs like Intel SGX or AMD SEV occasionally appear on industrial-PC-class "embedded" gateways — note explicitly when they do, since their threat model differs.)
 - **Hardware debug interface boundary** — JTAG, SWD, UART console, ICE. Often the most consequential physical-attack boundary on a device. If the device ships with debug ports unfused, draw them as a boundary crossing into the device's privileged state.
 - **Bootloader / recovery / DFU mode boundary** — alternative boot paths that bypass normal application controls.
 - **OTA update server ↔ device boundary** — signed firmware delivery; rollback protection.
@@ -191,10 +192,6 @@ Most real systems span multiple environment types: a cloud backend + mobile app 
 
 ## How to use this file
 
-1. After Round 1.5 of the interview, you should know each environment type and owner. Pick the matching section(s) above.
-2. Walk the boundary list for that environment as a checklist. For each one: is it in the DFD? Should it be? If absent, add it; if absent and *not needed*, mark in the assumptions ("A4: no MDM in scope; personal-device deployment only").
-3. Use the subgraph labeling convention to encode owner + environment type + trust level on every zone.
-4. Fill in the trust-boundary prose template (`dfd-mermaid.md` § "Trust boundary prose template", which now includes an Owner column) for every boundary the DFD draws.
-5. Cross-check against the system-type matrix in `methodologies.md` to make sure the contextual supplements (data-centric / asset-centric / process-centric / etc.) match the environment.
+After Round 1.5 you know each environment type and owner. Pick the matching section(s), walk the boundary list as a checklist (in DFD, should be, or explicitly out — "A4: no MDM in scope, personal-device deployment only"), label subgraphs with the convention, and fill in the trust-boundary table (`dfd-mermaid.md` § "Trust boundary prose template") with owners on each side. Cross-check the system-type matrix in `methodologies.md` for matching contextual supplements (data-centric / asset-centric / etc.).
 
 This is a checklist, not a straitjacket. Drop boundaries that genuinely don't apply, but say so explicitly — silent omission is the anti-pattern that this file is here to prevent.

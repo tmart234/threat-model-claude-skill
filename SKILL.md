@@ -68,7 +68,6 @@ After Round 1.5 you should be able to draw subgraphs labeled with environment ty
 
 **Round 2 — Context that shapes threats (operational + strategic strata).** Ask:
 - Who would attack this and why? (External attacker, malicious insider, curious insider, supply chain, nation-state. Don't dwell — the Manifesto warns against over-focusing on adversaries.) Even a one-line answer is enough to seed the operational stratum's ATT&CK mapping.
-- What's the deployment context? (Cloud, on-prem, hybrid, air-gapped, hospital network, home network, public internet, embedded in a device.)
 - Are there safety implications? (Especially relevant for medical, automotive, industrial control, aerospace.) Drives the safety-bump rule from `risk-rating.md`.
 - Any regulatory constraints? (HIPAA, GDPR, FDA premarket cybersecurity guidance, IEC 62443, IEC 81001-5-1, PCI-DSS, EU AI Act, etc.) Seeds the strategic stratum.
 - What sector? (Medical, finance, ICS/OT, gov, generic SaaS, consumer.) Determines which sector ISAC / threat-intel sources to cite at the strategic stratum (H-ISAC, FS-ISAC, E-ISAC, MS-ISAC, CISA ICS-CERT).

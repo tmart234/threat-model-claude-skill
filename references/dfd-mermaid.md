@@ -39,7 +39,7 @@ flowchart LR
         Vendor[Vendor Remote Support]
     end
 
-    subgraph Cloud["Vendor | cloud (AWS prod account) | separate trust zone"]
+    subgraph Cloud["Vendor | cloud (AWS prod account) | medium trust"]
         Archive(Long-term Archive Service)
         ArchiveStore[(Archive Object Store)]
     end
