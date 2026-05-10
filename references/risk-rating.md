@@ -75,7 +75,7 @@ The per-element OWASP-RR table still lists the individual flaws; the path-risk t
 
 ## L/M/H ↔ TM-BOM enums
 
-The OWASP Threat Model Library schema (used as this skill's JSON sidecar — see `SKILL.md` § "Machine-readable sidecar (TM-BOM via OWASP TML)") uses 5-level enums for `risks[].likelihood` and `risks[].impact`, a 6-level enum for `risks[].level`, and an integer 0–25 `risks[].score`. The skill's L/M/H markdown values must translate to these schema enums when emitting the sidecar. Use this table — it's the canonical mapping; don't improvise.
+The OWASP Threat Model Library schema (used as this skill's TM-BOM — see `SKILL.md` § "Producing the TM-BOM") uses 5-level enums for `risks[].likelihood` and `risks[].impact`, a 6-level enum for `risks[].level`, and an integer 0–25 `risks[].score`. The skill's L/M/H markdown values must translate to these schema enums when emitting the TM-BOM. Use this table — it's the canonical mapping; don't improvise.
 
 ### Likelihood (markdown L/M/H → schema enum)
 
@@ -124,7 +124,7 @@ The score is a derived field — recompute it from likelihood/impact rather than
 
 ### Worked translation
 
-A flow-centric threat rated `Likelihood: M`, `Impact: H` in the markdown table → matrix output `High` → JSON sidecar:
+A flow-centric threat rated `Likelihood: M`, `Impact: H` in the markdown table → matrix output `High` → TM-BOM:
 
 ```json
 {
@@ -136,7 +136,7 @@ A flow-centric threat rated `Likelihood: M`, `Impact: H` in the markdown table �
 }
 ```
 
-A safety-bumped control-loop threat rated `Likelihood: M`, `Impact: H` (catastrophic — patient harm) → matrix output `High` (or `Critical` if the §1 promotion rule applies) → JSON sidecar:
+A safety-bumped control-loop threat rated `Likelihood: M`, `Impact: H` (catastrophic — patient harm) → matrix output `High` (or `Critical` if the §1 promotion rule applies) → TM-BOM:
 
 ```json
 {

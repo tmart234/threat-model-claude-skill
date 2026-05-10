@@ -25,7 +25,7 @@
 **Out of scope**:
 -
 
-### Scope classification (required for the OWASP TML JSON sidecar; useful for prioritization either way)
+### Scope classification (required for the OWASP TML TM-BOM; useful for prioritization either way)
 
 > See `SKILL.md` § "Round 1 — Scope and system understanding". Pick one value per field; these populate the schema's required `scope` enums.
 
@@ -94,11 +94,11 @@ flowchart LR
 
 > The `classDef tb` + `class ... tb` lines above render every trust-boundary subgraph with a dashed border — required for every DFD this skill produces. Don't delete them. See `references/dfd-mermaid.md` § "Rendering trust boundaries as dashed subgraphs".
 
-### DFD element catalog (required for the JSON sidecar; useful as a reading aid either way)
+### DFD element catalog (required for the TM-BOM; useful as a reading aid either way)
 
-> One row per DFD element. The "Symbolic name" column is the lowercase-hyphenated id used in the JSON sidecar (e.g. DFD `P1` → `p-1`; subgraph `Hospital` → `hospital`). See `SKILL.md` § "Symbolic-name derivation".
+> One row per DFD element. The "Symbolic name" column is the lowercase-hyphenated id used in the TM-BOM (e.g. DFD `P1` → `p-1`; subgraph `Hospital` → `hospital`). See `SKILL.md` § "Symbolic-name derivation".
 
-**Actors (external entities)** — populates sidecar `actors[]`:
+**Actors (external entities)** — populates TM-BOM `actors[]`:
 
 | Symbolic name | Title | Type | Trust zone | Description |
 |---|---|---|---|---|
@@ -106,13 +106,13 @@ flowchart LR
 
 > `type` enum: `system / user / power_user / administrator / engineer / third_party`.
 
-**Components (processes)** — populates sidecar `components[]`:
+**Components (processes)** — populates TM-BOM `components[]`:
 
 | Symbolic name | Title | Trust zone | Description |
 |---|---|---|---|
 | p-1 | <process name> | <zone symbolic name> | |
 
-**Data stores** — populates sidecar `data_stores[]`:
+**Data stores** — populates TM-BOM `data_stores[]`:
 
 | Symbolic name | Title | Type | Trust zone | Vendor | Product | Description |
 |---|---|---|---|---|---|---|
@@ -120,7 +120,7 @@ flowchart LR
 
 > `type` enum: `sql / key_value / document / object / graph / time_series`. Pick the closest fit; if it's a queue or stream, use `time_series` or `key_value` depending on access pattern, and note the actual technology in `product`.
 
-**Data flows** — populates sidecar `data_flows[]`:
+**Data flows** — populates TM-BOM `data_flows[]`:
 
 | Symbolic name | Title | Source (type, object) | Destination (type, object) | Has sensitive data | Encrypted | Description |
 |---|---|---|---|---|---|---|
@@ -134,7 +134,7 @@ flowchart LR
 |---|---|---|---|---|---|---|
 | ZoneA ↔ ZoneB | | | | | <none / acl / rbac / mac / dac / abac> | <none / password / otp / challenge_response / public_key / token / biometrics / sso / social> |
 
-### Threat personas (required for the JSON sidecar; a brief one-liner per persona is enough)
+### Threat personas (required for the TM-BOM; a brief one-liner per persona is enough)
 
 > See `SKILL.md` § "Round 2 — Context that shapes threats". At least one persona must be defined so threats can reference them. Common starter set: `external-anonymous`, `internal-user`. Add more if the system faces distinct adversaries.
 
@@ -232,15 +232,15 @@ flowchart TD
 | Threat ID(s) | Cross-refs (CAPEC / CWE / ATT&CK / sector) | Risk | Response | Control / mitigation | Status | Priority | Owner |
 |--------------|-------------------------------------------|------|----------|----------------------|--------|----------|-------|
 | T1           | CAPEC-151, CWE-287, ATT&CK T1078 | High | Mitigate |                      | suggested | high     |       |
-| T2           |                                  | Medium | Accept | (rationale — no control row in JSON sidecar) | — | — |       |
+| T2           |                                  | Medium | Accept | (rationale — no control row in TM-BOM) | — | — |       |
 
-> **Status** populates the JSON sidecar's `controls[].status`: `assumed / active / suggested / under_review / approved / scheduled / retired / wont_do`. Default for new mitigations: `suggested`. Already deployed → `active`.
+> **Status** populates the TM-BOM's `controls[].status`: `assumed / active / suggested / under_review / approved / scheduled / retired / wont_do`. Default for new mitigations: `suggested`. Already deployed → `active`.
 > **Priority** populates `controls[].priority`: `none / low / medium / high / critical`. Translate from Risk: Low→low, Medium→medium, High→high, Critical→critical.
-> The skill's response (`Mitigate / Eliminate / Transfer / Accept`) is captured in the JSON sidecar via the `extensions["tmskill.threat-modeler/response"]` field on the control; `Accept` rows don't get a control entry in the sidecar (record rationale in the threat's `description` instead).
+> The skill's response (`Mitigate / Eliminate / Transfer / Accept`) is captured in the TM-BOM via the `extensions["tmskill.threat-modeler/response"]` field on the control; `Accept` rows don't get a control entry in the TM-BOM (record rationale in the threat's `description` instead).
 
-### Risk register (sidecar `risks[]`; one row per threat or per cluster of cross-referenced threats)
+### Risk register (TM-BOM `risks[]`; one row per threat or per cluster of cross-referenced threats)
 
-> Populates the JSON sidecar's required `risks[]` array. `score` = likelihood-index × impact-index where `rare/unlikely/possible/likely/certain = 1..5` and `negligible/minor/moderate/major/severe = 1..5` — see `references/risk-rating.md` § "L/M/H ↔ TM-BOM enums". `level` derived from §3 Risk: `Low → low`, `Medium → medium`, `High → high` (or `very_high` if both axes top out), `Critical → critical`.
+> Populates the TM-BOM's required `risks[]` array. `score` = likelihood-index × impact-index where `rare/unlikely/possible/likely/certain = 1..5` and `negligible/minor/moderate/major/severe = 1..5` — see `references/risk-rating.md` § "L/M/H ↔ TM-BOM enums". `level` derived from §3 Risk: `Low → low`, `Medium → medium`, `High → high` (or `very_high` if both axes top out), `Critical → critical`.
 
 | symbolic_name | Threats | Likelihood | Impact | Score | Level | Impact description |
 |---|---|---|---|---|---|---|

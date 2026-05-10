@@ -48,12 +48,12 @@ Cluster questions; don't fire one at a time. Two or three turns of clustered que
 
 **Round 1 — Scope and system understanding (Q1).**
 - One-paragraph system description.
-- External entities (users, other systems, third parties). Capture for each: actor type from this fixed enum — `system / user / power_user / administrator / engineer / third_party` (used directly in the OWASP TML JSON sidecar; if you're unsure, default to `user` for end-users, `engineer` for internal devs, `third_party` for vendor integrations).
+- External entities (users, other systems, third parties). Capture for each: actor type from this fixed enum — `system / user / power_user / administrator / engineer / third_party` (used directly in the OWASP TML TM-BOM; if you're unsure, default to `user` for end-users, `engineer` for internal devs, `third_party` for vendor integrations).
 - Major processes (services / applications / components that *do* something).
-- Data stores (databases, files, queues, caches, configuration). For each, capture the storage type from this fixed enum — `sql / key_value / document / object / graph / time_series` (used directly in the JSON sidecar).
+- Data stores (databases, files, queues, caches, configuration). For each, capture the storage type from this fixed enum — `sql / key_value / document / object / graph / time_series` (used directly in the TM-BOM).
 - Where trust boundaries sit (network, process, privilege, tenant, physical).
-- Sensitive data flowing through it. Tag each class against the JSON-sidecar `data_sensitivity` enum: `pii / phi / fin / ip / cred / biz / gov / pci / op` (multiple allowed). If one or two data classes dominate the threat picture, name them — they seed the data-centric supplement (`references/data-centric.md`).
-- **Scope classification (required for sidecar emission, useful for prioritization in any case).** Pick one value per field:
+- Sensitive data flowing through it. Tag each class against the TM-BOM `data_sensitivity` enum: `pii / phi / fin / ip / cred / biz / gov / pci / op` (multiple allowed). If one or two data classes dominate the threat picture, name them — they seed the data-centric supplement (`references/data-centric.md`).
+- **Scope classification (required for TM-BOM emission, useful for prioritization in any case).** Pick one value per field:
   - `business_criticality`: `minimal / low / moderate / high / maximal` — how much the business depends on this system.
   - `exposure`: `internal / external` — reachable from the public internet, or only from inside an org boundary.
   - `tier`: `mission_critical / business_critical / important / non_critical` — operational impact tier.
@@ -77,7 +77,7 @@ Cluster questions; don't fire one at a time. Two or three turns of clustered que
   - `malicious_intent` (boolean — `false` for accidental-misuse personas; threats from `human_error` sources still need a non-malicious persona).
   - `applicability_to_org`: `minimal / low / moderate / high / maximal` — how relevant this persona is to *this* organization in particular.
 
-  Even a one-line answer seeds ATT&CK mapping — don't dwell, but don't skip either; the sidecar's `threats[].threat_persona` field is required and references back to one of these. Default starter set when the user gives nothing: `external-anonymous` (anonymous + script_kid + malicious + moderate applicability) and `internal-user` (user + insider + non-malicious + moderate applicability).
+  Even a one-line answer seeds ATT&CK mapping — don't dwell, but don't skip either; the TM-BOM's `threats[].threat_persona` field is required and references back to one of these. Default starter set when the user gives nothing: `external-anonymous` (anonymous + script_kid + malicious + moderate applicability) and `internal-user` (user + insider + non-malicious + moderate applicability).
 - Safety implications? Drives the safety-bump rule from `references/risk-rating.md`.
 - Regulatory constraints?
 - What sector? Determines which sector ISAC and regulator framing apply (full lists in `references/methodologies.md`).
@@ -176,7 +176,7 @@ Threat table format:
 |----|---------|--------|--------|---------|-------|--------|------------|--------|------|
 | T1 | Auth Service (P1) | S | Attacker reuses captured session token across boundary | external-anonymous | session takeover | adversary | M | H | High |
 
-Per-row additions (required for the JSON sidecar; useful narrative even without it):
+Per-row additions (required for the TM-BOM; useful narrative even without it):
 - **Persona** — symbolic name of one of the personas captured in Round 2 (the OWASP TML schema's `threats[].threat_persona` field).
 - **Event** — short verb-phrase summary (≤6 words) of *what happens* in the threat scenario; populates the schema's `threats[].event` field. Example: *"session takeover"*, *"PHI exfiltration"*, *"unauthenticated firmware flash"*.
 - **Source** — one or more values from this fixed enum: `adversary / human_error / failure / events_beyond_org_control` (the schema's `threats[].sources` field). Most threats are `adversary`; STPA-SafeSec non-adversarial scenarios are `human_error` or `failure`.
@@ -244,21 +244,23 @@ Read on demand:
 - `manifesto.md` — Threat Modeling Manifesto values, principles, patterns, anti-patterns (paraphrased).
 - `risk-rating.md` — Qualitative L/M/H, OWASP-RR pointer, safety-bump rule, why DREAD is discouraged.
 - `stpa-safesec.md` — Safety+security joint hazard analysis for control-loop systems. Two modes (swap or supplement). Use when the worst case is physical harm and the system is a control loop.
-- `examples.md` — Pointer to the OWASP Threat Model Library (https://github.com/OWASP/www-project-threat-model-library) as the source for end-to-end worked examples by system type (web-applications, ai-ml-systems, infrastructure, third-party-integrations). The library's JSON schema also defines the structured-sidecar contract — see § "Machine-readable sidecar" above. The medical / DICOM end-to-end example is the exception, kept inline at `data-centric.md` § "Worked example" + `dfd-mermaid.md` § "Worked example: small clinical PACS".
+- `examples.md` — Pointer to the OWASP Threat Model Library (https://github.com/OWASP/www-project-threat-model-library) as the source for end-to-end worked examples by system type (web-applications, ai-ml-systems, infrastructure, third-party-integrations). The library's JSON schema also defines the TM-BOM contract — see § "Producing the TM-BOM" above. The medical / DICOM end-to-end example is the exception, kept inline at `data-centric.md` § "Worked example" + `dfd-mermaid.md` § "Worked example: small clinical PACS".
 
 Blank template: `assets/threat-model-template.md`.
 
-## Machine-readable sidecar (TM-BOM via OWASP TML)
+## Producing the TM-BOM (machine-readable artifact)
 
-The default output is a markdown document. When the user wants to import findings into a tracker (Polarion, Jira, GitHub Issues, ServiceNow), feed downstream tooling, or contribute the model upstream, also emit a **JSON sidecar that validates against the OWASP Threat Model Library schema** (`threat-model.schema.json` v1.0.2 from https://github.com/OWASP/www-project-threat-model-library, MIT-licensed; aligns with the pending CycloneDX TM-BOM specification). The schema is the contract downstream tools already implement against; don't invent your own.
+> **What "TM-BOM" means here**: a Threat Model Bill of Materials — a structured, machine-readable description of the system, threats, controls, and risks, analogous to an SBOM for software components. The concrete schema this skill emits against is the **OWASP Threat Model Library** JSON schema (`threat-model.schema.json` v1.0.2, MIT-licensed), which itself aligns with the pending CycloneDX TM-BOM specification. Tools that consume CycloneDX BOMs (SBOM, SaaSBOM, HBOM today; TM-BOM when published) will be the consumers; OWASP TML is the working contract today.
 
-The markdown is the canonical artifact for humans; the JSON sidecar is the derived view. Don't emit only the JSON. **Always validate** the sidecar before handing it over: `check-jsonschema --schemafile threat-model.schema.json <output>.json`.
+The default output is a markdown document. When the user wants to import findings into a tracker (Polarion, Jira, GitHub Issues, ServiceNow), feed downstream tooling, or contribute the model upstream, also emit a TM-BOM (JSON) that validates against the OWASP TML schema. The schema is the contract downstream tools already implement against; don't invent your own.
+
+The markdown is the canonical artifact for humans; the TM-BOM is the derived view. Don't emit only the JSON. **Always validate** the TM-BOM before handing it over: `check-jsonschema --schemafile threat-model.schema.json <your-tm-bom>.json`.
 
 ### Symbolic-name derivation (every TM-BOM ID must match `^[0-9a-z-]+$`)
 
 The schema requires every `symbolic_name` to be lowercase alphanumeric plus hyphens. The skill's markdown IDs (`AS1`, `T1`, `V1`, `PR1`, `SR-001`, `TB1`, `ASM1`) are uppercase for human readability — derive the schema-valid symbolic name by lowercasing and inserting a hyphen between the letter prefix and any digits *only when no hyphen is already present*:
 
-| Markdown ID | Sidecar `symbolic_name` |
+| Markdown ID | TM-BOM `symbolic_name` |
 |---|---|
 | `AS1` | `as-1` |
 | `T1` | `t-1` |
@@ -299,7 +301,7 @@ Trust-zone subgraph IDs from the DFD (e.g. `Hospital`, `Cloud`, `Internet`, `Pro
 | `risks[]` | §3 risk ratings, one risk per threat (or per cluster of cross-referenced threats) | `threats` array of refs; `likelihood` and `impact` use the schema enums (translation table in `references/risk-rating.md` § "L/M/H ↔ TM-BOM enums"); `score` is integer 0–25; `level` enum: `very_low / low / medium / high / very_high / critical` |
 | Skill-specific fields with no schema home (STRIDE category, stratum tag, Stellios path-product score, Mitigate/Eliminate/Transfer/Accept response distinct from `control.status`) | **Top-level `extensions` only** — not per-object (every object def in the schema has `additionalProperties: false`, so per-object extensions fail validation). Key per-object data by the object's `symbolic_name`. | Extension keys must match the schema's regex: `<domain-with-hyphens-allowed>.<letters-only-TLD>/<path>`. Use the namespace `threat-modeler.tmskill/...` — the natural-looking `tmskill.threat-modeler/...` is **rejected** by the schema because the TLD label can't contain hyphens. Recommended paths: `threat-modeler.tmskill/stride-by-threat`, `threat-modeler.tmskill/stratum-by-threat`, `threat-modeler.tmskill/path-score-by-threat`, `threat-modeler.tmskill/response-by-control`. |
 
-**Top-level header.** Every emitted sidecar starts with these two lines so the file declares which schema version it was built against:
+**Top-level header.** Every emitted TM-BOM starts with these two lines so the file declares which schema version it was built against:
 
 ```json
 {
@@ -343,7 +345,7 @@ The skill's response taxonomy doesn't map 1:1 onto `control.status`. Use this ru
 
 Also record the original response verbatim in `controls[].extensions["tmskill.threat-modeler/response"]` so the markdown ↔ JSON round-trip is lossless.
 
-### Validation checklist before shipping the sidecar
+### Validation checklist before shipping the TM-BOM
 
 - [ ] Top-level `$schema` and `version` are present.
 - [ ] Every `symbolic_name` matches `^[0-9a-z-]+$` (run a regex over the file).
@@ -356,23 +358,23 @@ Also record the original response verbatim in `controls[].extensions["tmskill.th
 - [ ] `risks[].score` is in `[0, 25]` and is consistent with `risks[].level`.
 - [ ] No per-object `extensions` (every object has `additionalProperties: false` — extensions only at top level).
 - [ ] Extension keys match the schema's regex (TLD must be letters-only — `threat-modeler.tmskill/<path>`, **not** `tmskill.threat-modeler/<path>`).
-- [ ] `check-jsonschema --schemafile threat-model.schema.json <output>.json` exits 0. **Always run this before handing the file over.**
+- [ ] `check-jsonschema --schemafile threat-model.schema.json <your-tm-bom>.json` exits 0. **Always run this before handing the file over.**
 
-Worked example threat models live in https://github.com/OWASP/www-project-threat-model-library/tree/main/threat-models — `ai-ml-systems/husky-ai-threat-model.json` is the most-complete reference. Open the closest example before producing a sidecar; mirror its shape and depth.
+Worked example threat models live in https://github.com/OWASP/www-project-threat-model-library/tree/main/threat-models — `ai-ml-systems/husky-ai-threat-model.json` is the most-complete reference. Open the closest example before producing a TM-BOM; mirror its shape and depth.
 
-A minimal validated sidecar exercising every required field of the schema, every cross-reference type, and the top-level `extensions` pattern lives at `assets/sidecar-example.json`. It validates against `threat-model.schema.json` v1.0.2 with `check-jsonschema` exit 0. Use it as the structural starter when you don't want to clone an OWASP TML example. Re-validate after every edit:
+A minimal validated TM-BOM exercising every required field of the schema, every cross-reference type, and the top-level `extensions` pattern lives at `assets/tm-bom-example.json`. It validates against `threat-model.schema.json` v1.0.2 with `check-jsonschema` exit 0. Use it as the structural starter when you don't want to clone an OWASP TML example. Re-validate after every edit:
 
 ```
 curl -sSf -o /tmp/threat-model.schema.json \
   https://raw.githubusercontent.com/OWASP/www-project-threat-model-library/main/threat-model.schema.json
-check-jsonschema --schemafile /tmp/threat-model.schema.json <your-sidecar>.json
+check-jsonschema --schemafile /tmp/threat-model.schema.json <your-tm-bom>.json
 ```
 
 ## Citations
 
 Concepts in this skill paraphrase from:
 
-- **OWASP** — Threat Modeling community page, Threat Modeling Process, Threat Modeling Cheat Sheet, Security Culture v1.0 §6, Threat Modeling Playbook (Toreon), **Threat Model Library** (https://github.com/OWASP/www-project-threat-model-library, MIT-licensed; structured-sidecar JSON schema and the curated example-models repository the skill defers to for worked examples).
+- **OWASP** — Threat Modeling community page, Threat Modeling Process, Threat Modeling Cheat Sheet, Security Culture v1.0 §6, Threat Modeling Playbook (Toreon), **Threat Model Library** (https://github.com/OWASP/www-project-threat-model-library, MIT-licensed; TM-BOM JSON schema and the curated example-models repository the skill defers to for worked examples).
 - **Threat Modeling Manifesto** — values, principles, patterns, anti-patterns (CC-BY 4.0).
 - **Adam Shostack**, *Threat Modeling: Designing for Security* (Wiley, 2014) — Four Question Framework, STRIDE-Per-Element, diagramming and validation checklists, iteration tactics, bug-filing as exit point.
 - **NIST SP 800-154** (Draft, Souppaya & Scarfone, 2016) — data-centric methodology.
