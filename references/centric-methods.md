@@ -1,6 +1,6 @@
 # Centric methods — choosing the entry point
 
-> **Related**: ← `SKILL.md` • `methodologies.md` (categorization-lens choices: STRIDE / LINDDUN / PASTA / **STPA-SafeSec** …) • `data-centric.md` (data-centric workflow deep-dive) • `stpa-safesec.md` (full-methodology swap, replaces both entry point and lens) • `stride-prompts.md` (STRIDE-as-generation prompts).
+> **Related**: ← `SKILL.md` • `methodologies.md` (categorization-lens choices: STRIDE / LINDDUN / PASTA / **STPA-SafeSec** …) • `data-centric.md` (data-centric workflow deep-dive) • `stpa-safesec.md` (safety+security joint hazard analysis — swap or supplement, not an entry point) • `stride-prompts.md` (STRIDE-as-generation prompts).
 
 This file is the **canonical home** for the entry-point taxonomy and the generation-vs-characterization distinction. SKILL.md and `methodologies.md` reference this; don't duplicate.
 
@@ -22,7 +22,7 @@ code-centric                               CVSS
 
 For example, "STRIDE-Per-Element" is really *flow-centric generation + STRIDE characterization*. STRIDE is doing the prompt work; the DFD is doing the coverage work. Confusing the two leads people to think STRIDE alone is a complete approach. It isn't — STRIDE is a categorization lens that needs an entry point to be applied against.
 
-> **Note on STPA-SafeSec.** STPA-SafeSec is *not* an entry point in this taxonomy — it's a full-methodology swap that replaces both the entry point (DFD) and the lens (STRIDE) for the contextual core. It belongs with the categorization-lens swaps in `methodologies.md`, not here. Use it for safety-critical control-loop systems where physical harm is the worst case (medical infusion pumps, ventilators, ICS, automotive, robotics). See `stpa-safesec.md`.
+> **Note on STPA-SafeSec.** STPA-SafeSec is *not* an entry point in this taxonomy — it's a safety+security joint hazard analysis that produces hazard scenarios (a superset of threats), not threats per se. It can run as a **swap** for the contextual core (one joint artifact for FDA / IEC 62304 / IEC 81001-5-1 / IEC 61508 / ISO 26262) or as a **supplement** alongside flow-centric + STRIDE (cross-references threats and adds non-adversarial safety failures). It belongs with the methodology choices in `methodologies.md`, not here. Use it for safety-critical control-loop systems where physical harm is the worst case (medical infusion pumps, ventilators, ICS, automotive, robotics). See `stpa-safesec.md` § "Two modes".
 
 ### Mapping to Shostack's three approaches
 

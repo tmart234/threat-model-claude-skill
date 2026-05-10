@@ -95,9 +95,9 @@ flowchart LR
 - **Security objectives in scope**: C / I / A — justify each drop
 - **Authorized locations** (storage / transmission / execution / input / output): list with `L1`, `L2`, ... — reference the corresponding DFD elements where they exist; mark lifecycle-only locations explicitly
 
-### Losses, hazards, constraints (fill in if STPA-SafeSec is the contextual core in §2.1)
+### Losses, hazards, constraints (fill in if STPA-SafeSec is in §2.1 — swap or supplement mode)
 
-> Use only if §2.1 swaps in STPA-SafeSec for safety-critical control-loop systems. See `references/stpa-safesec.md` for the full workflow.
+> Use if §2.1 includes STPA-SafeSec in either mode (swap: STPA-SafeSec replaces §2.1.a/b; supplement: STPA-SafeSec adds an §2.1.e alongside §2.1.a/b). See `references/stpa-safesec.md` § "Two modes" for mode selection.
 
 - **Losses** (`L-1` …): unacceptable stakeholder outcomes (patient harm, equipment destruction, environmental damage)
 - **Hazards** (`H-1 [L-x]` …): system states that, in worst case, lead to a loss
@@ -111,7 +111,9 @@ flowchart LR
 
 ### 2.1 Contextual stratum (system-specific)
 
-> If STPA-SafeSec is the contextual core (safety-critical control-loop systems), §2.1.a (flow-centric STRIDE-Per-Element) and §2.1.b (supplementary entry-point pass) are replaced by the STPA-SafeSec workflow — UCAs (`HC-N`), system flaws (`F-N`), hazard-scenario trees, and integrity/availability constraints (`CSTR-I-N`, `CSTR-A-N`). STRIDE may still layer in for non-control flows (telemetry, OTA, audit) at the component layer. Workflow: `references/stpa-safesec.md`.
+> **STPA-SafeSec users (safety-critical control-loop systems):** two modes — see `references/stpa-safesec.md` § "Two modes" for mode selection.
+> - **Swap mode** — §2.1.a (flow-centric STRIDE-Per-Element) and §2.1.b (supplementary entry-point pass) are replaced by the STPA-SafeSec workflow: UCAs (`HC-N`), system flaws (`F-N`), hazard-scenario trees, integrity/availability constraints (`CSTR-I-N`, `CSTR-A-N`). STRIDE may still layer in for non-control flows (telemetry, OTA, audit) at the component layer.
+> - **Supplement mode** — §2.1.a/b run normally; add an §2.1.e "Hazard scenarios (STPA-SafeSec)" sub-section after §2.1.d. Hazard scenarios cross-reference threats they propagate from (`HS-3 ← T7`) and add non-adversarial safety failures STRIDE misses (`HS-4: sensor degradation; not a threat`).
 
 #### 2.1.a Flow-centric STRIDE-Per-Element (always)
 
@@ -230,13 +232,14 @@ flowchart TD
 - [ ] Every "Mitigate" decision has a concrete, testable control
 - [ ] Top risks have an owner identified
 
-**STPA-SafeSec (if it is the contextual core in §2.1)**
+**STPA-SafeSec (if it is in §2.1 — swap or supplement mode)**
 - [ ] Every loss has at least one hazard; every hazard has at least one constraint
 - [ ] Every UCA traces to at least one system flaw
 - [ ] Every system flaw has a root hazard scenario refined to where mitigation can be designed
 - [ ] Every leaf-to-root path in each hazard-scenario tree is mitigated, OR the residual loss has been explicitly accepted via prioritization
 - [ ] Adversarial causal factors (`CSTR-I-1..8`, `CSTR-A-1..4`) considered for every relevant constraint
 - [ ] Component layer reflects current/planned reality, not a sanitized version
+- [ ] **(Supplement mode only)** Every hazard scenario either cross-references a threat it propagates from (`HS-N ← T-M`) or is explicitly marked as a non-adversarial safety failure
 
 **Review**
 - [ ] Stakeholders beyond the threat modeler have reviewed (note who below)

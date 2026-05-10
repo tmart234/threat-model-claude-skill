@@ -1,10 +1,31 @@
 # STPA-SafeSec — loss-driven entry mode
 
-> **Related**: ← `SKILL.md` • `methodologies.md` (full-methodology swap context) • `centric-methods.md` (entry-point alternatives that keep STRIDE) • `risk-rating.md` (safety-bump rule) • `validation.md` (Q4 framing).
+> **Related**: ← `SKILL.md` • `methodologies.md` (where this methodology is registered alongside LINDDUN / PASTA / attack trees) • `centric-methods.md` (entry-point taxonomy; STPA-SafeSec is not an entry point) • `risk-rating.md` (safety-bump rule) • `validation.md` (Q4 framing).
 
-A full-methodology alternative to flow-centric + STRIDE for safety-critical control-loop systems. **STPA-Sec** (Young & Leveson, 2014) extends Leveson’s STPA hazard analysis to security. **STPA-SafeSec** (Friedberg et al., 2017) integrates safety and security into one workflow and adds a component-layer mapping that makes the analysis actionable. Use STPA-SafeSec, not plain STPA-Sec — the component layer is what closes the abstraction gap.
+A safety+security joint analysis for control-loop systems. **STPA-Sec** (Young & Leveson, 2014) extends Leveson’s STPA hazard analysis to security. **STPA-SafeSec** (Friedberg et al., 2017) integrates safety and security into one workflow and adds a component-layer mapping that makes the analysis actionable. Use STPA-SafeSec, not plain STPA-Sec — the component layer is what closes the abstraction gap.
 
-This is a methodology swap, not an entry-point swap. Replaces both the DFD and STRIDE-Per-Element. For methodology-swap context, see `methodologies.md`. For entry-point alternatives that keep STRIDE, see `centric-methods.md`.
+What STPA-SafeSec generates is **hazard scenarios**, not threats. A hazard scenario is one specific way a system flaw leads to a UCA leads to a hazard leads to a loss. Adversarial-cause hazard scenarios (driven by `CSTR-I-*` / `CSTR-A-*`) are threat-shaped; non-adversarial-cause hazard scenarios (sensor failure, controller logic bug, missing feedback) are safety-failure-shaped. The output is a superset of what flow-centric + STRIDE produces.
+
+For where this fits among the skill's other methodology choices, see `methodologies.md`. For entry-point taxonomy (STPA-SafeSec is not an entry point), see `centric-methods.md`.
+
+## Two modes: swap or supplement
+
+STPA-SafeSec can be used two ways inside this skill's hybrid output. Pick by what artifact the team needs.
+
+**Swap mode — STPA-SafeSec replaces flow-centric + STRIDE for the contextual core.** The §2.1 contextual stratum becomes the STPA-SafeSec workflow end-to-end (Losses → Hazards → Constraints → Control layer → Component layer → UCAs → System flaws → Hazard-scenario trees). One artifact covers safety and security jointly. Use this when:
+
+- Regulators require the joint safety+security artifact anyway (FDA premarket cybersecurity for control-loop devices; IEC 62304 + IEC 81001-5-1 for medical software; IEC 61508 for industrial functional safety; ISO 26262 for automotive). Producing one document instead of two saves work and forces the team to confront safety/security interactions.
+- The team is greenfield on both safety analysis and threat modeling — pick STPA-SafeSec once rather than maintaining two parallel practices.
+- The system is purely a control loop with negligible non-control attack surface (no telemetry uploads, no admin web UI, no audit log channel). When the entire system *is* the control loop, splitting STRIDE off makes no sense.
+
+**Supplement mode — STPA-SafeSec runs alongside flow-centric + STRIDE.** §2.1.a (flow-centric STRIDE-Per-Element) and §2.1.b (supplementary entry-point pass) run normally; STPA-SafeSec adds a new pass (§2.1.e in the template) that produces hazard scenarios. Hazard scenarios cross-reference threats they propagate from (`HS-3 ← T7`) and add non-adversarial safety failures the threat model would miss (`HS-4: sensor degradation; not a threat`). Use this when:
+
+- The team already has a STRIDE/DFD threat-modeling practice and an existing threat-model artifact — bolt safety hazard analysis onto it rather than restart.
+- The system has substantial non-control attack surface alongside its control loops (telemetry, OTA, audit, admin UI, mobile companion app). STRIDE+DFD covers the non-control surface; STPA-SafeSec covers the control loops.
+- The security review is being done independently of the safety analysis (e.g., third-party security audit on a system that already has its own safety case). The safety case stays separate; STPA-SafeSec borrows from it to inform the security work.
+- Safety and security functions are owned by separate teams producing separate artifacts.
+
+Both modes use the same workflow below — what differs is whether the output replaces §2.1.a/b or adds a new §2.1.e.
 
 ## When to pick STPA-SafeSec
 
