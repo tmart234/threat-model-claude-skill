@@ -1,7 +1,7 @@
 # DFD → Mermaid mapping
 
 > **Last verified**: 2026-05. Mermaid syntax (especially `classDef` / `style` / `linkStyle` and the v10+ comma-escape rule) updates between Mermaid releases — re-verify against the live Mermaid docs if a deliverable target depends on a specific version.
-> **Sources paraphrased**: Adam Shostack, *Threat Modeling: Designing for Security* (Wiley, 2014) — DFD3 dashed-trust-boundary convention, "focus on data flow" / "no data sinks" / "data can't move itself" / "tell a story" / "don't draw an eye chart" / "combine equivalent elements" rules-of-thumb, the diagramming checklist (paraphrase only). Mermaid syntax (mermaid-js.github.io, MIT licensed). Substantive direct quotes from Shostack 2014 require Wiley/Shostack attribution.
+> **Sources paraphrased**: Adam Shostack, *Threat Modeling: Designing for Security* (Wiley, 2014) — DFD3 dashed-trust-boundary convention, "focus on data flow" / "no data sinks" / "data can't move itself" / "tell a story" / "don't draw an eye chart" / "combine equivalent elements" rules-of-thumb, the diagramming checklist (paraphrase only). MITRE Threat Modeling Playbook (Toreon, OWASP) §2.3.1.1 — DFD3 conformance items (trust-boundary "complete shape" rule; data-flow arrow convention noted as a *deviation* below — see § "Conventions to keep things readable"). Mermaid syntax (mermaid-js.github.io, MIT licensed). Substantive direct quotes from Shostack 2014 require Wiley/Shostack attribution.
 
 > **Related**: ← `SKILL.md` • `environments.md` (per-environment boundary patterns + ownership taxonomy) • `centric-methods.md` (flow-centric entry point) • `stride-prompts.md` (enumerate threats once the DFD is drawn) • `validation.md` (canonical diagramming checklist)
 
@@ -27,6 +27,34 @@ linkStyle 0 stroke:#d62728,stroke-width:2px
 ```
 
 ## Worked example: small clinical PACS
+
+The same PACS, drawn at two levels of decomposition. Read them as a progression: Figure 1 (Level 0) is the context diagram a reviewer sees first; Figure 2 (Level 1) is the decomposition into the zones and components that STRIDE actually walks.
+
+### Figure 1 — Level 0 (context)
+
+```mermaid
+flowchart LR
+    Modality[CT Modality]
+    Workstation[Clinician Workstation]
+    Vendor[Vendor Remote Support]
+    CloudArchive[Cloud Archive Service]
+
+    subgraph Boundary["PACS System (in scope)"]
+        PACS("PACS — black box")
+    end
+
+    Modality -- "DICOM images (PHI)" --> PACS
+    Workstation -- "DICOM Q/R, view requests" --> PACS
+    Vendor -. "remote support session" .-> PACS
+    PACS -- "tiered archive (mTLS)" --> CloudArchive
+
+    classDef tb fill:none,stroke:#888,stroke-dasharray: 5 5
+    class Boundary tb
+```
+
+The Level 0 view says exactly four things and no more: what's in scope (one box), who talks to it (four external entities), what crosses (the labeled flows), and where the trust boundary sits (the dashed shape). The internal stores, the audit log, and the archive object store are *not* drawn at Level 0 — they're not visible from the outside. Level 0 is what a reviewer points at when asking "what is this system, and what touches it?"; everything else is decomposition.
+
+### Figure 2 — Level 1 (decomposed)
 
 ```mermaid
 flowchart LR
@@ -65,6 +93,8 @@ Note four things this example demonstrates:
 - **Boundaries are dashed.** The `classDef tb` + `class … tb` pattern applies the dashed border to all three zone subgraphs at once.
 - **The flow from `untrusted` is dashed too.** `Vendor -. "..." .-> PACS` uses Mermaid's dashed-arrow syntax to mark the highest-attention crossing; the in-zone flows stay solid.
 - **Data-bearing elements carry inline `(AS#)` tags** — `(AS1)`..`(AS6)` — that reconcile against the §1 asset list of the threat model containing this DFD. External entities (Workstation, Vendor) aren't assets, so they have no tag.
+
+What changes between Figure 1 and Figure 2: the single in-scope `PACS` box opens into the PACS server plus its Image Database and Audit Log, and ownership-typed trust zones (Hospital IT / Internet / Cloud) replace the single in-scope shape. The four external flows are preserved across both levels — that's the consistency check between Level 0 and Level 1 (no flow appears at Level 1 that wasn't already implied at Level 0; if one does, it's a missing external entity at Level 0 or an in-scope process leaking outside its stated boundary).
 
 Trust boundaries (the dashed subgraph borders above):
 
@@ -132,6 +162,8 @@ A small follow-on: when two zones legitimately sit at the same Purdue level but 
 
 Mermaid renders `subgraph` borders as solid rectangles by default. Solid borders read visually as *containment* — UML-package-style "this object contains those objects." That's the wrong semantic for a threat model. A trust boundary is a *line an attacker crosses*, and Shostack's DFD3 convention (and every commercial threat-modeling tool) renders it dashed for exactly this reason.
 
+The MITRE Threat Modeling Playbook §2.3.1.1 makes the same rule explicit: a trust boundary should be drawn as a **complete shape, not a line or arc**. The skill's `subgraph` + dashed-`classDef` pattern below realizes both conventions directly — every zone is a closed shape with a dashed outline, every element sits inside exactly one zone, and a flow that crosses the dashed border is visibly a trust crossing. This is the strongest single signal a reviewer has that the model uses DFD3 conventions correctly; it's not optional.
+
 **Default to the `classDef` + `class` pattern below** for every diagram in this skill, including diagrams with only one subgraph (consistent with the worked example and the template). The per-subgraph `style` form is a fallback for tooling that doesn't render `classDef` correctly; mention it once if you fall back to it.
 
 **Canonical pattern: `classDef` with `class` assignment.** Place these two lines at the bottom of the Mermaid block, listing every trust-zone subgraph in the `class` line:
@@ -195,6 +227,8 @@ The outer subgraph is the device as a unit (a physical box, an account); the inn
 
 - **Label every flow.** "DICOM C-STORE over TCP/11112 (PHI)" not "data". Concrete protocols make threats tractable: an attacker can craft DICOM PDUs against an open `11112` listener, but they can't attack a flow labeled "data".
 - **Direction matters.** Use `-->` for one-way and `<-->` only when the flow truly is symmetric request/response with the same content. For RPC-style flows, draw two arrows with their actual content labels.
+
+  **Deviation from DFD3.** DFD3 (per the MITRE Threat Modeling Playbook §2.3.1.1, citing Shostack) defaults to a *double-headed* arrow because production traffic usually flows in both directions, with one filled / one open arrowhead reserved to signal which side initiates. **This skill deviates and defaults to one-way arrows** because the threats on each direction differ under STRIDE-Per-Element (a request flow and a response flow have different Spoofing / Tampering / Information-Disclosure surfaces), and collapsing them onto one bidirectional edge hides one of the two threat sets. Two one-way arrows with their actual content labels — request and response drawn separately — is what STRIDE-Per-Element wants. For genuinely symmetric flows (UDP heartbeats with identical content both ways, peer-to-peer gossip, mirrored replication), `<-->` is fine and matches DFD3. Document the deviation if you're claiming DFD3 conformance to a regulator; the choice is defensible but not silent.
 - **Group by trust zone, not by physical layout.** Trust zones are what STRIDE-Per-Element care about.
 - **Color sparingly.** Use `style` only to highlight the riskiest crossings or the highest-risk elements. Don't decorate. (Note: ~1 in 12 people have some form of color blindness, so don't rely on color alone — always pair color with text labels.)
 - **Tag DFD elements with their §1 asset IDs.** Any element that represents a named asset from §1 (`AS1`, `AS2`, …) carries that ID inline in its label — `BeckIPC(("Beckhoff IPC<br/>application controller<br/>(AS3)"))` not just `BeckIPC(("Beckhoff IPC"))`. This makes the diagram self-checking against §1: a reviewer can scan the picture, count `AS#` tags, and confirm against the §1 asset list without flipping back and forth. Elements that aren't assets (the JVM as such, a transient process, an external entity) stay untagged. When one element carries multiple assets (a DB holding both PHI and signing keys), tag both: `(AS8, AS9)`. Trust boundaries themselves don't get asset IDs — boundaries are properties of the diagram, not assets.
@@ -206,7 +240,7 @@ These rules (paraphrased from *Threat Modeling: Designing for Security*, Ch. 1�
 
 - **Focus on data flow, not control flow.** Threats follow data; control-flow diagrams hide where attackers can reach.
 - **The "sometimes / also" test.** Anytime the team has to qualify a description with "sometimes we connect via TLS, but also fall back to HTTP" — that's two flows, not one. Draw both, and consider whether an attacker can force the fallback.
-- **No data sinks.** Every piece of data written somewhere has a reader; show who reads it. If you can't name the reader, either the flow shouldn't exist or you've missed a process.
+- **No data sinks.** Every piece of data written somewhere has a reader; show who reads it. If you can't name the reader, either the flow shouldn't exist or you've missed a process. (Medical-device-specific violations to watch for: audit logs written but never read — PHI accumulating without lifecycle controls — and device-local telemetry stored on the device but never uploaded; both are PHI risks even though no exfiltration ever happens. See `medical.md` § "Clinical workflow misuse".)
 - **Data can't move itself between stores.** If the diagram shows a flow from one data store directly to another with no process in between, you've omitted the process that actually moves the data. Add it.
 - **Tell a story.** The diagram should support the team telling a story about how the system works, end-to-end, while pointing at it. If telling that story requires editing the diagram or adding caveats, the diagram isn't done.
 - **Don't draw an eye chart.** A diagram so dense you have to squint is no longer doing its job. Decompose.
@@ -268,3 +302,11 @@ This section is what a reviewer actually reads when assessing whether the model 
 - **Trust boundaries everywhere**: if every element is in its own subgraph, you've drawn a network diagram, not a threat model. Boundaries should be where *trust* changes.
 - **Missing data stores**: people often draw the processes and forget the databases. Stores hold the data attackers want.
 - **Aspirational**: drawing what the system *should* look like rather than what it *is*. Threat model the real system; if the real system needs to change, that's a finding.
+
+## Why flow-centric DFDs and not process-flow diagrams (PFDs)
+
+ThreatModeler's process-flow diagram (PFD) framing argues that DFDs miss multi-step user-flow threats — situations where each individual step is fine but the sequence is exploitable (a TOCTOU between authorization and action; a verification step that can be bypassed by reaching the next step from a different entry; an approval workflow whose sequence an attacker can reorder). The critique is real, and a flow-centric DFD doesn't directly address it. The skill stays flow-centric anyway because data is what attackers ultimately want and trust boundaries are what they ultimately cross — both of which DFDs surface natively, and PFDs surface awkwardly. The compensating moves are (a) STRIDE-Per-Interaction on cross-boundary flows (`references/stride-prompts.md`), which forces the modeler to ask "what if this step happens before / after / without the previous one?", (b) attack trees on the top one or two business-logic flows (`references/methodologies.md` § "Attack trees"), which are the right shape for ordered-step exploitability, and (c) sequence / swim-lane diagrams (`references/non-dfd-models.md`) where the workflow is the threat surface. With those three supplements, the PFD critique is mostly absorbed; without them, it stings.
+
+## Translating to other diagramming tools
+
+If your org mandates Microsoft Threat Modeling Tool (TMT), OWASP Threat Dragon, or pytm output, the DFD3 conventions in this skill — dashed `subgraph` borders for trust boundaries, three-field zone labels (owner / env-type / trust), `(AS#)` asset tagging, dashed-arrow flows from untrusted zones — translate directly to those tools' default rendering. Only the syntax changes: TMT renders trust boundaries as dashed rectangles natively, Threat Dragon as dashed lines, pytm as a styled subgraph in its dot output. Generate the Mermaid first (it's the readable text artifact), then export to the mandated tool's format; the underlying model is the same.

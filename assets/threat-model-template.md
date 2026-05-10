@@ -36,6 +36,14 @@
 **Out of scope**:
 -
 
+### Assumptions
+
+> **This is the Assumptions register** — equivalent to the MITRE Threat Modeling Playbook §2.4.6 deliverable. Every assumption referenced anywhere in §2 / §3 prose must resolve to a numbered `ASM#` here. Versioned across iterations via the §4 changelog (a removed or revised assumption is a model change, not an edit). Use the `ASM` prefix to keep these distinct from `AS#` asset IDs (`A1` looks too much like `AS1` on first read and breaks grep). Phrase each one falsifiably — "the load balancer terminates TLS before traffic reaches the app server" is testable; "the network is secure" is not. Placed before the asset and trust-level tables so a reviewer scanning §1 sees the register first.
+
+- **ASM1**:
+- **ASM2**:
+- **ASM3**:
+
 ### Scope classification (required for the OWASP TML TM-BOM; useful for prioritization either way)
 
 > See `SKILL.md` § "Round 1 — Scope and system understanding". Pick one value per field; these populate the schema's required `scope` enums.
@@ -61,14 +69,6 @@
 | TL2 | Authenticated user | |
 | TL3 | Privileged user / admin | |
 | TL4 | Service / machine identity | |
-
-### Assumptions
-
-> Use the `ASM` prefix to keep these distinct from `AS#` asset IDs (`A1` looks too much like `AS1` on first read and breaks grep). Phrase each one falsifiably — "the load balancer terminates TLS before traffic reaches the app server" is testable; "the network is secure" is not.
-
-- **ASM1**:
-- **ASM2**:
-- **ASM3**:
 
 ### Technology stack and environment
 
@@ -289,6 +289,7 @@ flowchart TD
 - [ ] Per-environment boundary patterns from `references/environments.md` checked for the in-scope environment types
 - [ ] Flows are labeled with concrete protocols and authentication, not generic terms like "data"
 - [ ] Assumptions are listed and falsifiable; out-of-scope items are explicit
+- [ ] All assumptions referenced in §2 / §3 prose resolve to a numbered `ASM#` in §1; new or revised assumptions between revisions are reflected in the §4 changelog
 
 **Threats and responses**
 - [ ] Every applicable STRIDE category was walked at every applicable element

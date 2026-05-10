@@ -55,7 +55,7 @@ Definitions from the Manifesto, with the skill-output gloss in parentheses:
 - **Varied viewpoints** — diverse SMEs and cross-functional collaboration. (Call out where domain expertise is needed — e.g. "this is the right place to bring in the firmware team".)
 - **Useful toolkit** — tools that increase productivity and enable repeatability.
 - **Theory into practice** — use field-tested techniques tailored to local context. (Prefer mitigations that map to real engineering work the team does.)
-- **Multiple representations** (added by the Manifesto's pattern catalogue, central to this skill's hybrid output) — multiple imperfect views beat one perfect view; context DFD + decomposed DFDs are fine and good.
+- **Multiple representations** (added by the Manifesto's pattern catalogue, central to this skill's hybrid output) — multiple imperfect views beat one perfect view; context DFD + decomposed DFDs are fine and good. The skill operationalizes this as DFDs (`dfd-mermaid.md`) plus, where the system warrants them, sequence / swim-lane diagrams and state diagrams (`non-dfd-models.md`) — three diagram families, one cross-referenced threat table.
 
 ## Anti-patterns (avoid these)
 
