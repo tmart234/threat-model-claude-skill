@@ -44,7 +44,9 @@ For medical device submissions specifically, FMEA-style scoring (severity × occ
 
 ## CVSS-based attack-path risk (cyber-physical IoT)
 
-For multi-device IoMT / IoT environments where the threat is a composed *path* across several devices rather than a flaw on one element, per-element OWASP-RR tends to under-rate the danger because no single hop scores high — the composition is the threat. Use CVSS-derived path scoring: each hop carries a CVSS score (or a CVV — Cyber-physical Vulnerability Vector — extending CVSS with physical-interaction parameters per Stellios et al. 2021), and the path's risk is a function of the per-hop scores (Stellios et al. use the product, with a threshold for pruning). The per-element OWASP-RR table still lists the individual flaws; the path-risk table lists the composed attack chains and is what gets triaged. Construction technique: `methodologies.md` § "Risk-prioritized cyber-physical attack paths".
+Use this **only** when the threat being rated is a composed *path* across several devices in one physical space (multi-device IoMT room, plant-floor cabinet, robotics cell, smart building zone) and the composition is what makes it dangerous — no single hop scores high under per-element OWASP-RR, so OWASP-RR under-rates the chain. This is a path-scoring supplement, not a third numeric option for ordinary single-element threats; for those, stick with L/M/H or OWASP-RR.
+
+Each hop carries a CVSS score (or a CVV — Cyber-physical Vulnerability Vector — extending CVSS with physical-interaction parameters per Stellios et al. 2021), and the path's risk is a function of the per-hop scores (Stellios et al. use the product, with a threshold for pruning). The per-element OWASP-RR table still lists the individual flaws; the path-risk table lists the composed attack chains and is what gets triaged. Construction technique: `methodologies.md` § "Risk-prioritized cyber-physical attack paths".
 
 ## Why DREAD is discouraged
 
