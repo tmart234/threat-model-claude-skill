@@ -1,5 +1,7 @@
 # DFD → Mermaid mapping
 
+> **Related**: ← `SKILL.md` • `centric-methods.md` (flow-centric entry point) • `stride-prompts.md` (enumerate threats once the DFD is drawn) • `validation.md` (canonical diagramming checklist)
+
 Mermaid renders well in GitHub, GitLab, Markdown editors, and Polarion (with the Mermaid plugin). It's the practical default for a text-first threat modeling workflow.
 
 Mermaid doesn't natively render trust boundaries the way a dedicated threat modeling tool does, so we use `subgraph` blocks to group elements by trust zone and a prose key to explain the convention.
@@ -90,15 +92,7 @@ These rules (paraphrased from *Threat Modeling: Designing for Security*, Ch. 1�
 
 ## Diagramming checklist
 
-A short version of the Shostack-derived checklist for use at the end of the diagramming phase. Every box should be checkable before moving to threat enumeration:
-
-- [ ] We can tell a story about the system without changing the diagram.
-- [ ] We can tell that story without "sometimes" or "also."
-- [ ] We can point at the diagram and identify exactly where the software makes a security decision.
-- [ ] All trust boundaries are shown — every UID/account boundary, application role, and network interface.
-- [ ] The diagram reflects current or planned reality, not an aspirational version.
-- [ ] We can see where all data goes and who uses it.
-- [ ] Every data store has the process(es) that read/write it shown — no orphan stores.
+The end-of-diagramming checklist (Shostack-derived) is the canonical version in `validation.md` § "Diagramming checklist". Use it at the end of the diagramming phase — every box should be checkable before moving to threat enumeration. Don't duplicate it here.
 
 ## Trust boundaries — what to include
 

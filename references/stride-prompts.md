@@ -1,5 +1,9 @@
 # STRIDE Prompts (per element type)
 
+> **Related**: ← `SKILL.md` • `dfd-mermaid.md` (draw the DFD first) • `centric-methods.md` (STRIDE as generation vs characterization) • `methodologies.md` (when to swap or supplement STRIDE — LINDDUN, AI/ML, etc.) • `capec.md` (STRIDE → CAPEC → CWE chain) • `validation.md` (Q4 Threats checklist).
+
+This file is the **canonical home** for the STRIDE-Per-Element applicability table and the STRIDE → security property → typical mitigations table. SKILL.md references both; don't duplicate.
+
 When threat-enumerating a DFD, walk each element through the STRIDE categories that apply. The applicability table:
 
 | Element        | S | T | R | I | D | E |

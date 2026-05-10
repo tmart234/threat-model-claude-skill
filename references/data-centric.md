@@ -1,6 +1,8 @@
 # Data-centric threat modeling — workflow, caveats, worked example
 
-This file is the deep-dive on the data-centric entry point. For the entry-point overview and the comparative "when do I pick this vs flow-centric / asset-centric" framing, see `centric-methods.md` § Data-centric. For how this layer fits into the skill's hybrid output, see `methodologies.md` § Hybrid as default.
+> **Related**: ← `SKILL.md` • `centric-methods.md` § Data-centric (entry-point overview and "when do I pick this") • `methodologies.md` § Hybrid as default (where this layer fits in the hybrid output) • `stride-prompts.md` (STRIDE applies per location).
+
+This file is the deep-dive on the data-centric entry point.
 
 Source: NIST SP 800-154 (Draft), *Guide to Data-Centric System Threat Modeling*, Souppaya & Scarfone, NIST, March 2016. Public-domain U.S. government work.
 

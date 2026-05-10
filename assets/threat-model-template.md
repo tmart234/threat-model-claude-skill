@@ -29,9 +29,11 @@
 
 ### Assets
 
+> Use `AS` prefix for assets to keep them distinct from asset-centric *findings* (`A`-prefixed) in §2.1.b.
+
 | ID | Asset | Description | Why it matters |
 |----|-------|-------------|----------------|
-| A1 |       |             |                |
+| AS1 |      |             |                |
 
 ### Trust levels
 
@@ -106,11 +108,11 @@ flowchart LR
 
 #### 2.1.c Privacy / AI-specific pass (if applicable)
 
-> Add if PII/PHI is in scope (LINDDUN — Linking / Identifying / Non-repudiation / Detecting / Data disclosure / Unawareness / Non-compliance) or if ML components are present (prompt injection, model extraction, training-data poisoning, adversarial examples — see OWASP LLM Top 10 / OWASP ML Security Top 10).
+> Add if PII/PHI is in scope (LINDDUN — Linking / Identifying / Non-repudiation / Detecting / Data disclosure / Unawareness / Non-compliance) or if ML components are present (prompt injection, model extraction, training-data poisoning, adversarial examples — see OWASP LLM Top 10 / OWASP ML Security Top 10). Use `PR` prefix to keep these IDs distinct from DFD process labels (`P1`, `P2` …).
 
 | ID | Element / Data | Category | Threat | Likelihood | Impact | Risk |
 |----|----------------|----------|--------|------------|--------|------|
-| P1 |                |          |        |            |        |      |
+| PR1 |               |          |        |            |        |      |
 
 #### 2.1.d Threat tree(s) for top 1–2 highest-value threats (optional)
 

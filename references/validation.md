@@ -1,6 +1,10 @@
 # Validating the threat model (Q4)
 
+> **Related**: ← `SKILL.md` (entry point) • `methodologies.md` (hybrid framing) • `dfd-mermaid.md` (diagramming → checklist below) • `stride-prompts.md` (threats checklist below) • `manifesto.md` ("Admiration for the problem" anti-pattern)
+
 The fourth question — "Did we do a good enough job?" — is the most-skipped step. The Manifesto's "Admiration for the problem" anti-pattern lives here: lots of teams enumerate threats and never close the loop on whether the model is right, whether the responses landed, or whether the implementation actually matches the model. This file is dedicated to making Q4 a real activity, not a closing pleasantry.
+
+This file is the **canonical home** of the three closing checklists this skill emits — Diagramming, Threats (hybrid: contextual / operational / strategic / cross-stratum), Validating-threats. SKILL.md and `dfd-mermaid.md` reference them; don't duplicate.
 
 The frame and most of the practical wisdom here is paraphrased from Adam Shostack's *Threat Modeling: Designing for Security* (Wiley, 2014), Chapter 1 ("Checking Your Work") and Chapter 10 ("Validating That Threats Are Addressed"), with attribution.
 
@@ -46,9 +50,9 @@ As the team gets close to shipping or deploying, run a query for every threat-de
 
 A `tmtest` or `threat-model` tag/label on each bug makes this query trivial.
 
-## The Shostack-style closing checklists
+## The closing checklists
 
-These are useful to drop into the threat model document itself, with check-marks. Adapted/paraphrased from Shostack Chapter 1's three end-of-chapter checklists:
+Drop these into the threat-model document itself with check-marks. The Diagramming and Validating-threats checklists are adapted from Shostack Chapter 1's end-of-chapter checklists; the Threats checklist is extended to cover this skill's hybrid output (three strata + cross-stratum).
 
 ### Diagramming checklist
 
@@ -60,11 +64,28 @@ These are useful to drop into the threat model document itself, with check-marks
 - [ ] We can see where all the data goes and who uses it (no data sinks — every written piece of data has a reader).
 - [ ] We see the processes that move data from one data store to another (data can't move itself).
 
-### Threats checklist
+### Threats checklists (hybrid)
 
-- [ ] We have looked for each STRIDE threat.
-- [ ] We have looked at each element of the diagram.
-- [ ] We have looked at each data flow in the diagram. (Data flows are an element type, but they get overlooked, so this is a deliberate belt-and-suspenders check.)
+**Contextual stratum (§2.1)**
+- [ ] Have we looked for each STRIDE category, at each element, *and* at each data flow specifically? (Flows get overlooked — belt-and-suspenders.)
+- [ ] Has at least one supplementary entry-point pass been run (data-centric / asset-centric / user-needs-centric / process-centric — driven by the system-type matrix in `methodologies.md`)?
+- [ ] LINDDUN pass run if PII/PHI is in scope?
+- [ ] AI/ML-specific threats considered if ML components are present?
+
+**Operational stratum (§2.2)**
+- [ ] At least the top 3 threats carry the full **STRIDE → CAPEC → CWE → mitigation** chain (CAPEC pattern with explicit abstraction level, the CWE(s) it exploits, and the mitigation class)?
+- [ ] At least the top 3 threats mapped to ATT&CK technique IDs?
+- [ ] Where no Detailed CAPEC pattern exists for a domain-specific protocol (DICOM, HL7, ICS), the closest Standard or Meta pattern is cited *and the row says so explicitly* (per `capec.md` § "Honest about CAPEC coverage")?
+- [ ] Kill-chain / CVSS references added where they aid handoff to SOC / IR / engineering?
+
+**Strategic stratum (§2.3)**
+- [ ] Sector ISAC / threat-intel context noted (or explicitly marked "not applicable: <reason>")?
+- [ ] Regulatory framing captured (FDA / IEC / HIPAA / GDPR / PCI / EU AI Act — whichever apply)?
+- [ ] Named-adversary context included if the sector has one?
+
+**Cross-stratum**
+- [ ] Threats are *cross-referenced* across strata, not duplicated?
+- [ ] All threats share one ID space and one risk-rating scale, so the §3 prioritized list is single-sorted?
 
 ### Validating-threats checklist
 

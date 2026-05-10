@@ -1,5 +1,7 @@
 # CAPEC — using the attack-pattern catalog in a hybrid threat model
 
+> **Related**: ← `SKILL.md` • `stride-prompts.md` (STRIDE is the input to the CAPEC chain) • `centric-methods.md` (CAPEC is a characterization layer, not an entry point) • `methodologies.md` § "Hybrid as default" (CAPEC's place in the operational stratum).
+
 This file is the working reference for CAPEC (Common Attack Pattern Enumeration and Classification, MITRE) inside this skill's hybrid output. CAPEC is one of the operational-stratum characterization layers (see `methodologies.md` § "Hybrid as default"). It is **not** an entry point — you don't enumerate threats from CAPEC; you map already-enumerated threats to CAPEC patterns to make them concrete and traceable.
 
 CAPEC's distinctive design-time payoff over MITRE ATT&CK: each CAPEC pattern references the **CWE** weaknesses it exploits, which gives you a chain from the abstract STRIDE category to a concrete weakness class to a known mitigation. ATT&CK doesn't provide that chain at design time (it's a TTP catalog for ops). Surface and use the chain explicitly.
