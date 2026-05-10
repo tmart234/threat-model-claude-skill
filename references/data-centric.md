@@ -1,5 +1,8 @@
 # Data-centric threat modeling — workflow, caveats, worked example
 
+> **Last verified**: 2026-05. NIST SP 800-154 has been a Draft since 2016 and may have been finalized, withdrawn, or superseded since this file was last reviewed; re-check csrc.nist.gov before citing the publication status. The four-step workflow itself has been stable since the 2016 draft.
+> **Sources paraphrased**: NIST SP 800-154 (Draft, Souppaya & Scarfone, 2016, US public domain). HIPAA / GDPR / PCI / FDA / ITAR/EAR framings (public regulatory text, paraphrase only).
+
 > **Related**: ← `SKILL.md` • `centric-methods.md` § Data-centric (entry-point overview and "when do I pick this") • `methodologies.md` § Hybrid as default (where this layer fits in the hybrid output) • `stride-prompts.md` (STRIDE applies per location).
 
 This file is the deep-dive on the data-centric entry point.

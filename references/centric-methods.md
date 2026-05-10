@@ -1,5 +1,8 @@
 # Centric methods — choosing the entry point
 
+> **Last verified**: 2026-05. The entry-point taxonomy is stable across the Shostack 2014 / Manifesto 2020 frame; re-confirm with the Threat Modeling Manifesto site before citing the "Multiple representations" pattern verbatim.
+> **Sources paraphrased**: Adam Shostack, *Threat Modeling: Designing for Security* (Wiley, 2014) — Chapter 2 framing of asset / attacker / software focus and the asset-centric / attacker-centric critiques (paraphrase only; substantive direct quotes require Wiley/Shostack attribution); Threat Modeling Manifesto 2020 (CC-BY 4.0); NIST SP 800-154 Draft 2016 (US public domain — see data-centric.md for full attribution).
+
 > **Related**: ← `SKILL.md` • `methodologies.md` (categorization-lens choices: STRIDE / LINDDUN / PASTA / **STPA-SafeSec** …) • `data-centric.md` (data-centric workflow deep-dive) • `stpa-safesec.md` (safety+security joint hazard analysis — swap or supplement, not an entry point) • `stride-prompts.md` (STRIDE-as-generation prompts).
 
 This file is the **canonical home** for the entry-point taxonomy and the generation-vs-characterization distinction. SKILL.md and `methodologies.md` reference this; don't duplicate.

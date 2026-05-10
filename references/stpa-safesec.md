@@ -1,5 +1,8 @@
 # STPA-SafeSec — loss-driven entry mode
 
+> **Last verified**: 2026-05. STPA-Sec / STPA-SafeSec methodology and the IEC 61508 / 62304 / 81001-5-1 / 62443 / ISO 26262 framings are stable; re-confirm regulator edition years on any submission deliverable.
+> **Sources paraphrased**: Friedberg, McLaughlin, Smith, Laverty & Sezer (2017), *STPA-SafeSec*, Journal of Information Security and Applications 34 (CC-BY); Young & Leveson (2014), *An Integrated Approach to Safety and Security Based on Systems Theory*, CACM 57(2); Leveson (2011), *Engineering a Safer World* (MIT Press, paraphrase only — direct quotes need MIT Press attribution); Thomas (2013, MIT thesis); Khalil, Bahsi & Korõtko (2023). Substantive direct quotes need upstream attribution; paraphrasing here is permitted under each license.
+
 > **Related**: ← `SKILL.md` • `methodologies.md` (where this methodology is registered alongside LINDDUN / PASTA / attack trees) • `centric-methods.md` (entry-point taxonomy; STPA-SafeSec is not an entry point) • `risk-rating.md` (safety-bump rule) • `validation.md` (Q4 framing).
 
 A safety+security joint analysis for control-loop systems. **STPA-Sec** (Young & Leveson, 2014) extends Leveson’s STPA hazard analysis to security. **STPA-SafeSec** (Friedberg et al., 2017) integrates safety and security into one workflow and adds a component-layer mapping that makes the analysis actionable. Use STPA-SafeSec, not plain STPA-Sec — the component layer is what closes the abstraction gap.

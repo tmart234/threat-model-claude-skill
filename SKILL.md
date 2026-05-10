@@ -1,19 +1,35 @@
 ---
 name: threat-modeler
-description: Use when the user asks for a threat model, security architecture review, attack-surface analysis, or "what can go wrong with this system" against a paste of an architecture, design, spec, or component list — or when they explicitly name a methodology (STRIDE, LINDDUN, PASTA, STPA-SafeSec) for design-time analysis. Also use when the user mentions a regulatory threat-model deliverable (FDA premarket cybersecurity, IEC 81001-5-1, IEC 62443, ISO 26262 cyber). Do not use for penetration test planning, vulnerability scanning, incident response, or passing references to STRIDE/DFD that aren't a request to produce a model.
+description: Use when the user asks the assistant to *produce* a threat model, security architecture review, attack-surface analysis, or "what can go wrong with this system" — typically against a paste of an architecture, design, spec, code, or component list — or when they explicitly name a methodology (STRIDE, LINDDUN, PASTA, STPA-SafeSec) and ask for design-time analysis of *their* system. Also use when the user mentions a regulatory threat-model deliverable (FDA premarket cybersecurity, IEC 81001-5-1, IEC 62443, ISO 26262 cyber). The trigger is the request to *produce an artifact*, not the mention of a term. Do **not** use for: educational queries ("what does S in STRIDE stand for?", "explain DFD trust boundaries", "summarize LINDDUN", "what is PASTA?"); definitions, glossary lookups, or methodology comparisons that don't reference a specific system; coursework / certification study help; pen-test planning; vulnerability scanning; incident response; SBOM generation; threat intelligence summaries; CVE / advisory triage; or passing references to STRIDE / DFD / "attack surface" that appear in unrelated discussions (resume review, blog post drafting, code review of an unrelated change). When in doubt, the question to ask is "is the user asking me to produce a §1 / §2 / §3 / §4 artifact about a system they've described?" — if yes, use the skill; if no, answer the question directly without invoking it.
 ---
 
 # Threat Modeler
 
-Produce a working threat model for an engineering team. State assumptions and proceed rather than interrogating the user. Ship a useful approximation rather than polishing a perfect artifact. When STRIDE categorization is debatable, record the threat and move on. Avoid two anti-patterns: **Admiration for the problem** (analyzing without producing solutions — every threat gets a response) and **Asset rabbit-holing** (padding the asset list). Full Manifesto values, principles, and pattern catalog: `references/manifesto.md`.
+Produce a working threat model for an engineering team. State assumptions and proceed rather than interrogating the user. Ship a useful approximation rather than polishing a perfect artifact. When STRIDE categorization is debatable, record the threat and move on. Avoid two anti-patterns: **Admiration for the problem** (analyzing without producing solutions — every threat gets a response) and **Asset rabbit-holing** (padding the asset list). Full Manifesto values, principles, and pattern catalog: `references/manifesto.md`. Before shipping a draft, scan it against the failure-mode catalog in `references/manifesto.md` § "Failure-mode catalog — what bad output looks like" — padded asset lists, single-threat-per-element, generic mitigations ("apply RBAC"), STRIDE labels with no concrete attack, etc. If the draft has those shapes, fix them before sending; a model with those failure modes is worse than no model because it implies threats were considered when they weren't.
 
 ## Pick a mode
 
 - **Guided interview** — user said "help me threat model X" without a system description. Run §"Guided interview" to scope, then produce the model.
-- **Fast-path** — user pasted architecture, a DFD, a component list, a spec, code, or a description detailed enough to identify external entities, processes, data stores, and trust boundaries. Skip the interview, but **before drawing the DFD** pin down the four things from Round 1.5 (technology stack, environment type, environment ownership, physical/operational context). If any aren't in the artifact, state your inferred answer as a numbered assumption ("A3: assumed customer IT owns the on-prem network; correct if otherwise") and proceed.
-- **Update / extend** — user pasted an existing threat model. Treat their document as input: preserve existing IDs, only renumber on collision, mark new entries clearly, and run a Q4 model/reality conformance check first per `references/validation.md`. Match their structure rather than rewriting it.
+- **Fast-path** — user pasted architecture, a DFD, a component list, a spec, code, or a description detailed enough to identify external entities, processes, data stores, and trust boundaries. Skip the interview, but **before drawing the DFD** pin down the four things from Round 1.5 (technology stack, environment type, environment ownership, physical/operational context). If any aren't in the artifact, state your inferred answer as a numbered assumption ("ASM3: assumed customer IT owns the on-prem network; correct if otherwise") and proceed.
+- **Update / extend** — user pasted an existing threat model. Treat their document as input: preserve existing IDs, only renumber on collision, mark new entries clearly (e.g. `T17 [new]`, `SR-014 [new]`), and run a Q4 model/reality conformance check first per `references/validation.md`. **Branch on the existing structure** — most existing models won't use this skill's three-stratum hybrid layout, and silently imposing it is rude:
+  - **If the existing document uses §1 / §2 / §3 / §4 (Four Question Framework) but not the three-stratum §2.1 / §2.2 / §2.3 split** (most common shape): preserve their §2 structure. Add new threats inline in their existing tables. If the user explicitly asks for the operational or strategic stratum, add `§2.x` subsections rather than restructuring. State this once: "Keeping your existing §2 structure; new threats appended below."
+  - **If the existing document doesn't use the Four Question Framework at all** (e.g. a vendor-specific template, a Microsoft TMT export, a Polarion-imported table): match their structure. Don't reorganize. Add new entries in the same shape they used. If their structure makes Q4 hard to find, add a Q4 self-assessment in their style at the end and say so.
+  - **If the existing document already uses the three-stratum hybrid**: extend it in place; that's what the defaults are for.
+  - **Default to ASK before restructuring.** If you're tempted to convert their model to the three-stratum layout because it would be cleaner, surface that as an explicit offer ("Your model uses §1/§2/§3/§4 without strata; want me to keep that, or convert to the hybrid layout?") rather than rewriting silently. The user's existing structure is usually load-bearing — it ties to a tracker, a regulator template, or a team convention.
+  - **ID-prefix conventions stay flexible in update mode.** If the existing model uses `A1, A2, ...` for assets (instead of `AS1, AS2, ...`) or `RR-001` for requirements (instead of `SR-001`), match their prefixes. The convention serves the team, not the skill.
 
 When in doubt, state assumptions and proceed.
+
+## Handling sensitive input
+
+Threat modeling invites users to paste architecture, data-class names, identifiers, and sometimes credentials-adjacent material. Before processing user input, surface this guidance once at the start of the session — not as a gate, but so the user can decide what to share:
+
+- **Redact before pasting**: production credentials, API keys, customer PII / PHI, real patient identifiers, internal hostnames, IPs of production systems, signing-key fingerprints, URLs of internal-only endpoints. The model doesn't need any of these to produce a useful threat model — placeholders (`prod-db-1`, `<internal-host>`, `customer-X`) work just as well, and a redacted DFD reads no worse than a literal one.
+- **Suspicious-string check**: if the pasted artifact contains anything that looks like a JWT, base64 secret, AWS access key (`AKIA…`), GitHub token (`ghp_…`), connection string with embedded credentials, `BEGIN PRIVATE KEY`, or a real customer name, **stop, flag it to the user, and ask whether to proceed with redaction or pause**. Don't silently include the substring in the output.
+- **The produced threat model is itself sensitive.** A complete threat model lists what the system protects, where the trust boundaries are, and what isn't yet mitigated — exactly the things an attacker would want. State this in the document's header and recommend the team store it under the same access controls as the design documents it describes (typically internal-only or SOC-restricted). Default the template's `Status` field to `Draft / Internal` and ask before recommending wider distribution.
+- **If the user names a third party**: don't speculate about that third party's vulnerabilities or named-adversary exposure beyond what's in public advisories. Stick to the system the user is responsible for.
+
+This guidance applies across every mode (guided / fast-path / update). State it once, then proceed; don't re-prompt unless new pasted material reintroduces the concern.
 
 ## The Four Question Framework
 
@@ -112,18 +128,19 @@ Output a single markdown document. Default to a single document; only split into
 
 **Default scaffold rule.** The default layout has three top-level subsections under §2 — Contextual, Operational, Strategic. Add content to a subsection when you have something to say there. Omit a subsection entirely when you don't. No "not applicable" stubs. The three-stratum layout is *available scaffolding*, not a coverage quota — it comes from Tatam et al. (2021), one paper, not a practitioner consensus. Background and the system-type matrix that suggests which supplements to add: `references/methodologies.md` § "Hybrid as default".
 
-ID conventions to keep cross-stratum references unambiguous (one prefix per namespace):
+ID conventions to keep cross-stratum references unambiguous (one prefix per namespace, chosen so single-letter prefixes can't be misread as truncations of multi-letter ones):
 
 - Assets in §1: `AS1`, `AS2`, …
+- Assumptions in §1: `ASM1`, `ASM2`, … (avoid bare `A1` — it's visually confusable with `AS1` and breaks grep)
 - Flow-centric STRIDE threats: `T1`, `T2`, …
-- Supplementary entry-point findings: `V1`, `V2`, … (data-centric / asset-centric / etc. — use the `V` prefix regardless of pass type, with the pass type recorded in the row)
+- Supplementary entry-point findings: `V1`, `V2`, … (data-centric / asset-centric / user-needs-centric / process-centric / code-centric — use the `V` prefix regardless of pass type, with the pass type recorded in the row; avoid `A#` for asset-centric findings since it collides with assets)
 - Privacy / LINDDUN / AI-ML findings: `PR1`, `PR2`, …
 - Mitigations / derived requirements: `SR-001`, `SR-002`, …
 - ATT&CK / CAPEC / CWE / CVE: cite the upstream ID directly
 
 ## DFD
 
-Use Mermaid `flowchart LR` (or `TD`). Map elements as: external entity → rectangle (`EE[User]`); process → rounded rectangle or circle (`P1(Auth Service)`); data store → cylinder (`DS[(User DB)]`); data flow → labeled arrow (`EE -- "credentials" --> P1`); trust boundary → Mermaid `subgraph`. Render trust-boundary subgraphs with a dashed border and label each subgraph with owner, environment type, and trust level — full conventions, the dashed-stroke pattern, the labeling format, and worked examples in `references/dfd-mermaid.md`. The per-environment patterns that should drive *which* subgraphs you draw live in `references/environments.md`.
+Use Mermaid `flowchart LR` (or `TD`). Map elements as: external entity → rectangle (`EE[User]`); process → rounded rectangle or circle (`P1(Auth Service)`); data store → cylinder (`DS[(User DB)]`); data flow → labeled arrow (`EE -- "credentials" --> P1`); trust boundary → Mermaid `subgraph`. Render every trust-boundary subgraph with a dashed border using the `classDef tb fill:none,stroke:#888,stroke-dasharray: 5 5` + `class <Subgraph1>,<Subgraph2>,... tb` pair at the bottom of the diagram — apply this pattern to every diagram, not optional. Label each subgraph with owner, environment type, and trust level. Full conventions, the per-subgraph `style` alternative for single-zone diagrams, the labeling format, and worked examples in `references/dfd-mermaid.md`. The per-environment patterns that should drive *which* subgraphs you draw live in `references/environments.md`.
 
 Three rules, applied in order:
 
@@ -155,7 +172,7 @@ For the highest-risk handful of threats (top 3–5), consider drawing a threat t
 
 Each threat gets exactly one response: **Mitigate**, **Eliminate**, **Transfer**, or **Accept**. For "Mitigate", give a concrete control mapped to the violated property — STRIDE → security property → typical mitigations table in `references/stride-prompts.md`.
 
-If you produce §2.2 (operational stratum), include CAPEC and CWE alongside ATT&CK. The CAPEC → CWE bridge is what makes derived requirements (`SR-###`) traceable to a known weakness class rather than a free-text threat sentence. Format, abstraction-level rule of thumb, and STRIDE→CAPEC mapping: `references/capec.md`.
+If you produce §2.2 (operational stratum), include CAPEC and CWE alongside ATT&CK. The CAPEC → CWE bridge is what makes derived requirements (`SR-###`) traceable to a known weakness class rather than a free-text threat sentence. **Pick the CAPEC abstraction level for the user, by SDLC stage** (Meta for early architecture, Standard for design review, Detailed for component-level work) and don't expose the level in the row unless you were forced to use a higher abstraction because no Detailed pattern exists for the domain-specific protocol (DICOM, HL7, ICS). When forced, footnote `(closest pattern; no Detailed available)`. Format, the abstraction-level rule of thumb, and STRIDE→CAPEC mapping: `references/capec.md`.
 
 Derive security requirements from mitigations. Each one is testable and stable enough to import into a tracker:
 
@@ -187,7 +204,7 @@ The contextual core (flow-centric DFD + STRIDE) almost never gets swapped. Add s
 | Attack tree | Top 1–2 highest-value threats where adversarial reasoning adds value | `references/methodologies.md` § Attack trees |
 | AI/ML threat list | ML components in scope (prompt injection, training-data poisoning, model extraction) | `references/methodologies.md` § ML/AI; OWASP LLM Top 10 |
 | PASTA framing | Borrow the business-impact stage when executive sign-off is needed | `references/methodologies.md` § PASTA |
-| STPA-SafeSec | Safety-critical control loops where worst case is physical harm (medical devices, ICS, automotive, aerospace, robotics); swap or supplement mode | `references/stpa-safesec.md` |
+| STPA-SafeSec **(opt-in only — do not load by default)** | Safety-critical control loops where worst case is physical harm (medical devices, ICS, automotive, aerospace, robotics); swap or supplement mode. Niche; ~14 KB of reference. Load `references/stpa-safesec.md` only when the system is a control loop *and* one of: regulator requires the joint safety+security artifact (FDA premarket cybersec for control-loop devices, IEC 62304/81001-5-1, IEC 61508, ISO 26262); team needs hazard scenarios alongside threats. Skip otherwise. | `references/stpa-safesec.md` |
 | OCTAVE / VAST | Org/portfolio-level only, not per-system | `references/methodologies.md` |
 
 Domain pointers: medical / PACS / DICOM / IoMT → also load `references/medical.md`. Embedded / IoT / OT / cloud-native / AI-ML / third-party code → `references/environments.md` § "Domain notes" has each domain's specifics.
@@ -208,8 +225,71 @@ Read on demand:
 - `manifesto.md` — Threat Modeling Manifesto values, principles, patterns, anti-patterns (paraphrased).
 - `risk-rating.md` — Qualitative L/M/H, OWASP-RR pointer, safety-bump rule, why DREAD is discouraged.
 - `stpa-safesec.md` — Safety+security joint hazard analysis for control-loop systems. Two modes (swap or supplement). Use when the worst case is physical harm and the system is a control loop.
+- `examples.md` — Worked end-to-end examples for non-medical system types: a multi-tenant SaaS web app and an LLM chatbot with tools. Loads §1 → DFD → §2.1 STRIDE + supplement → §2.2 operational → §3 mitigations + requirements → §4 self-check. The medical / DICOM end-to-end example lives in `data-centric.md` § "Worked example" + `dfd-mermaid.md` § "Worked example: small clinical PACS".
 
 Blank template: `assets/threat-model-template.md`.
+
+## Machine-readable sidecar (for tracker import)
+
+The default output is a markdown document. When the user is going to import findings into Polarion, Jira, GitHub Issues, ServiceNow, or any other tracker, also emit a YAML sidecar alongside the markdown — one item per row across §1 (assets), §2 (threats / vectors / privacy findings), §3 (mitigations / requirements). Markdown headings and tables are the document's contract for humans; the YAML sidecar is the contract for tooling. Don't produce only the YAML — the markdown remains the canonical artifact and the sidecar is a derived view.
+
+When the user asks for tracker import, asks "can I export this to Jira/GitHub/Polarion", or names a downstream tool, emit the sidecar by default. Otherwise mention it once and offer it.
+
+Schema (stable contract — keep field names exactly as below so downstream importers don't need regex archaeology):
+
+```yaml
+threat_model:
+  system: "<system name>"
+  version: "0.1"
+  date: "YYYY-MM-DD"
+  status: "Draft / Reviewed / Approved"
+  next_review_trigger: "<text>"
+
+assets:
+  - id: AS1
+    name: "<asset name>"
+    description: "<what it is>"
+    why_it_matters: "<one sentence>"
+
+assumptions:
+  - id: ASM1
+    text: "<falsifiable assumption>"
+
+threats:
+  - id: T1
+    stratum: contextual          # contextual | operational | strategic
+    pass: flow-centric           # flow-centric | data-centric | asset-centric | user-needs-centric | process-centric | code-centric | linddun | ai-ml | stpa-safesec
+    element: "<DFD element ID and label>"
+    stride: S                    # S | T | R | I | D | E | "" (non-STRIDE pass)
+    threat: "<concrete attack scenario, not just the category>"
+    likelihood: M                # L | M | H
+    impact: H                    # L | M | H
+    risk: High                   # Low | Medium | High  (or Critical only if §1 promotes High+High; see references/risk-rating.md)
+    capec: ["CAPEC-151"]         # may be empty
+    capec_forced_abstraction: false  # true only if no Detailed exists for the domain protocol
+    cwe: ["CWE-287", "CWE-290"]
+    attack: ["T1078"]            # ATT&CK technique IDs
+    cross_refs: []               # ["V3", "PR1"] — IDs of cross-stratum equivalents
+    response: Mitigate           # Mitigate | Eliminate | Transfer | Accept
+    controls: ["<concrete control or control class>"]
+    owner: "<team or named role>"
+    requirements: ["SR-001"]
+
+requirements:
+  - id: SR-001
+    text: "The system SHALL <testable requirement>."
+    mitigates: ["T1", "T3"]
+    closes_cwe: ["CWE-287"]
+
+trust_boundaries:
+  - id: TB1
+    left_owner: "<owner>"
+    right_owner: "<owner>"
+    crosses: "<what crosses>"
+    mediating_control: "<control>"
+```
+
+A finding from a supplementary pass (`V#`) uses `id: V1`, sets `pass:` to the pass type, and leaves `stride:` empty when not STRIDE-categorized. A LINDDUN/AI-ML finding uses `id: PR1` and sets `pass: linddun` or `pass: ai-ml`. The schema is intentionally narrow — extend a downstream-importable field only when the import target requires it.
 
 ## Citations
 

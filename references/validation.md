@@ -1,5 +1,8 @@
 # Validating the threat model (Q4)
 
+> **Last verified**: 2026-05. The Shostack-derived checklists are stable; re-confirm against any post-2026 edition of *Threat Modeling: Designing for Security* before substantive citation.
+> **Sources paraphrased**: Adam Shostack, *Threat Modeling: Designing for Security* (Wiley, 2014) — Chapter 1 ("Checking Your Work") and Chapter 10 ("Validating That Threats Are Addressed"): three Q4 checks, diagramming checklist, validating-threats checklist, third-party / acquired-code inside-out approach (paraphrase only — substantive direct quotes require Wiley/Shostack attribution); Threat Modeling Manifesto 2020 (CC-BY 4.0) — "Admiration for the problem" anti-pattern.
+
 > **Related**: ← `SKILL.md` (entry point) • `methodologies.md` (hybrid framing) • `dfd-mermaid.md` (diagramming → checklist below) • `stride-prompts.md` (threats checklist below) • `manifesto.md` ("Admiration for the problem" anti-pattern)
 
 The fourth question — "Did we do a good enough job?" — is the most-skipped step. The Manifesto's "Admiration for the problem" anti-pattern lives here: lots of teams enumerate threats and never close the loop on whether the model is right, whether the responses landed, or whether the implementation actually matches the model. This file is dedicated to making Q4 a real activity, not a closing pleasantry.
@@ -60,7 +63,7 @@ Drop these into the threat-model document itself with check-marks. The Diagrammi
 - [ ] We can tell that story without using the words "sometimes" or "also" — anywhere those came up, we broke the case into separate flows or added detail.
 - [ ] We can look at the diagram and see exactly where the software will make a security decision.
 - [ ] Every element is inside exactly one zone subgraph — no floating elements (`dfd-mermaid.md` § "Trust boundaries — what to include").
-- [ ] Every trust boundary is rendered as a dashed-border subgraph (`dfd-mermaid.md` § "Rendering trust boundaries as dashed subgraphs").
+- [ ] Every trust boundary is rendered as a dashed-border subgraph using the canonical `classDef tb` + `class ... tb` pattern (`dfd-mermaid.md` § "Rendering trust boundaries as dashed subgraphs").
 - [ ] Sub-trust-boundaries are nested subgraphs where they exist — controller dual-OS, account/VPC/subnet, host/VM/container, device/secure-element (`dfd-mermaid.md` § "Nested subgraphs for sub-trust boundaries").
 - [ ] Every `AS#` from §1 appears in the DFD as a tagged element label, and every §1 trust boundary is drawn (DFD ↔ §1 reconciliation rule from SKILL.md § "DFD").
 - [ ] Methodology framing (Purdue, AD Tier, cloud account/VPC, mobile sandbox) is named in §1 prose, not repeated on every subgraph label.

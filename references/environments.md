@@ -1,5 +1,8 @@
 # Per-environment trust-boundary patterns
 
+> **Last verified**: 2026-05. Cloud-provider service names, Purdue Reference Architecture levels, Microsoft AD Tier model conventions, mobile-OS sandbox/keystore primitives, OWASP LLM/ML Top 10 entries, EU AI Act / NIST AI RMF citations, and the OS-vendor and carrier ownership boundaries listed here all change on independent cadences. Re-confirm cloud-managed-service names and AI-Act risk-classification language before citing them in a deliverable.
+> **Sources paraphrased**: AWS / Azure / GCP / OCI shared-responsibility documentation (public); Purdue Enterprise Reference Architecture (ISA-95); Microsoft Enterprise Access Model (public Microsoft documentation, paraphrase); Apple iOS Security Guide (public, paraphrase); Android Open Source Project security documentation (Apache 2.0); Stellios et al. 2021 (paraphrase, see methodologies.md); OWASP LLM Top 10 / ML Security Top 10 (CC-BY 4.0); NIST AI RMF (US public domain); EU AI Act (EU public).
+
 > **Related**: ← `SKILL.md` (Round 1.5 references this) • `dfd-mermaid.md` (subgraph labeling convention; generic boundary list this file extends) • `methodologies.md` (system-type matrix — picks which contextual supplements apply) • `centric-methods.md` (entry-point taxonomy)
 
 This file is the **canonical home** for environment-specific trust-boundary patterns and for the ownership taxonomy that generalizes cloud's shared-responsibility model to embedded, OT, mobile, and enterprise. The generic boundary list in `dfd-mermaid.md` § "Trust boundaries — what to include" is the floor (UID, NIC, VLAN, container, org, tenant); this file is the ceiling — the patterns that catch boundaries the generic list misses.
@@ -30,7 +33,7 @@ For every subgraph in the DFD, name the owner. Use this taxonomy as a starting p
 | **Open-source / upstream** | Library / firmware components you depend on but don't control |
 | **No single owner (public internet, public space)** | Public-internet transit, kiosk-public-area surroundings — no controls available; treat as untrusted. Use the literal label `Unowned` or `Public` in the subgraph |
 
-Mark every subgraph with its owner using the labeling convention from `dfd-mermaid.md` § "Subgraph labeling convention" (`subgraph ID["<owner> | <env-type> | <trust>"]`). If an owner can't be named, record an explicit assumption (e.g. "A2: assumed customer IT owns the on-prem network; correct if otherwise") and proceed — don't block the model on it.
+Mark every subgraph with its owner using the labeling convention from `dfd-mermaid.md` § "Subgraph labeling convention" (`subgraph ID["<owner> | <env-type> | <trust>"]`). If an owner can't be named, record an explicit assumption (e.g. "ASM2: assumed customer IT owns the on-prem network; correct if otherwise") and proceed — don't block the model on it.
 
 Ownership ≠ data custody (who holds the data) and ≠ legal accountability (who's on the hook for a breach). It's narrower: who can change configuration, who runs the patch cycle, whose IAM controls access, whose physical security applies. Custody and accountability often follow ownership but not always — call out the divergence when it matters (e.g. cloud provider owns the host; customer holds the data; HIPAA accountability sits with the customer).
 
@@ -239,6 +242,84 @@ The skill's defaults are domain-neutral. These subsections collect domain-specif
 - **Strategic stratum**: EU AI Act, NIST AI RMF, sector-specific AI regulators where they exist (e.g. healthcare AI). The risk classification under the AI Act drives the regulatory framing.
 - **Agentic systems** add tool-use as an attack surface: any tool a model can call is a control-flow path the prompt can hijack. Treat each tool integration as a trust boundary.
 
+#### DFD pattern for an LLM application
+
+LLM apps look unfamiliar in a classic DFD because untrusted *content* mixes with trusted *instructions* in the prompt, and the model can issue control-plane actions (tool calls) from data it just read. The canonical mapping:
+
+| LLM-app concept | DFD element | Why |
+|---|---|---|
+| End-user prompt | Data flow (untrusted input → app process) | Same as any user input — but never separated from system instructions on the model side |
+| System prompt / developer prompt | Data store (read by app process at request time) — usually a config asset (`AS#`) | Treat as a high-value secret-adjacent asset; exfiltration is a known threat (prompt-leak / system-prompt extraction) |
+| RAG / retrieved documents | Data flow + data store (the index / vector DB) | Each retrieved chunk is a data flow whose origin trust must be tracked. Indirect prompt injection rides this flow |
+| Long-term memory / chat history | Data store | Same store treatment as any user-persistent data — includes the persistence trust boundary an attacker can poison across sessions |
+| The LLM itself (provider API or self-hosted) | Process | Not a data store; it transforms input to output. If self-hosted, the weights are an `AS#` |
+| Model weights (self-hosted) | Data store + asset (`AS#`) | Exfiltratable via model extraction; supply-chain compromise of pre-trained weights is a tampering threat |
+| Tools the model can call (HTTP, DB, shell, code interpreter, MCP server) | One process per tool, each a *separate trust zone* | Prompt-driven tool invocation is a control-flow hijack surface — each tool is a boundary the prompt can cross |
+| Context window | Implicit data store with a write-only-during-request lifecycle | Lifecycle-only location; data-centric pass picks this up where flow-centric won't |
+| Output passed to a downstream renderer (browser, terminal, IDE, another agent) | Data flow → process | Hallucinated or attacker-controlled output becomes the next stage's input — XSS-style sinks apply |
+
+**Trust crossings to draw explicitly** (these are where the threats live; mark each with the canonical dashed-border `classDef tb` pattern):
+
+- **End-user → app**: classic untrusted-input boundary. Direct prompt injection.
+- **App → LLM provider**: trust crosses if the provider is third-party. Confidentiality of system prompt and customer data; vendor lock-in for model behavior.
+- **Retrieved document → app → LLM**: this is the **indirect prompt injection** path. The retrieved-document store sits in a trust zone that may include attacker-controlled content (web crawler, multi-tenant uploads, public-internet sources). Walk it as a separate subgraph.
+- **LLM → tool**: the model's output becomes the tool's input. **Each tool is its own trust zone**, and the boundary between the LLM process and each tool is where authorization checks must enforce that the prompt didn't smuggle a privileged action through. For agentic systems, this is the highest-value boundary in the diagram.
+- **Tool output → LLM → user**: completes the loop. Tool output flows back into the model's context window and out to the user; if the tool reads attacker-controlled data, that data is now reaching the user via a trusted-looking channel.
+
+**Worked sketch — minimal LLM chatbot with tools**:
+
+```mermaid
+flowchart LR
+    subgraph User["End-user | public internet | untrusted"]
+        U[User]
+    end
+
+    subgraph App["Vendor | cloud (app account) | medium trust"]
+        Web(Web App / API)
+        SysPrompt[(System Prompt + tool descriptions (AS1))]
+        ChatStore[(Chat History (AS2))]
+        VectorDB[(RAG vector store (AS3))]
+    end
+
+    subgraph LLM["LLM Provider | cloud (provider account) | out-of-scope owner"]
+        Model("Frontier LLM API")
+    end
+
+    subgraph Tools["Vendor | cloud (tool sandboxes) | low trust"]
+        ToolHTTP("HTTP fetch tool")
+        ToolDB("Internal DB tool")
+    end
+
+    U -- "user prompt (HTTPS)" --> Web
+    Web -- "read system prompt" --> SysPrompt
+    Web -- "read recent turns" --> ChatStore
+    Web -- "RAG retrieval (top-k)" --> VectorDB
+    Web -- "prompt = sys + history + retrieved + user (HTTPS)" --> Model
+    Model -- "tool call (function calling)" --> Web
+    Web -- "dispatch (signed)" --> ToolHTTP
+    Web -- "dispatch (parameterized query)" --> ToolDB
+    ToolHTTP -. "untrusted web fetch" .-> Web
+    ToolDB -- "row results" --> Web
+    Web -- "tool result back as model input (HTTPS)" --> Model
+    Model -- "assistant message" --> Web
+    Web -- "render (HTTPS)" --> U
+
+    classDef tb fill:none,stroke:#888,stroke-dasharray: 5 5
+    class User,App,LLM,Tools tb
+```
+
+Threats this diagram makes legible (not exhaustive):
+
+- **Direct prompt injection** at the `U → Web → Model` flow (Spoofing of intent, Elevation via tool call). CWE-1427 maps here.
+- **Indirect prompt injection** at the `VectorDB → Web → Model` flow when retrieved chunks come from attacker-influenced sources.
+- **Tool-call hijack** at the `Model → Web → ToolHTTP / ToolDB` boundary — the highest-leverage authorization check in the system.
+- **System-prompt exfiltration** via `Model → Web → U` (Information Disclosure on `AS1`).
+- **Model extraction / membership inference** at the `User ↔ Model` API surface if the user is allowed many requests.
+- **Tool-result smuggling** at the `ToolHTTP → Web → Model` flow (note the dashed arrow) when tool output is attacker-controlled and is fed back into the model's context window.
+- **Cross-session memory poisoning** at the `Web → ChatStore` writes if the system reuses memory across sessions or users.
+
+For agentic / multi-tool systems, replicate the `Tools` subgraph with one zone per tool when the tools have meaningfully different trust levels (a code interpreter, a billing API, and a public web fetcher each warrant their own zone). Don't collapse them into one box — that hides exactly the boundaries the prompt is trying to cross.
+
 ### Third-party / acquired code — domain notes
 
 For components the team didn't write (acquired products, OEM firmware, third-party SaaS embedded as a dependency, open-source libraries with significant attack surface), internal documentation, architecture diagrams, and source may all be missing. The inside-out workflow in `validation.md` § "Validating threats addressed in third-party / acquired code" is the entry point: enumerate accounts and processes the component runs as, listening ports and IPC endpoints, administrative interfaces (including documented backdoors and account-recovery paths), and platform changes the component makes (OS changes, firewall rules, permissions, auto-updater behavior). The result is enough to construct a software model and run threat enumeration against it.
@@ -247,7 +328,7 @@ Components that ship with their own threat model and operational security guide 
 
 ## How to use this file
 
-After Round 1.5 you know each environment type and owner. Pick the matching section(s), walk the boundary list as a checklist (in DFD, should be, or explicitly out — "A4: no MDM in scope, personal-device deployment only"), label subgraphs with the convention, and fill in the trust-boundary table (`dfd-mermaid.md` § "Trust boundary prose template") with owners on each side. Cross-check the system-type matrix in `methodologies.md` for matching contextual supplements (data-centric / asset-centric / etc.).
+After Round 1.5 you know each environment type and owner. Pick the matching section(s), walk the boundary list as a checklist (in DFD, should be, or explicitly out — "ASM4: no MDM in scope, personal-device deployment only"), label subgraphs with the convention, and fill in the trust-boundary table (`dfd-mermaid.md` § "Trust boundary prose template") with owners on each side. Cross-check the system-type matrix in `methodologies.md` for matching contextual supplements (data-centric / asset-centric / etc.).
 
 If the system is medical / PACS / DICOM / IoMT, also load `medical.md` — domain-specific defaults (patient-as-asset, clinical workflow misuse, DICOM/HL7 STRIDE specifics, FDA / IEC 81001-5-1 framing) live there rather than in this file.
 

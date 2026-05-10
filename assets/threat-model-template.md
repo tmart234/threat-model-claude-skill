@@ -44,9 +44,11 @@
 
 ### Assumptions
 
-1.
-2.
-3.
+> Use the `ASM` prefix to keep these distinct from `AS#` asset IDs (`A1` looks too much like `AS1` on first read and breaks grep). Phrase each one falsifiably — "the load balancer terminates TLS before traffic reaches the app server" is testable; "the network is secure" is not.
+
+- **ASM1**:
+- **ASM2**:
+- **ASM3**:
 
 ### Technology stack and environment
 
@@ -76,7 +78,12 @@ flowchart LR
 
     EE1 -- "<protocol + auth>" --> P1
     P1 -- "<protocol + auth>" --> DS1
+
+    classDef tb fill:none,stroke:#888,stroke-dasharray: 5 5
+    class ZoneA,ZoneB tb
 ```
+
+> The `classDef tb` + `class ... tb` lines above render every trust-boundary subgraph with a dashed border — required for every DFD this skill produces. Don't delete them. See `references/dfd-mermaid.md` § "Rendering trust boundaries as dashed subgraphs".
 
 ### Trust boundaries
 
@@ -141,12 +148,15 @@ flowchart TD
 
 ### 2.2 Operational / Tactical stratum (only if produced)
 
-> Include this stratum when the team will use it (handoff to SOC, detection coverage, IR roadmap). If included, add CAPEC and CWE alongside ATT&CK so derived requirements (`SR-###`) are traceable to a known weakness class. Pick CAPEC abstraction level by SDLC stage (Meta = early architecture, Standard = design review, Detailed = component-level — see `references/capec.md`). Where no Detailed pattern exists for a domain-specific protocol, cite the closest Standard or Meta pattern and **say so explicitly** in the row. Delete this section if the team won't use it.
+> Include this stratum when the team will use it (handoff to SOC, detection coverage, IR roadmap). If included, add CAPEC and CWE alongside ATT&CK so derived requirements (`SR-###`) are traceable to a known weakness class. The CAPEC ID itself is what users care about — **the modeler picks the abstraction level for them** by SDLC stage (Meta = early architecture, Standard = design review, Detailed = component-level — see `references/capec.md`); leave the level off the row unless the choice was forced (no Detailed pattern exists for a domain-specific protocol — e.g. DICOM, HL7, ICS), in which case footnote the row with `(closest pattern; no Detailed available)`. Delete this section if the team won't use it.
 
-| Threat ID | STRIDE | CAPEC (level) | CWE(s) | ATT&CK | Kill chain | CVE / CVSS | Detection / handoff notes |
-|-----------|--------|---------------|--------|--------|------------|------------|---------------------------|
-| T1 (example) | S | CAPEC-151 (Standard) — Identity Spoofing | CWE-287, CWE-290 | T1078 (Valid Accounts) | Exploitation | — | mTLS + cert pinning; SOC: alert on cert mismatch |
-|           |        |               |        |        |            |            |                           |
+| Threat ID | STRIDE | CAPEC | CWE(s) | ATT&CK | Kill chain | CVE / CVSS | Detection / handoff notes |
+|-----------|--------|-------|--------|--------|------------|------------|---------------------------|
+| T1 (example) | S | CAPEC-151 — Identity Spoofing | CWE-287, CWE-290 | T1078 (Valid Accounts) | Exploitation | — | mTLS + cert pinning; SOC: alert on cert mismatch |
+| T2 (example, no Detailed)¹ | T | CAPEC-272 — Protocol Manipulation | CWE-345 | — | — | — | DICOM-specific; closest pattern (Meta) — no Detailed exists for DICOM PDU |
+|           |        |       |        |        |            |            |                           |
+
+¹ Include the "no Detailed available" footnote only when forced — most rows should not need it. See `references/capec.md` § "Honest about CAPEC coverage".
 
 ### 2.3 Strategic stratum (only if it shapes decisions)
 

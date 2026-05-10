@@ -1,5 +1,8 @@
 # Medical-device threat modeling — domain notes
 
+> **Last verified**: 2026-05. FDA premarket cybersecurity guidance, IEC 81001-5-1, IEC 62443, IEC 62304, MDR/IVDR, HIPAA, and the H-ISAC sector reference are all subject to revision; re-confirm against the FDA CDRH guidance index, IEC store, and the EU OJEU before relying on a specific edition. The 2023 FDA *Cybersecurity in Medical Devices* final guidance is the most-recently-updated load-bearing reference here. Re-verify on every model that goes near a regulatory submission.
+> **Sources paraphrased**: US FDA guidance (public domain, US government work); IEC 81001-5-1 / 62443 / 62304 (proprietary IEC standards — paraphrase only, do not quote); HIPAA Security Rule (US government work); DICOM Standard (NEMA, freely available); HL7 v2 / FHIR (HL7 International, freely available); H-ISAC (membership-restricted advisories). No substantive direct quotes from any of these in this file.
+
 > **Related**: ← `SKILL.md` § "Picking supplements" • `methodologies.md` § "Decision matrix" (medical-device row) • `data-centric.md` (worked DICOM example) • `stpa-safesec.md` (safety-critical control loops) • `environments.md` § "Multi-device shared-space modeling" (IoMT room composition) • `capec.md` § "Domain-specific subset" (medical CAPEC working set).
 
 Load this when the system is a medical device, a PACS / RIS / VNA, a DICOM- or HL7-adjacent service, or a clinical environment with multiple co-located devices (Internet of Medical Things — IoMT). The skill defaults stay the same; this file collects the medical-specific defaults, regulators, and gotchas in one place.
