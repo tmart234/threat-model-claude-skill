@@ -4,8 +4,19 @@
 **Date**: <YYYY-MM-DD>
 **Author(s)**:
 **Reviewer(s)**:
-**Status**: Draft / Reviewed / Approved
-**Next review trigger**: <e.g. "next architectural change", "before v2.0 release", "annual">
+**Status**: Draft / Internal / Reviewed / Approved
+
+**Configuration baseline** — bind this TM to a specific system release so verification activities and findings are anchored:
+- **System release / tag**: <e.g. v1.4.2, sprint-23, firmware-2026-05>
+- **Commit / build SHA**: <git SHA, container image digest, or firmware build ID>
+- **SBOM reference**: <SBOM file path / URL / hash if one exists>
+
+**Next review trigger** — pick at least one concrete trigger (a vague "annually" alone is weak; see SKILL.md § "Mitigations and Q4"):
+- [ ] Architecture / design change above threshold (new external integration, new data class, new trust boundary, change of identity provider): <describe>
+- [ ] New dependency above criticality threshold (new SDK, vendor, SaaS): <describe>
+- [ ] Security incident in this system or sector (CVE in load-bearing dependency; sector ISAC advisory matching this system's profile)
+- [ ] Time-elapsed: <12 months for low-stakes; quarterly for safety-critical / regulated>
+- [ ] Regulatory update affecting framing (new FDA guidance, IEC revision, GDPR opinion): <describe>
 
 > Section 2 below sketches three strata as a default layout (Contextual, Operational, Strategic). **Delete subsections you don't need — no stubs required.** The three-stratum layout is convenience scaffolding, not a coverage requirement. The system-type matrix in `references/methodologies.md` § "Decision matrix" suggests which contextual supplements and which strategic references typically fit each system type.
 
@@ -236,7 +247,15 @@ flowchart TD
 
 > **Status** populates the TM-BOM's `controls[].status`: `assumed / active / suggested / under_review / approved / scheduled / retired / wont_do`. Default for new mitigations: `suggested`. Already deployed → `active`.
 > **Priority** populates `controls[].priority`: `none / low / medium / high / critical`. Translate from Risk: Low→low, Medium→medium, High→high, Critical→critical.
-> The skill's response (`Mitigate / Eliminate / Transfer / Accept`) is captured in the TM-BOM via the `extensions["tmskill.threat-modeler/response"]` field on the control; `Accept` rows don't get a control entry in the TM-BOM (record rationale in the threat's `description` instead).
+> The skill's response (`Mitigate / Eliminate / Transfer / Accept`) is captured in the TM-BOM via the top-level `extensions["threat-modeler.tmskill/response-by-control"]`; `Accept` rows don't get a `controls[]` entry — log them in the Accept register below.
+
+### Accept register
+
+> Required for every threat with response = `Accept`. An unjustified Accept is indistinguishable from a missed threat (failure-mode catalog). Populates the top-level TM-BOM extension `extensions["threat-modeler.tmskill/accept-rationale-by-threat"]`.
+
+| Threat | Rationale (why not mitigate / eliminate / transfer) | Decision-maker (name / role) | Decided | Residual risk |
+|---|---|---|---|---|
+| T2 | Mitigation cost exceeds expected loss; re-evaluated next review | A. Smith, Eng Director | 2026-05-10 | Medium — accepted |
 
 ### Risk register (TM-BOM `risks[]`; one row per threat or per cluster of cross-referenced threats)
 
@@ -248,12 +267,14 @@ flowchart TD
 
 ### Derived security requirements
 
-> Cite the CWE the requirement closes — that's what makes the requirement traceable to a known weakness class rather than to a free-text threat sentence. The CAPEC → CWE step in §2.2 supplies the CWE ID where §2.2 is produced.
+> Cite the CWE the requirement closes — that's what makes the requirement traceable to a known weakness class rather than to a free-text threat sentence. The CAPEC → CWE step in §2.2 supplies the CWE ID where §2.2 is produced. **Every SR names a verification activity** — test ID, integration suite, audit step, manual checklist, or runbook drill. An SR with no verification is unverified.
 
 - **SR-001**: The system SHALL <testable requirement>.
   Mitigates: T1, T3, V2 — closes CWE-287, CWE-290.
+  Verification: <test ID / suite / audit / checklist / runbook drill — name the activity and where the result is recorded>.
 - **SR-002**: The system SHALL <testable requirement>.
   Mitigates: V1 — closes CWE-89.
+  Verification: <as above>.
 
 ---
 
