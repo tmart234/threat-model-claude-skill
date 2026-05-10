@@ -112,6 +112,19 @@ Don't pack everything into one diagram. Use a hierarchy:
 
 If your diagram has more than ~15 elements or feels unreadable, you owe the reader a decomposition.
 
+### High-value dataflows that should always pull a Level-2 view
+
+The MITRE Threat Modeling Playbook §2.3.3 names six dataflow categories that consistently warrant their own decomposition — typically a Sequence / Swim Lane diagram (`non-dfd-models.md` § "Sequence / swim-lane diagrams") or a State diagram (`non-dfd-models.md` § "State diagrams"), not a fourth-tier DFD. When any of these are in scope, the system has earned a Level-2 view of that flow regardless of overall element count:
+
+- **Authentication protocols with external servers.** Multi-step token exchanges, mTLS handshakes, SSO redirects, OAuth/OIDC flows, SMART-on-FHIR. Sequence-diagram targets — the threat is in the *order and content of the messages*, not the boxes they pass through.
+- **Programming and configuration commands.** Any flow that changes device behavior in the field — config writes, calibration commands, mode changes, drug-library updates, parameter sets. State diagram if the device has named operational modes; sequence diagram if it's a multi-step programming workflow with pre-conditions.
+- **Obtaining and validating software updates.** OTA firmware, package manifests, signed-payload validation, rollback paths. Sequence diagram — most update-path threats sit between "fetched" and "validated" or between "validated" and "applied". The SKATE-style worked example in the Playbook spends ten pages on just this flow because every transition is a threat surface.
+- **Sharing patient data with external servers.** PHI egress to cloud archives, vendor analytics, secondary-use research stores, HIE / TEFCA hand-offs. Sequence diagram with the data class on each arrow; data-centric supplement (`data-centric.md`) for the data lifecycle view.
+- **Transmitting and silencing of alarms.** Alarm generation, propagation across redundant paths, acknowledgment, escalation, silencing, latch-on / latch-off behavior. State diagram for the alarm state machine, plus a sequence diagram for the silence/escalate flow. Alarms are safety-critical — a missed alarm is a safety event, not just an availability event.
+- **Procedures to restore from backups.** Backup integrity, restore authorization, partial-restore paths, post-restore consistency. Sequence diagram; often the recovery path has weaker authentication than the steady-state path because "we're restoring service, just let it through" — that's the threat.
+
+When any of these flows is in scope, drawing it at Level-2 isn't optional decomposition — it's where most of the actionable threats live. The Level-1 DFD shows the boxes; the Level-2 sequence/state view shows the *order, the timing, and the pre-conditions* that STRIDE-Per-Element on a flat DFD systematically misses. For medical-device models specifically, expect to draw at least three of the six (auth, update path, alarm flow are the typical baseline; programming commands and PHI egress are common; backup restoration is the under-modeled one).
+
 ## Subgraph labeling convention
 
 Every subgraph (= one trust zone) is labeled with three pipe-delimited fields, in this fixed order:

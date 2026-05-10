@@ -25,6 +25,23 @@ These fields go into §1 of the threat-model document above the standard Scope /
 
 This intake also feeds the ISO 14971 / TIR57 mapping in `references/risk-rating.md` § "ISO 14971 / AAMI TIR57 mapping for medical-device submissions" — invasiveness and intended-use directly inform the severity-of-harm scale, and the user-roles list informs the P2 (probability of harm given hazardous situation) calculation by making the in-the-loop clinical roles explicit.
 
+## Four Questions ↔ TIR57 / ISO 14971 joint risk-management workflow
+
+For FDA premarket cybersecurity submissions, IEC 81001-5-1, IEC 62304, and MDR / IVDR, the threat-model artifact has to compose with the device's safety risk file. Reviewers expect cybersecurity activities to map onto the **AAMI TIR57 / ISO 14971 joint risk-management workflow** — the same shape as Figure 16 of the MITRE Threat Modeling Playbook. The Four Question Framework that this skill's threat model is built on (`SKILL.md` § "The Four Question Framework") slots directly onto that workflow. Surface the mapping in §1 prose of any medical-device model so the reviewer can see the joint structure at a glance.
+
+| Skill question | TIR57 / ISO 14971 activity | What lives here |
+|---|---|---|
+| **Q1 — What are we working on?** | **Security risk analysis — asset inventory.** Intended use, device class, period of expected use, invasiveness, core technology, user roles (per `medical.md` § "Medical-device §1 intake template"); the asset table (`AS#`); the DFD with trust zones and ownership; the assumptions register (`ASM#`). | §1 of the threat-model document. |
+| **Q2 — What can go wrong?** | **Security risk analysis — threats and vulnerabilities.** STRIDE-Per-Element on the DFD, plus the supplements (data-centric, LINDDUN, attack trees, STPA when safety is in play); §2.2 operational stratum (CAPEC → CWE → ATT&CK → D3FEND); strategic stratum (FDA / IEC 62443 / IEC 81001-5-1 / H-ISAC). Hazardous-situation language (TIR57's `P1` × `P2` decomposition; `risk-rating.md` § "ISO 14971 / AAMI TIR57 mapping for medical-device submissions") translates each threat into the safety-case framing. | §2.1 / §2.2 / §2.3 of the threat-model document. |
+| **Q3 — What are we going to do about it?** | **Security risk control + Evaluation of overall residual security risk acceptability.** Mitigate / Eliminate / Transfer / Accept response per threat; derived security requirements (`SR-###`); residual-risk register; `severity × P1 × P2` re-rating after mitigations applied. The "evaluation of overall residual acceptability" is the part that names *what was accepted on whose behalf* — silent transference (`manifesto.md` § "Anti-patterns" → "Silent risk transference / silent risk acceptance") fails the reviewer's read here. | §3 of the threat-model document. |
+| **Q4 — Did we do a good enough job?** | **Security risk management report + Production and post-production information.** The Q4 self-assessment (model/reality conformance, every threat has a response, every present section is populated); next-review trigger; the assumptions register and what's still unconfirmed; the changelog binding the model version to the device-software version under change control. Production / post-production feedback (CISA advisories, H-ISAC alerts, vulnerability-disclosure intake, SBOM updates) is what re-triggers Q1 — the loop is what TIR57 calls "production and post-production information" feeding back into risk analysis. | §4 of the threat-model document, plus the next-review trigger that closes the loop. |
+
+The lifecycle context (FDA / JSP Product Security Framework / IEC 81001-5-1 lifecycle activities — design, verification, release, post-market) is the outer loop that pulls the Q1 → Q4 cycle through the device's life. Each premarket submission, each significant design change, and each post-market intelligence event re-enters the cycle at the appropriate question. State this explicitly in §1 of any medical-device threat model:
+
+> *This threat model is the security risk analysis (Q1–Q2) and security risk control (Q3) artifact for the joint TIR57 / ISO 14971 / IEC 81001-5-1 workflow. It composes with the device's ISO 14971 safety risk file via the `severity × P1 × P2` mapping in §3. Production and post-production information (CISA advisories, H-ISAC alerts, internal vulnerability disclosures, SBOM updates) re-triggers this model per the next-review trigger in §4.*
+
+This single paragraph is what tells the reviewer the threat model is *integrated* with the safety risk file rather than bolted on — the most common premarket finding for cybersecurity submissions.
+
 ## Default layer mix for medical / PACS / DICOM
 
 For a medical device or PACS the default hybrid pulls in:
@@ -116,7 +133,7 @@ Cite at the strategic stratum (§2.3) when applicable:
 - **GDPR** (EU PHI / patient data outside the US).
 - **MDR / IVDR** (EU medical devices).
 - **ISO 14971:2019** — application of risk management to medical devices (the safety-risk language regulators expect cybersecurity risk to be expressed in).
-- **AAMI TIR57:2023** — principles for medical-device security risk management; the `P1 × P2` bridge from cybersecurity threat to ISO 14971 hazardous-situation-leading-to-harm. Use the L/M/H ↔ ISO 14971 / TIR57 mapping in `references/risk-rating.md` § "ISO 14971 / AAMI TIR57 mapping for medical-device submissions" to translate skill-side ratings into the regulator-facing safety-case view.
+- **AAMI TIR57:2023** — principles for medical-device security risk management; the `P1 × P2` bridge from cybersecurity threat to ISO 14971 hazardous-situation-leading-to-harm. Use the L/M/H ↔ ISO 14971 / TIR57 mapping in `references/risk-rating.md` § "ISO 14971 / AAMI TIR57 mapping for medical-device submissions" to translate skill-side ratings into the regulator-facing safety-case view. The Four Question ↔ TIR57 joint-workflow mapping (`medical.md` § "Four Questions ↔ TIR57 / ISO 14971 joint risk-management workflow") is the spine of any medical-device threat model — surface it in §1 prose so a reviewer can see the joint structure on the first page.
 - **H-ISAC** — Health-ISAC threat intel; advisories are a useful named-adversary source for sector strategic context.
 - **CISA medical-device advisories** — federal advisories for ICS-CERT-style disclosures of medical-device CVEs.
 

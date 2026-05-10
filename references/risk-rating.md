@@ -1,7 +1,7 @@
 # Risk rating
 
 > **Last verified**: 2026-05. OWASP Risk Rating Methodology, CVSS specification, ISO 14971 (current edition 14971:2019), and AAMI TIR57 (current edition 2023) all update; re-confirm against owasp.org, first.org/cvss, the ISO store, and the AAMI catalog before citing factor lists or version numbers in a regulatory deliverable.
-> **Sources paraphrased**: OWASP Risk Rating Methodology (CC-BY 4.0); CVSS specification (FIRST.org, public); Stellios, Kotzanikolaou & Grigoriadis (Computers & Security 107, 2021) — CVV / pruning math (paraphrase, see methodologies.md for full citation); FMEA conventions (public); Adam Shostack and OWASP critiques of DREAD (paraphrase); ISO 14971:2019 — *Medical devices — Application of risk management to medical devices* (proprietary ISO standard, paraphrase only — severity / probability decomposition referenced, no direct quote); AAMI TIR57:2023 — *Principles for medical device security — Risk management* (proprietary AAMI technical information report, paraphrase only — `P1 × P2` cyber-to-safety bridge referenced, no direct quote); US FDA *Cybersecurity in Medical Devices: Quality System Considerations and Content of Premarket Submissions* (2023, US government work — joint cyber/safety risk-model expectation cited).
+> **Sources paraphrased**: OWASP Risk Rating Methodology (CC-BY 4.0); CVSS specification (FIRST.org, public); MITRE CVSS Rubric for Medical Devices (MITRE, public; mitre.github.io/md-cvss-rubric-tools/); Stellios, Kotzanikolaou & Grigoriadis (Computers & Security 107, 2021) — CVV / pruning math (paraphrase, see methodologies.md for full citation); FMEA conventions (public); Adam Shostack and OWASP critiques of DREAD (paraphrase); ISO 14971:2019 — *Medical devices — Application of risk management to medical devices* (proprietary ISO standard, paraphrase only — severity / probability decomposition referenced, no direct quote); AAMI TIR57:2023 — *Principles for medical device security — Risk management* (proprietary AAMI technical information report, paraphrase only — `P1 × P2` cyber-to-safety bridge referenced, no direct quote); US FDA *Cybersecurity in Medical Devices: Quality System Considerations and Content of Premarket Submissions* (2023, US government work — joint cyber/safety risk-model expectation cited).
 
 > **Related**: ← `SKILL.md` • `methodologies.md` (the L/M/H scale spans all three strata in the hybrid) • `validation.md` (Q4 cross-stratum check: one risk-rating scale across the whole model).
 
@@ -97,6 +97,33 @@ OWASP-RR scores threat agent factors (skill, motive, opportunity, size), vulnera
 Reference: https://owasp.org/www-community/OWASP_Risk_Rating_Methodology
 
 For medical device submissions specifically, FMEA-style scoring (severity × occurrence × detection) is often expected by quality / regulatory teams. If that's the constraint, mirror the FMEA scale rather than inventing a parallel scoring scheme.
+
+## MITRE CVSS Rubric for Medical Devices (medical-device CVSS)
+
+For medical-device threat models that need to assign **CVSS** scores (FDA premarket cybersecurity, post-market vulnerability disclosures, CISA medical-device advisories), use the **MITRE CVSS Rubric for Medical Devices** rather than scoring CVSS metrics with a generic enterprise-IT lens. The rubric is a branching decision tree per CVSS metric — Attack Vector, Attack Complexity, Privileges Required, User Interaction, Scope, Confidentiality / Integrity / Availability impact — that walks the analyst through the clinical-context questions that change the score for a medical device.
+
+The motivating problem: a "Network" Attack Vector reading on a hospital-internal management VLAN means something different from "Network" on the public internet, but generic CVSS scoring tends to score them the same. The rubric forces the analyst to consider the deployment context (clinical VLAN segmentation, physical access controls in the patient area, who's in the room when the attack would have to occur) and produces a more defensible score for FDA / CISA review. The Attack Vector branch is the worked example most users start with; Attack Complexity, Privileges Required, and User Interaction follow the same branching shape.
+
+When to use:
+
+- **FDA premarket cybersecurity submissions** — the rubric is what reviewers actually expect. Scoring CVSS without it makes the submission's threat ratings hard to defend.
+- **Post-market vulnerability disclosure** — CISA medical-device advisories (ICS-CERT–style) typically carry CVSS scores; using the rubric keeps the disclosed score consistent with what reviewers would derive themselves.
+- **Inter-vendor comparability** — when a hospital is comparing devices from multiple vendors, rubric-derived scores compare cleanly; ad-hoc CVSS scoring doesn't.
+
+When *not* to use:
+
+- **Non-medical-device systems** — the rubric is calibrated for the clinical environment; using it on a generic web app misapplies its branches. Use OWASP-RR or the L/M/H matrix above instead.
+- **Minimum-viable threat models** for low-stakes medical-adjacent systems (e.g. an internal hospital tool that isn't itself a regulated device) — the L/M/H matrix is enough.
+
+How to record the score in the threat model:
+
+- Cite the rubric explicitly in §1 prose: *"CVSS scores in §2 / §3 derived per the MITRE CVSS Rubric for Medical Devices (mitre.github.io/md-cvss-rubric-tools/), version <X.Y>, scored <date> by <analyst>."*
+- Carry the full CVSS vector string alongside the numeric score so a reviewer can re-derive it: *"CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H — 8.0 (High)"*.
+- Compose with the safety case: the rubric scores cybersecurity severity, not patient-safety severity. Pair every rubric-scored threat with the `severity × P1 × P2` ISO 14971 / TIR57 mapping above so the regulator-facing safety-case view is also present. The rubric is the *cyber side* of the joint risk model — `severity × P1 × P2` is the *safety side*; both belong in §3 of a medical-device submission.
+
+Calculator and rubric: https://mitre.github.io/md-cvss-rubric-tools/
+
+The medical-device rubric is the tool of choice when CVSS is required for medical devices; OWASP-RR remains the option when CVSS specifically isn't the asked-for output. The skill's L/M/H matrix is the default for any threat model where neither is mandated.
 
 ## CVSS-based attack-path risk (cyber-physical IoT)
 
