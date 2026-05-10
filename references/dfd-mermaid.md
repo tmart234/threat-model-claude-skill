@@ -1,6 +1,6 @@
 # DFD → Mermaid mapping
 
-> **Related**: ← `SKILL.md` • `centric-methods.md` (flow-centric entry point) • `stride-prompts.md` (enumerate threats once the DFD is drawn) • `validation.md` (canonical diagramming checklist)
+> **Related**: ← `SKILL.md` • `environments.md` (per-environment boundary patterns + ownership taxonomy) • `centric-methods.md` (flow-centric entry point) • `stride-prompts.md` (enumerate threats once the DFD is drawn) • `validation.md` (canonical diagramming checklist)
 
 Mermaid renders well in GitHub, GitLab, Markdown editors, and Polarion (with the Mermaid plugin). It's the practical default for a text-first threat modeling workflow.
 
@@ -15,7 +15,7 @@ Mermaid doesn't natively render trust boundaries the way a dedicated threat mode
 | Multi-process | `MP[[Label]]` (subroutine shape) | Use only when decomposition is shown elsewhere |
 | Data store | `DS[(Label)]` (cylinder) | Standard cylinder shape |
 | Data flow | `A -- "label" --> B` | Always label what flows |
-| Trust boundary | `subgraph Zone["Zone name"]` ... `end` | Each subgraph is one trust zone |
+| Trust boundary | `subgraph Zone["<owner> \| <env-type> \| <trust>"]` ... `end` | Each subgraph is one trust zone — see § "Subgraph labeling convention" |
 
 Per-edge styling (optional, for emphasis on highest-risk flows):
 
@@ -27,7 +27,7 @@ linkStyle 0 stroke:#d62728,stroke-width:2px
 
 ```mermaid
 flowchart LR
-    subgraph Hospital["Hospital network — moderate trust"]
+    subgraph Hospital["Hospital IT | on-prem enterprise (clinical VLAN) | moderate trust"]
         Modality(CT Modality)
         Workstation[Clinician Workstation]
         PACS(PACS Server)
@@ -35,22 +35,22 @@ flowchart LR
         AuditDB[(Audit Log)]
     end
 
-    subgraph Internet["Public internet — untrusted"]
+    subgraph Internet["Unowned | public internet | untrusted"]
         Vendor[Vendor Remote Support]
     end
 
-    subgraph Cloud["Cloud archive — separate trust zone"]
+    subgraph Cloud["Vendor | cloud (AWS prod account) | separate trust zone"]
         Archive(Long-term Archive Service)
         ArchiveStore[(Archive Object Store)]
     end
 
-    Modality -- "DICOM C-STORE (PHI)" --> PACS
+    Modality -- "DICOM C-STORE over TCP/11112 (PHI)" --> PACS
     Workstation -- "DICOM Q/R, view requests" --> PACS
     PACS -- "store images" --> ImageDB
     PACS -- "audit events" --> AuditDB
-    PACS -- "tiered archive (TLS)" --> Archive
-    Archive -- "object PUT" --> ArchiveStore
-    Vendor -- "remote support session (VPN)" --> PACS
+    PACS -- "tiered archive (mTLS)" --> Archive
+    Archive -- "object PUT (SigV4)" --> ArchiveStore
+    Vendor -- "remote support session (VPN + MFA)" --> PACS
 ```
 
 Trust boundaries (the implicit "dotted lines"):
@@ -69,9 +69,37 @@ Don't pack everything into one diagram. Use a hierarchy:
 
 If your diagram has more than ~15 elements or feels unreadable, you owe the reader a decomposition.
 
+## Subgraph labeling convention
+
+Every subgraph (= one trust zone) is labeled with three pipe-delimited fields, in this fixed order:
+
+```
+subgraph ID["<owner> | <env-type> | <trust>"]
+```
+
+Where:
+
+- **`<owner>`** — who owns the underlying network, host, account, or device (and therefore who can change configuration / patch / control access). Pick from the ownership taxonomy in `environments.md` § "Ownership taxonomy". When ownership is unclear, write `Unknown` and record an explicit assumption — don't guess silently. When two owners share a zone, write the one with operational control (e.g. `Customer IT (vendor service-account exception — A3)`).
+- **`<env-type>`** — the environment kind, from the fixed taxonomy: `cloud (<provider>)`, `on-prem enterprise (<sub-zone, e.g. AD Tier 0 / corp VLAN / DMZ>)`, `embedded (<sub-zone, e.g. application core / secure element / baseband>)`, `OT/ICS (<Purdue level or named zone>)`, `mobile (<sub-zone, e.g. app sandbox / keystore>)`, or `public internet`. Use the per-environment patterns in `environments.md` for sub-zones; collapsing a whole environment into one box loses most of the boundaries that matter.
+- **`<trust>`** — qualitative trust level: `untrusted`, `low trust`, `medium trust`, `high trust`, `very high trust`, or domain-specific qualifiers like `safety-critical`, `out-of-scope owner`, `unknown`. Use the same scale across every diagram in one model so the prioritized §3 list is consistent.
+
+Examples:
+
+```
+subgraph HospNet["Hospital IT | on-prem enterprise (clinical VLAN) | moderate trust"]
+subgraph DeviceSE["Vendor | embedded (secure element) | very high trust"]
+subgraph SIS["Plant Operator | OT/ICS (Safety Instrumented System) | safety-critical, isolated"]
+subgraph Keystore["OS Vendor (Apple/Google) | mobile (hardware-backed keystore) | very high trust"]
+subgraph CSPCtrl["AWS | cloud provider control plane | out-of-scope owner"]
+```
+
+Why three fields and not one: a subgraph label like `Hospital network — moderate trust` (the older convention) tells the reader the trust level but hides the *owner* and the *environment kind* — both of which drive which mitigations are even possible. The three-field label makes responsibility-for-mitigation legible from the diagram, which is what §3 of the threat model needs to answer.
+
+When a system spans multiple environments (almost always the case), every subgraph gets its own owner / env-type / trust triplet. Don't share labels across environments.
+
 ## Conventions to keep things readable
 
-- **Label every flow.** "DICOM C-STORE (PHI)" not "data". The label is what makes the threat enumeration tractable.
+- **Label every flow.** "DICOM C-STORE over TCP/11112 (PHI)" not "data". Concrete protocols make threats tractable: an attacker can craft DICOM PDUs against an open `11112` listener, but they can't attack a flow labeled "data".
 - **Direction matters.** Use `-->` for one-way and `<-->` only when the flow truly is symmetric request/response with the same content. For RPC-style flows, draw two arrows with their actual content labels.
 - **Group by trust zone, not by physical layout.** Trust zones are what STRIDE-Per-Element care about.
 - **Color sparingly.** Use `style` only to highlight the riskiest crossings or the highest-risk elements. Don't decorate. (Note: ~1 in 12 people have some form of color blindness, so don't rely on color alone — always pair color with text labels.)
@@ -96,7 +124,9 @@ The end-of-diagramming checklist (Shostack-derived) is the canonical version in 
 
 ## Trust boundaries — what to include
 
-Trust boundaries are anywhere principals with different privileges interact. Specific things that should always show as boundaries:
+Trust boundaries are anywhere principals with different privileges interact. The list below is the **floor** — boundaries that apply to every environment. Once you know the environment type (cloud / on-prem enterprise / embedded / OT/ICS / mobile), use `references/environments.md` for the per-environment patterns that catch boundaries this generic list misses (Purdue levels for OT, app sandbox / keystore for mobile, secure-boot / JTAG / secure element for embedded, account / VPC / IAM / KMS for cloud, AD tier model / SSO federation / jump-host for enterprise). Both lists; not just one.
+
+Generic boundaries that should always show up:
 
 - Account / UID / SID boundaries (different OS users)
 - Network interface boundaries (different segments, VLANs, VPCs)
@@ -104,6 +134,7 @@ Trust boundaries are anywhere principals with different privileges interact. Spe
 - VM / container boundaries (especially when the host is shared)
 - Organizational boundaries (your org ↔ vendor ↔ customer)
 - Tenant boundaries in multi-tenant systems
+- Ownership boundaries — wherever the *owner* of the underlying network/host/account changes (vendor → customer, customer → cloud provider, end-user → OS vendor). The shared-responsibility model applies in every environment, not just cloud — see `environments.md` § "Ownership taxonomy".
 - Anywhere you can argue for different privileges
 
 A useful tactic when you can't find boundaries: ask *does everything in this system have the same level of privilege and access to everything else? Is everything the system communicates with inside that same boundary?* If both answers are yes, draw a single trust boundary around everything. If either is no, you've found a missing boundary or a missing element.
@@ -116,15 +147,25 @@ Threats cluster around trust boundaries — but not *only* there. Complex parsin
 
 ## Trust boundary prose template
 
-After the diagram, include a short prose section that names each boundary and what crosses it. Example:
+After the diagram, include a short prose section that names each boundary, what crosses it, **and who owns each side** — ownership tells §3 who can implement the mitigation. Use a table for clarity once you have more than two boundaries.
+
+Example (table form):
+
+| Boundary | Owner (left) | Owner (right) | What crosses | Mediating control |
+|---|---|---|---|---|
+| Hospital ↔ Internet | Hospital IT | Unowned (public internet) | Vendor support sessions only | VPN concentrator + MFA |
+| Hospital ↔ Cloud | Hospital IT | Vendor (AWS prod account) | Tiered archive PUTs (outbound only) | mTLS + cert pinning; no inbound |
+| Imaging VLAN ↔ Clinical VLAN (within Hospital) | Hospital IT (imaging team) | Hospital IT (clinical team) | Modality → PACS only | L3 firewall ACLs; soft boundary |
+
+Or in prose form:
 
 > **Trust boundaries**
 >
-> - **Hospital ↔ Internet**: Only vendor support sessions cross this boundary. Mediated by VPN concentrator and require MFA.
-> - **Hospital ↔ Cloud**: Outbound only, TLS 1.2+, mTLS via mutual cert pinning. No inbound from cloud to PACS.
-> - **Imaging VLAN ↔ Clinical VLAN** (within Hospital): Soft boundary. Modalities can reach PACS but not the audit DB. Enforced at L3 firewall.
+> - **Hospital ↔ Internet** (owners: Hospital IT ↔ unowned). Only vendor support sessions cross this boundary. Mediated by VPN concentrator and require MFA. Mitigation responsibility: Hospital IT.
+> - **Hospital ↔ Cloud** (owners: Hospital IT ↔ Vendor on AWS). Outbound only, TLS 1.2+, mTLS via mutual cert pinning. No inbound from cloud to PACS. Mitigation responsibility split: Vendor for cloud-side controls, Hospital IT for egress firewall.
+> - **Imaging VLAN ↔ Clinical VLAN** (within Hospital, both Hospital IT-owned). Soft boundary. Modalities can reach PACS but not the audit DB. Enforced at L3 firewall.
 
-This section is what a reviewer actually reads when assessing whether the model is right. The diagram alone isn't enough.
+This section is what a reviewer actually reads when assessing whether the model is right. The diagram alone isn't enough. The Owner columns are what make §3 of the threat model assignable — without ownership, "implement mTLS" has no addressee.
 
 ## Anti-patterns to avoid in the diagram
 

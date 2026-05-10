@@ -60,6 +60,9 @@ Drop these into the threat-model document itself with check-marks. The Diagrammi
 - [ ] We can tell that story without using the words "sometimes" or "also" — anywhere those came up, we broke the case into separate flows or added detail.
 - [ ] We can look at the diagram and see exactly where the software will make a security decision.
 - [ ] The diagram shows all trust boundaries: every UID/account boundary, every application role, every network interface, every place different principals interact.
+- [ ] Every subgraph is labeled `<owner> | <env-type> | <trust>` per `dfd-mermaid.md` § "Subgraph labeling convention" — owner is named (or marked Unknown with an assumption), environment type is from the fixed taxonomy, trust level is on the model-wide scale.
+- [ ] The per-environment trust-boundary patterns from `references/environments.md` have been checked for every environment type in scope (cloud / on-prem enterprise / embedded / OT/ICS / mobile) — boundaries that apply but aren't drawn are explicitly justified.
+- [ ] Every data flow is labeled with the actual protocol and authentication (e.g. "DICOM C-STORE over TCP/11112", "HTTPS + mTLS", "Modbus/TCP", "BLE GATT") — generic labels like "data" mean threats will be missed.
 - [ ] The diagram reflects the current or planned reality — not an aspirational version.
 - [ ] We can see where all the data goes and who uses it (no data sinks — every written piece of data has a reader).
 - [ ] We see the processes that move data from one data store to another (data can't move itself).
