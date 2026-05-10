@@ -1,5 +1,9 @@
 # Threat Modeling Manifesto (paraphrased reference)
 
+> **Related**: ← `SKILL.md` (entry point — references the patterns and anti-patterns below) • `methodologies.md` ("Multiple representations" pattern as the basis for hybrid output) • `validation.md` ("Admiration for the problem" anti-pattern is the Q4 motivation).
+
+This file is the **canonical home** for the Manifesto's patterns, anti-patterns, and values as they apply to this skill. SKILL.md cites them; don't duplicate.
+
 The Threat Modeling Manifesto (2020, threatmodelingmanifesto.org, CC-BY 4.0) defines values, principles, patterns, and anti-patterns for the practice. It's methodology-agnostic — it doesn't tell you to use STRIDE — but the values shape how this skill produces output.
 
 ## What threat modeling is (per the Manifesto)
@@ -41,18 +45,24 @@ How this shapes the skill:
 
 ## Patterns (do these)
 
-- **Systematic approach** — be thorough and reproducible by applying knowledge in a structured way.
-- **Informed creativity** — leave room for craft, not just process.
-- **Varied viewpoints** — diverse SMEs and cross-functional collaboration.
+Definitions from the Manifesto, with the skill-output gloss in parentheses:
+
+- **Systematic approach** — be thorough and reproducible by applying knowledge in a structured way. (STRIDE-Per-Element gives the reproducibility.)
+- **Informed creativity** — leave room for craft, not just process. (Once STRIDE is exhausted, brainstorm misuse cases, abuse stories, supply-chain angles.)
+- **Varied viewpoints** — diverse SMEs and cross-functional collaboration. (Call out where domain expertise is needed — e.g. "this is the right place to bring in the firmware team".)
 - **Useful toolkit** — tools that increase productivity and enable repeatability.
-- **Theory into practice** — use field-tested techniques tailored to local context.
+- **Theory into practice** — use field-tested techniques tailored to local context. (Prefer mitigations that map to real engineering work the team does.)
+- **Multiple representations** (added by the Manifesto's pattern catalogue, central to this skill's hybrid output) — multiple imperfect views beat one perfect view; context DFD + decomposed DFDs are fine and good.
 
 ## Anti-patterns (avoid these)
 
-- **Hero threat modeler** — assuming only one person with a special mindset can do this.
-- **Admiration for the problem** — analyzing endlessly without producing solutions.
-- **Tendency to overfocus** — too much attention on one adversary, asset, or technique.
-- **Perfect representation** — refusing to ship until the model is "perfect"; multiple imperfect views beat one perfect view.
+Definitions from the Manifesto, with the skill-output gloss:
+
+- **Hero threat modeler** — assuming only one person with a special mindset can do this. (Use plain language; assume the development team will read this.)
+- **Admiration for the problem** — analyzing endlessly without producing solutions. (Every threat gets a response: Mitigate / Eliminate / Transfer / Accept.)
+- **Tendency to overfocus** — too much attention on one adversary, asset, or technique. (Cover the whole DFD before drilling down.)
+- **Perfect representation** — refusing to ship until the model is "perfect"; multiple imperfect views beat one perfect view. (Ship a useful approximation; iterate.)
+- **Asset rabbit-holing** (skill-specific extension) — long asset lists are usually a distraction. Keep the list to things actually worth protecting; don't pad with abstractions like "company reputation".
 
 ## Authors
 

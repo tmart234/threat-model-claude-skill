@@ -1,5 +1,9 @@
 # Methodologies beyond STRIDE
 
+> **Related**: ← `SKILL.md` • `centric-methods.md` (entry points; canonical home for generation-vs-characterization) • `stride-prompts.md` (STRIDE-Per-Element / Per-Interaction) • `capec.md`, `risk-rating.md`, `validation.md` (operational/strategic-stratum supporting refs).
+
+This file is the **canonical home** for the hybrid-as-default framing (three strata, applicability matrix by system type, single-doc vs linked-doc shapes, pruning rules) and for the categorization-lens choices (LINDDUN, PASTA, attack trees, ATT&CK, kill chains, OCTAVE, VAST, AI/ML). SKILL.md references this; don't duplicate.
+
 This file covers **full-methodology swaps or supplements** — replacing the STRIDE *categorization lens* with something different (LINDDUN, PASTA, etc.) or adding an output characterization layer (ATT&CK, kill chains).
 
 For the related but distinct question of "what's my **entry point** to enumerate threats?" — asset-centric, flow-centric, process-centric, user-needs-centric, code-centric, attacker-centric — see `centric-methods.md`. The two decisions are independent: you can pair flow-centric generation with STRIDE *or* with LINDDUN, and you can pair STRIDE with flow-centric *or* asset-centric entry. Don't conflate them.

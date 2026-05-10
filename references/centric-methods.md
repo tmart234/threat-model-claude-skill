@@ -1,5 +1,9 @@
 # Centric methods — choosing the entry point
 
+> **Related**: ← `SKILL.md` • `methodologies.md` (categorization-lens choices: STRIDE / LINDDUN / PASTA …) • `data-centric.md` (data-centric workflow deep-dive) • `stride-prompts.md` (STRIDE-as-generation prompts).
+
+This file is the **canonical home** for the entry-point taxonomy and the generation-vs-characterization distinction. SKILL.md and `methodologies.md` reference this; don't duplicate.
+
 > All models are wrong; some are useful. Threat modeling methods are abstractions of reality; what differs between them is the entry point.
 
 This file is about the **entry point** to threat generation — the question of "what do I look at first to enumerate threats?" — not about which methodology (STRIDE / LINDDUN / PASTA) you apply once you're enumerating. Those are separate decisions:

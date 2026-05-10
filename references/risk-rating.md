@@ -1,5 +1,7 @@
 # Risk rating
 
+> **Related**: ← `SKILL.md` • `methodologies.md` (the L/M/H scale spans all three strata in the hybrid) • `validation.md` (Q4 cross-stratum check: one risk-rating scale across the whole model).
+
 This skill defaults to **qualitative L/M/H ratings** for likelihood and impact, with risk = function(likelihood, impact). That's enough for most threat models and avoids the false-precision trap of numeric models.
 
 ## Default: 3×3 qualitative matrix

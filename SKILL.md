@@ -1,6 +1,6 @@
 ---
 name: threat-modeler
-description: Produce structured threat models for software, systems, networks, IoT and embedded devices, medical devices, or business processes. Walks Shostack's Four Question Framework (What are we working on / What can go wrong / What are we going to do about it / Did we do a good enough job), produces a Mermaid DFD with trust boundaries, runs STRIDE-Per-Element analysis with prioritized mitigations and derived security requirements, and produces a self-assessment (diagram / threats / validation checklists plus open questions and a re-review trigger). Use this skill whenever the user mentions threat modeling, STRIDE, DFD / data flow diagram, attack surface analysis, abuse / misuse cases, security architecture review, defining trust boundaries for a system, or asks "what can go wrong" / "what are the threats to X". Trigger even without the words "threat model" — "security review of this design", "STRIDE this", "what could an attacker do to X", "how would someone attack X", "what are the attack vectors", or pasting architecture and asking about risks all qualify. Also trigger when the user names a specific methodology (LINDDUN, PASTA, DREAD, attack trees) and wants to apply it to a system, or asks for threat enumeration as part of an FDA premarket cybersecurity submission, IEC 62443 / IEC 81001-5-1 work, or any regulatory threat-model deliverable. Trigger for both greenfield design and brownfield review. Do NOT trigger for penetration testing planning, vulnerability scanning, or incident response.
+description: Produce structured threat models for software, systems, networks, IoT/embedded devices, medical devices, or business processes. Walks Shostack's Four Question Framework, produces a Mermaid DFD with trust boundaries, runs STRIDE-Per-Element with prioritized mitigations and derived security requirements, and a Q4 self-assessment. Trigger on threat modeling, STRIDE, DFD / data flow diagram, attack surface, abuse / misuse cases, security architecture review, trust boundaries, "what can go wrong / what are the threats to X / how would someone attack X", or pasting architecture and asking about risks. Also trigger when the user names a methodology (LINDDUN, PASTA, DREAD, attack trees) or asks for a regulatory threat-model deliverable (FDA premarket cybersecurity, IEC 62443, IEC 81001-5-1). Greenfield and brownfield. Do NOT trigger for penetration testing planning, vulnerability scanning, or incident response.
 ---
 
 # Threat Modeler
@@ -11,32 +11,15 @@ The skill is methodology-opinionated: the default output is a **hybrid threat mo
 
 ## The default output is a hybrid model
 
-Earlier guidance treated single-method models as the default and hybrid as something you reach for when a system was "complex enough." That bar was wrong — it let simple-looking systems ship with single-method models that missed whole categories. The new default: **every threat model this skill produces is hybrid.** What scales with stakes is the *amount of content* per stratum, not the *presence* of all three strata.
+**Every threat model this skill produces is hybrid.** Three strata (Contextual / Operational / Strategic, from Tatam et al. 2021) are always present; what scales with stakes is the *amount of content* per stratum, not the *presence* of all three. The layer catalog populating each stratum, the applicability matrix by system type, and the rules for nesting strata in one document vs. linked documents live in `references/methodologies.md` § "Hybrid as default" — **read that file first**.
 
-The three strata (from Tatam et al., *A review of threat modelling approaches for APT-style attacks*, Heliyon 2021) — and the layers from this skill that populate each — are catalogued in `references/methodologies.md` § "Hybrid as default". Read that file before producing the model; the applicability matrix tells you which layers to add for the system type in front of you.
-
-Minimum viable hybrid (a small low-stakes system): flow-centric DFD + STRIDE table + one short supplementary entry-point pass + ATT&CK technique IDs on the top three threats + one paragraph of sector / regulatory context. Even that is a hybrid. Don't ship less.
+Minimum viable hybrid (a small low-stakes system): flow-centric DFD + STRIDE table + one short supplementary entry-point pass + ATT&CK technique IDs on the top three threats + one paragraph of sector / regulatory context. Don't ship less.
 
 ## Two decisions, not one
 
-People often conflate "what's my entry point to enumerate threats?" with "what categorization scheme do I use?" — they're separate decisions:
+People often conflate "what's my entry point to enumerate threats?" with "what categorization scheme do I use?" — they're separate decisions. The full entry-point × lens taxonomy and the generative-vs-characterization framing live in `references/centric-methods.md`; read it before picking. In a hybrid model these aren't either/or choices — flow-centric is always the contextual core and STRIDE is always the categorization on it, but additional entry points layer in alongside (driven by the system type — see the matrix in `methodologies.md`), and additional lenses (LINDDUN, AI/ML threats) supplement STRIDE where they apply. Picking a *single* entry point is the old default and is wrong; picking a *primary* entry point and layering supplements is the new default.
 
-```
-ENTRY POINT (centric method)        +    LENS (categorization)
-flow-centric                              STRIDE
-asset-centric                             LINDDUN
-data-centric (NIST SP 800-154)            CAPEC
-process-centric                           ATT&CK / kill chain
-user-needs-centric                        CWE / CVSS
-attacker-centric
-code-centric (validation only)
-```
-
-In a hybrid model, these aren't either/or choices — flow-centric is always the contextual core and STRIDE is always the categorization on it, but additional entry points layer in alongside (driven by the system type — see the matrix in `methodologies.md`), and additional lenses (LINDDUN, AI/ML threats) supplement STRIDE where they apply. Picking a *single* entry point is the old default and is wrong; picking a *primary* entry point and layering supplements is the new default. Read `references/centric-methods.md` for what each entry point is and `references/methodologies.md` for which to layer in for the system in front of you.
-
-A note on STRIDE: it can be used both *generatively* (as a per-element prompt — "what could go wrong here across these six axes?") and as a *characterization layer* (post-hoc bucket — "this finding is a Tampering issue"). This skill uses STRIDE generatively. Be explicit about which mode you're in; conflating them is a common source of confusion.
-
-Adam Shostack — who originated STRIDE-Per-Element and the Four Question Framework — puts it bluntly: STRIDE is a tool to *guide* threat finding, not to categorize what's found, and "it makes a lousy taxonomy, anyway." If during enumeration someone asks whether a given finding is "really" Spoofing or Information Disclosure, the answer is **who cares — record it and move on**. The categorization argument is rarely worth the time it costs.
+This skill uses STRIDE *generatively* (as a per-element prompt), not as a post-hoc bucket. Adam Shostack puts it bluntly: STRIDE is a tool to *guide* threat finding, not to categorize what's found, and "it makes a lousy taxonomy, anyway." If during enumeration someone asks whether a given finding is "really" Spoofing or Information Disclosure, the answer is **who cares — record it and move on**.
 
 ## What threat modeling produces
 
@@ -155,11 +138,13 @@ The default shape is a single-document hybrid (all three strata in one file). Fo
    - Recommended next review trigger (next feature, next architectural change, etc.)
 ```
 
-ID conventions (to keep cross-stratum references unambiguous):
+ID conventions (to keep cross-stratum references unambiguous — one prefix per namespace, no collisions):
+- Assets in §1 (the things worth protecting): `AS1`, `AS2`, ...
 - Flow-centric STRIDE threats: `T1`, `T2`, ...
 - Data-centric vectors: `V1`, `V2`, ...
-- Asset-centric findings: `A1`, `A2`, ... (or reuse the asset ID from §1)
-- Mitigations / requirements: `SR-001`, `SR-002`, ...
+- Asset-centric findings: `A1`, `A2`, ...
+- Privacy / LINDDUN / AI-ML findings: `PR1`, `PR2`, ...
+- Mitigations / derived requirements: `SR-001`, `SR-002`, ...
 - ATT&CK / CAPEC / CWE / CVE references: cite the upstream ID directly
 
 ### DFD conventions
@@ -180,21 +165,7 @@ Symbol simplification follows Shostack's DFD3 convention (external entity, proce
 
 The contextual core of the hybrid (§2.1.a in the document structure above) is **STRIDE-Per-Element on the DFD**. The other contextual passes (data-centric, asset-centric, user-needs-centric, process-centric, code-centric — at least one is always added per the system-type matrix) plus the operational stratum (ATT&CK and friends) and the strategic stratum (sector landscape) build out from there. This subsection covers the contextual core; the rest is in `references/methodologies.md` and `references/data-centric.md`.
 
-For each element on the DFD, run through the STRIDE categories that apply to that element type (see table). For each category that applies, write at least one concrete threat ("An attacker on the public internet sends crafted DICOM C-STORE requests to the PACS to overflow the parser" — not "DoS").
-
-| Element        | S | T | R | I | D | E |
-|----------------|---|---|---|---|---|---|
-| External entity| ✓ |   | ✓ |   |   |   |
-| Process        | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Data flow      |   | ✓ |   | ✓ | ✓ |   |
-| Data store     |   | ✓ | ? | ✓ | ✓ |   |
-
-(R on data store applies if it's a logging/audit store.) STRIDE category prompts and per-element example threats live in `references/stride-prompts.md` — read it before enumerating threats.
-
-Two rules from `references/stride-prompts.md` that are load-bearing enough to repeat here:
-
-- **The element is the victim, not the perpetrator.** When modeling tampering against a data store, the data store is what gets tampered with. When modeling spoofing affecting a process, the process is what gets confused. "Spoofing by tampering with the network" is really a spoof of an endpoint — the endpoint is the victim, regardless of where the attack happens technically.
-- **Per-Element is the default; Per-Interaction is the alternative.** STRIDE-Per-Element runs STRIDE on each diagram element. STRIDE-Per-Interaction runs STRIDE on each (origin, destination, interaction) tuple — more thorough, harder to memorize. Use Per-Interaction when the team is already used to thinking in interactions (typical of network/protocol work) or when Per-Element feels too coarse.
+For each DFD element, run through the STRIDE categories that apply to that element type. The applicability table (which categories apply to each of External entity / Process / Data flow / Data store), the category prompts, per-element example threats, the **element-is-the-victim** framing rule, and the **Per-Element vs Per-Interaction** choice all live in `references/stride-prompts.md` — **read it before enumerating threats**. Write at least one concrete threat per applicable cell ("An attacker on the public internet sends crafted DICOM C-STORE requests to the PACS to overflow the parser" — not "DoS").
 
 A reasonable exit criterion: at least one threat per check-marked cell in the applicability table. If you also circle back to consider threats against your *mitigations*, you're doing pretty well.
 
@@ -224,16 +195,7 @@ These come from Shostack's practical guidance and are worth following:
 
 ### Mitigations and responses
 
-Each threat gets exactly one response: **Mitigate**, **Eliminate**, **Transfer**, or **Accept**. For "Mitigate", give a concrete control mapped to the violated property — STRIDE → security property mapping is in the table below (also in `references/stride-prompts.md`):
-
-| STRIDE | Property | Typical mitigations |
-|--------|----------|---------------------|
-| Spoofing | Authentication | Mutual TLS, strong auth, MFA, signed tokens, certificate pinning |
-| Tampering | Integrity | Hashes, MACs, digital signatures, tamper-evident logging, write-once storage |
-| Repudiation | Non-repudiation | Signed audit logs, timestamps, secure logging |
-| Information Disclosure | Confidentiality | Encryption (at-rest + in-transit), access control, key management, secret hygiene |
-| Denial of Service | Availability | Rate limiting, quotas, throttling, timeouts, redundancy, autoscaling |
-| Elevation of Privilege | Authorization | Least privilege, sandboxing, input validation, RBAC/ABAC |
+Each threat gets exactly one response: **Mitigate**, **Eliminate**, **Transfer**, or **Accept**. For "Mitigate", give a concrete control mapped to the violated property — the STRIDE → security property → typical mitigations table lives in `references/stride-prompts.md` § "STRIDE → security property → typical mitigations".
 
 Then derive security requirements from the mitigations. Each requirement should be testable. Format:
 
@@ -254,69 +216,19 @@ Q4 is the most-skipped step in real threat models — the Manifesto's "admiratio
 
 Full guidance — including Shostack's three-checklist approach, pen-testing-as-complement (black-box vs glass-box), model/reality conformance after architectural drift, and how to handle threat models for acquired/third-party code — is in `references/validation.md`. Read it when producing a thorough Q4 section.
 
-The minimum viable Q4 section in the output document includes the three checklists (diagramming / threats / validating-threats) below, an open-questions list, and a re-review trigger.
+The minimum viable Q4 section in the output document includes:
 
-**Diagramming**
-- [ ] Can we tell a story about how the system works without changing the diagram?
-- [ ] Can we tell that story without using "sometimes" or "also"?
-- [ ] Can we look at the diagram and see exactly where the software makes a security decision?
-- [ ] Does it show all trust boundaries (every UID, app role, network interface, principal)?
-- [ ] Does it reflect current/planned reality, not an aspirational version?
-- [ ] Can we see where all data goes and who uses it (no data sinks)?
-- [ ] Do we see the processes that move data between stores (data can't move itself)?
+- **Diagramming checklist** — see `references/validation.md` § "Diagramming checklist".
+- **Threats checklists** — by stratum (contextual / operational / strategic / cross-stratum) — see `references/validation.md` § "Threats checklists (hybrid)".
+- **Validating-threats checklist** — see `references/validation.md` § "Validating-threats checklist".
+- **Open questions / to validate** — anything unresolved, including assumptions that need testing.
+- **Next review trigger** — the event that will require re-modeling (e.g. "before the cloud upload feature ships," "next architecture revamp," "annually," "if the deployment topology changes").
 
-**Threats — contextual stratum**
-- [ ] Have we looked for each STRIDE category?
-- [ ] At each element of the diagram?
-- [ ] At each data flow specifically? (Belt-and-suspenders — flows get overlooked.)
-- [ ] Has at least one supplementary entry-point pass been run (data-centric / asset-centric / user-needs-centric / process-centric — driven by the system-type matrix in `methodologies.md`)?
-- [ ] LINDDUN pass run if PII/PHI is in scope?
-- [ ] AI/ML-specific threats considered if ML components are present?
+The blank template in `assets/threat-model-template.md` carries all three checklists pre-filled — copy from there.
 
-**Threats — operational stratum**
-- [ ] At least the top 3 threats carry the full **STRIDE → CAPEC → CWE → mitigation** chain (CAPEC pattern with explicit abstraction level, the CWE(s) it exploits, and the mitigation class)?
-- [ ] At least the top 3 threats mapped to ATT&CK technique IDs?
-- [ ] Where no Detailed CAPEC pattern exists for a domain-specific protocol (DICOM, HL7, ICS protocols), the closest Standard or Meta pattern is cited *and the row says so explicitly* (per `capec.md` § "Honest about CAPEC coverage")?
-- [ ] Kill-chain / CVSS references added where they aid handoff to SOC / IR / engineering?
+## Manifesto patterns and anti-patterns
 
-**Threats — strategic stratum**
-- [ ] Sector ISAC / threat-intel context noted (or explicitly marked "not applicable")?
-- [ ] Regulatory framing captured (FDA / IEC / HIPAA / GDPR / PCI / EU AI Act — whichever apply)?
-- [ ] Named-adversary context included if the sector has one?
-
-**Cross-stratum**
-- [ ] Threats are *cross-referenced* across strata, not duplicated?
-- [ ] All threats share one ID space and one risk-rating scale, so the §3 prioritized list is single-sorted?
-
-**Validating-threats**
-- [ ] Has every threat been written down or filed as a bug?
-- [ ] Does each threat have a proposed/planned/implemented response?
-- [ ] Is there a test case per threat or per mitigation?
-- [ ] Has the implementation passed the test?
-
-**Open questions / to validate** — list anything unresolved, including assumptions that need testing.
-
-**Next review trigger** — name the event that will require re-modeling: e.g. "before the cloud upload feature ships," "next architecture revamp," "annually," "if the deployment topology changes."
-
-## Anti-patterns to actively avoid
-
-These come from the Threat Modeling Manifesto. The skill should not produce output that exhibits them:
-
-- **Hero threat modeler** — writing the model as if only a security expert could verify it. Use plain language; assume the development team will read this.
-- **Admiration for the problem** — listing threats without responses. Every threat gets a response.
-- **Tendency to overfocus** — going deep on one attacker / one asset / one technique while missing the system view. Cover the whole DFD before drilling down.
-- **Perfect representation** — refusing to ship the model because the DFD isn't perfect. Ship a useful approximation; iterate.
-- **Asset rabbit-holing** — long asset lists are usually a distraction. Include assets but keep the list to things actually worth protecting; don't pad with abstractions like "company reputation".
-
-## Patterns to apply
-
-Also from the Manifesto:
-
-- **Systematic approach** — STRIDE-Per-Element gives reproducibility.
-- **Informed creativity** — once STRIDE is exhausted, brainstorm misuse cases, abuse stories, supply-chain angles.
-- **Varied viewpoints** — call out where domain expertise is needed (e.g. "this is the right place to bring in the firmware team").
-- **Theory into practice** — prefer mitigations that map to real engineering work the team does.
-- **Multiple representations** — context DFD + decomposed DFDs is fine and good.
+The Threat Modeling Manifesto's patterns and anti-patterns shape what this skill should and shouldn't produce. The full list (Systematic approach, Informed creativity, Varied viewpoints, Useful toolkit, Theory into practice, Multiple representations / Hero threat modeler, Admiration for the problem, Tendency to overfocus, Perfect representation, Asset rabbit-holing) and the skill-output gloss on each live in `references/manifesto.md`. Two are easy to slip into and worth keeping in mind throughout: **Admiration for the problem** (every threat must get a response) and **Asset rabbit-holing** (don't pad the asset list).
 
 ## When the contextual core needs supplementing
 
