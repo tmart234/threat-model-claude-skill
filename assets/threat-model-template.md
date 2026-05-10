@@ -50,26 +50,41 @@
 2.
 3.
 
+### Technology stack and environment
+
+> Fill this in before drawing the DFD. See `references/environments.md` for the per-environment trust-boundary patterns this drives, and SKILL.md § "Round 1.5" for what to capture. If any field is unclear, record an assumption above and proceed.
+
+- **Protocols on each flow**: <e.g. DICOM C-STORE over TCP/11112; HL7 v2 over MLLP; HTTPS/REST with OAuth2; Modbus/TCP; MQTT over TLS; BLE GATT>
+- **Runtimes / hosts per process**: <e.g. PACS on RHEL 9 / Java 17; ingestion service on AWS Lambda / Python 3.12; embedded firmware on Cortex-M33 / FreeRTOS>
+- **Identity / secrets**: <e.g. Okta SSO + AWS IAM; AD-integrated; device certificate from internal CA stored in secure element>
+- **Environment types in scope** (from `environments.md` taxonomy): <cloud (AWS) / on-prem enterprise (Hospital IT, AD-integrated) / embedded (medical device on Cortex-M33) / OT/ICS (Purdue L1–L3) / mobile (iOS app) / hybrid>
+- **Ownership per zone**: <list — who owns each environment in the DFD; e.g. "Vendor owns the cloud account; Customer IT owns the on-prem network; End-user owns the mobile device; Apple owns the iOS keystore">
+- **Physical / operational context**: <e.g. device deployed in clinical room with limited physical access; debug ports fused; OTA updates over HTTPS with image signing>
+
 ### Data Flow Diagram
+
+> Subgraph label convention: `subgraph ID["<owner> | <env-type> | <trust>"]` — see `references/dfd-mermaid.md` § "Subgraph labeling convention". The per-environment boundary patterns in `references/environments.md` should drive *which* subgraphs you draw.
 
 ```mermaid
 flowchart LR
-    subgraph ZoneA["Zone A — <trust description>"]
+    subgraph ZoneA["<owner> | <env-type> | <trust>"]
         P1(Process 1)
         DS1[(Data Store 1)]
     end
 
-    subgraph ZoneB["Zone B — <trust description>"]
+    subgraph ZoneB["<owner> | <env-type> | <trust>"]
         EE1[External Entity 1]
     end
 
-    EE1 -- "<flow label>" --> P1
-    P1 -- "<flow label>" --> DS1
+    EE1 -- "<protocol + auth>" --> P1
+    P1 -- "<protocol + auth>" --> DS1
 ```
 
 ### Trust boundaries
 
-- **ZoneA ↔ ZoneB**: <what crosses, what mediates>
+| Boundary | Owner (left) | Owner (right) | What crosses | Mediating control |
+|---|---|---|---|---|
+| ZoneA ↔ ZoneB | | | | |
 
 ### Data of interest (fill in if a data-centric pass is in §2.1)
 
@@ -169,6 +184,10 @@ flowchart TD
 
 **Diagram / setup**
 - [ ] DFD reflects the system as actually built / specified
+- [ ] Technology stack and environment section is filled in (protocols on each flow, runtimes, identity/secrets, environment types, owners, physical/operational context)
+- [ ] Every subgraph carries an owner | env-type | trust label (`references/dfd-mermaid.md` § "Subgraph labeling convention"); ownership is also reflected in the trust-boundary table
+- [ ] Per-environment boundary patterns from `references/environments.md` checked for the in-scope environment types (cloud / on-prem / embedded / OT/ICS / mobile)
+- [ ] Flows are labeled with concrete protocols and authentication ("DICOM C-STORE over TCP/11112" / "HTTPS + mTLS"), not generic terms like "data"
 - [ ] If a data-centric pass is included, "Data of interest" is filled in (data class, security objectives in scope with drop justifications, authorized locations)
 - [ ] Assumptions are listed and falsifiable
 - [ ] Out-of-scope items are explicit
