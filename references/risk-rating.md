@@ -86,6 +86,12 @@ Translated to ISO 14971 / TIR57:
 
 The point: the cybersecurity-risk score (`Likelihood: H, Impact: H, Risk: High`) doesn't tell the regulator whether the device is acceptable — the ISO 14971 view does. **For medical-device submissions, every safety-bumped threat in §3 should carry both ratings**: the skill's L/M/H for the engineering-team triage view, and the `severity × P1 × P2` for the regulator-facing safety-case view. Worked alongside the Risk register in §3, this is the single artifact FDA reviewers thumb through to confirm cybersecurity has been integrated with the ISO 14971 risk file rather than bolted on.
 
+**Table shape for §3.** Emit one row per safety-bumped threat alongside the §3 risk register. When STPA is in play, reference its `H-#` / `L-#` IDs rather than re-deriving hazards (`references/stpa.md`); otherwise name the hazard inline.
+
+| Threat | Hazard (STPA `H-#` or inline) | Severity | P1 | P2 | Barriers reducing P2 | Combined band |
+|---|---|---|---|---|---|---|
+| T7 | H-2 [L-1] — dosing setpoint exceeds prescribed rate | S5 | High | Low | Mechanical flow limit + annunciated dose-rate alarm | Probable/Occasional × S5 — bounded; mitigation still required |
+
 **Cross-references**: `references/medical.md` § "Regulators and threat-intel sources" lists the underlying standards. `references/stpa.md` is the right home when the *control loop itself* is the analysis target — STPA generates losses → hazards → constraints in a form that maps directly into ISO 14971 hazardous situations. The combination of STPA hazards + TIR57 cyber-to-safety mapping is what the joint IEC 62304 / IEC 81001-5-1 artifact actually contains.
 
 ## When to use OWASP Risk Rating Methodology instead
