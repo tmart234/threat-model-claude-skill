@@ -166,7 +166,7 @@ A common confusion: people sometimes treat CAPEC, CWE, ATT&CK, CVSS, and even ST
 - **CAPEC** — design-level attack pattern catalog.
 - **CWE** — code-level weakness taxonomy.
 - **ATT&CK** — post-deployment / detection-layer adversary technique catalog.
-- **CVSS** — vulnerability severity scoring.
+- **CVSS** — vulnerability severity scoring. (Typically a characterization layer, but Stellios et al. (2021) use a CVSS-derived metric — CVV — *generatively*, to prune the search space during cyber-physical attack-path construction; see `methodologies.md` § "Risk-prioritized cyber-physical attack paths".)
 - **Cyber Kill Chain** — adversary lifecycle stages.
 
 You pick a centric method to *generate* threats and then optionally use one of these to *organize, communicate, or score* them. ATT&CK, in particular, is most useful for operational work (detection coverage, threat hunting, IR planning) — it's not the right primary lens for design-time modeling, even though it's sometimes positioned that way.

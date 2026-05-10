@@ -102,8 +102,11 @@ When to use:
 - A specific high-value asset deserves adversarial reasoning, *and* you can name and characterize the adversary.
 - You want to evaluate the cost / skill / detection probability of an attack path.
 - You need to communicate "how would someone actually do this" to non-security stakeholders.
+- **Multi-hop cyber-physical paths** where individual elements look fine under per-element STRIDE but their composition is dangerous (one device's RF surface enables another device's safety failure across a hospital room or plant floor). For the construction technique that makes this tractable, see "Risk-prioritized cyber-physical attack paths (Stellios et al., 2021)" below.
 
 **When to be cautious:** attack trees are most at home in environments with named, capability-assessed adversaries — government / classified work, nation-state-target finance, defense contractors. **For medical device work in particular, attack trees are usually not the right primary tool.** Most realistic threats to medical devices come from commodity attackers, opportunistic ransomware, or insiders — not characterized APTs. A flow-centric STRIDE pass is more productive in that setting. If you do reach for an attack tree on a medical device, reserve it for one or two of the highest-priority threats (e.g. "how could someone forge a firmware signature") where adversarial reasoning genuinely adds value. Don't draw an attack tree per threat — that's a sign the methodology is being applied for its own sake.
+
+The other failure mode — specific to multi-device cyber-physical / IoT / IoMT environments — is **exponential blow-up without risk-based pruning**: the Agadakos et al. (2017) IoT-attack-graph baseline enumerates every reachable path and quickly produces graphs no team can review. The Stellios et al. (2021) fix is to score each hop with a CVSS-derived metric (CVV) and prune below a threshold *before* expanding the next layer — see "Risk-prioritized cyber-physical attack paths" below. If you're building an attack tree for an IoT/IoMT environment, do this from the start; an unpruned graph is not an artifact, it's a wall.
 
 Pair with STRIDE: STRIDE finds the threats, attack trees explore the worst few.
 
@@ -121,6 +124,21 @@ flowchart TD
     C --> C1[Length-extension flaw]
     C --> C2[Algorithm confusion]
 ```
+
+### Risk-prioritized cyber-physical attack paths (Stellios et al., 2021)
+
+A variant of attack-tree construction designed to scale to cyber-physical / IoT / IoMT environments where naive enumeration explodes combinatorially. Stellios, Kotzanikolaou & Grigoriadis (*Assessing IoT-enabled cyber-physical attack paths against critical systems*, Computers & Security 107, 2021) extend the Agadakos et al. (2017) IoT attack-graph baseline by adding risk-based pruning, so the search yields the small set of paths a defender can act on rather than the full graph.
+
+Method:
+
+- **Target-rooted, source-driven construction.** Root the tree at the high-value target (the safety-critical actuator, the patient-attached device) and walk *outwards* across each device's physical interaction surface, enumerating which other devices can influence it. Then walk inwards from each plausible attacker entry point. The candidate paths are the intersection — not the full reachability graph.
+- **CVV-based pruning.** Each hop is scored with a Cyber-physical Vulnerability Vector (CVV) — a CVSS-derived metric extended with physical-interaction parameters — and paths whose product CVV falls below a threshold are dropped *before* the next layer is expanded. This is what stops the exponential blow-up.
+- **P1 / P2 / P3 between-device physical-surface taxonomy.** **P1** = direct physical contact (USB, JTAG, an attached cable, a service-port adapter); **P2** = physical proximity within the same controlled space (BLE/NFC reach, line-of-sight IR, audible-range acoustic injection, near-field EM); **P3** = shared physical medium *without* a proximity requirement (the 2.4 GHz ISM band shared across Wi-Fi / BLE / Zigbee in a hospital room, where a malicious BLE peripheral can DoS a Wi-Fi-attached infusion pump without ever associating with it; or a shared power rail, a shared HVAC duct for acoustic side channels). The taxonomy makes "one device's physical surface is another device's threat" explicit and is what enables the cross-device hops that per-element STRIDE misses.
+- **Adversary → CVSS mapping.** Adversary capability is encoded in the CVV's exploitability sub-vectors (skill, access, authentication required) rather than as a separate persona, so the same tree serves multiple threat actors by re-running the prune with different CVV thresholds — no need for one tree per attacker profile.
+
+When this beats vanilla attack trees for IoMT: when the threat is *composition* — no single device looks dangerous under per-element STRIDE, but a chain of P2/P3 hops between commodity peripherals reaches a safety-critical target. Also when the team needs a defensible reason for *not* analyzing 95% of the graph (the CVV-pruned subset is the auditable artifact). For the risk-rating side of CVV — when CVSS-based path scoring beats per-element OWASP-RR — see `risk-rating.md` § "CVSS-based attack-path risk (cyber-physical IoT)".
+
+Pair with: STPA-SafeSec (which gives the safety-critical targets to root the tree at, plus non-adversarial hazard scenarios that surface targets a pure security pass would miss) and flow-centric STRIDE (which surfaces the per-device surfaces the P-hops connect).
 
 ## STPA-SafeSec — safety + security for control-loop systems
 
