@@ -25,6 +25,15 @@
 **Out of scope**:
 -
 
+### Scope classification (required for the OWASP TML JSON sidecar; useful for prioritization either way)
+
+> See `SKILL.md` § "Round 1 — Scope and system understanding". Pick one value per field; these populate the schema's required `scope` enums.
+
+- **Business criticality** (`minimal / low / moderate / high / maximal`):
+- **Data sensitivity** (multi-select from `pii / phi / fin / ip / cred / biz / gov / pci / op`):
+- **Exposure** (`internal / external`):
+- **Tier** (`mission_critical / business_critical / important / non_critical`):
+
 ### Assets
 
 > Use `AS` prefix for assets to keep them distinct from supplementary-pass findings (`V`-prefixed) in §2.1.
@@ -85,11 +94,54 @@ flowchart LR
 
 > The `classDef tb` + `class ... tb` lines above render every trust-boundary subgraph with a dashed border — required for every DFD this skill produces. Don't delete them. See `references/dfd-mermaid.md` § "Rendering trust boundaries as dashed subgraphs".
 
+### DFD element catalog (required for the JSON sidecar; useful as a reading aid either way)
+
+> One row per DFD element. The "Symbolic name" column is the lowercase-hyphenated id used in the JSON sidecar (e.g. DFD `P1` → `p-1`; subgraph `Hospital` → `hospital`). See `SKILL.md` § "Symbolic-name derivation".
+
+**Actors (external entities)** — populates sidecar `actors[]`:
+
+| Symbolic name | Title | Type | Trust zone | Description |
+|---|---|---|---|---|
+| user-1 | End-user | user | untrusted-internet | |
+
+> `type` enum: `system / user / power_user / administrator / engineer / third_party`.
+
+**Components (processes)** — populates sidecar `components[]`:
+
+| Symbolic name | Title | Trust zone | Description |
+|---|---|---|---|
+| p-1 | <process name> | <zone symbolic name> | |
+
+**Data stores** — populates sidecar `data_stores[]`:
+
+| Symbolic name | Title | Type | Trust zone | Vendor | Product | Description |
+|---|---|---|---|---|---|---|
+| ds-1 | <store name> | sql | <zone symbolic name> | | | |
+
+> `type` enum: `sql / key_value / document / object / graph / time_series`. Pick the closest fit; if it's a queue or stream, use `time_series` or `key_value` depending on access pattern, and note the actual technology in `product`.
+
+**Data flows** — populates sidecar `data_flows[]`:
+
+| Symbolic name | Title | Source (type, object) | Destination (type, object) | Has sensitive data | Encrypted | Description |
+|---|---|---|---|---|---|---|
+| flow-1 | <flow label> | (actor, user-1) | (component, p-1) | true | true | <protocol + auth from the Mermaid label> |
+
+> `Has sensitive data` is `true` if the flow carries data classified under `pii / phi / fin / cred / pci`. `Encrypted` is `true` if the flow uses TLS / mTLS / signed transport — `false` for cleartext (and a finding).
+
 ### Trust boundaries
 
-| Boundary | Owner (left) | Owner (right) | What crosses | Mediating control |
-|---|---|---|---|---|
-| ZoneA ↔ ZoneB | | | | |
+| Boundary | Owner (left) | Owner (right) | What crosses | Mediating control | Access control | Authentication |
+|---|---|---|---|---|---|---|
+| ZoneA ↔ ZoneB | | | | | <none / acl / rbac / mac / dac / abac> | <none / password / otp / challenge_response / public_key / token / biometrics / sso / social> |
+
+### Threat personas (required for the JSON sidecar; a brief one-liner per persona is enough)
+
+> See `SKILL.md` § "Round 2 — Context that shapes threats". At least one persona must be defined so threats can reference them. Common starter set: `external-anonymous`, `internal-user`. Add more if the system faces distinct adversaries.
+
+| symbolic_name | Title | is_person | skill_level | access_level | malicious_intent | applicability_to_org | One-line description |
+|---|---|---|---|---|---|---|---|
+| external-anonymous | External attacker | true | script_kid | anonymous | true | moderate | Untargeted commodity attacker on the public internet |
+| internal-user | Authenticated user | true | insider | user | false | moderate | Legitimate user; threat surface is mistakes and curiosity, not malice |
 
 ### Data of interest (only if §2.1 includes a data-centric pass)
 
@@ -112,10 +164,14 @@ flowchart LR
 
 #### 2.1.a Flow-centric STRIDE-Per-Element
 
-| ID | Element | STRIDE | Threat | Likelihood | Impact | Risk |
-|----|---------|--------|--------|------------|--------|------|
-| T1 |         |        |        |            |        |      |
-| T2 |         |        |        |            |        |      |
+| ID | Element | STRIDE | Threat | Persona | Event | Source | Likelihood | Impact | Risk |
+|----|---------|--------|--------|---------|-------|--------|------------|--------|------|
+| T1 |         |        |        |         |       |        |            |        |      |
+| T2 |         |        |        |         |       |        |            |        |      |
+
+> **Persona**: symbolic_name from the Threat personas table above (e.g. `external-anonymous`).
+> **Event**: short verb-phrase summary (e.g. *"session takeover"*, *"PHI exfiltration"*).
+> **Source**: one or more of `adversary / human_error / failure / events_beyond_org_control`.
 
 #### 2.1.b Supplementary entry-point pass (add when warranted)
 
@@ -123,10 +179,10 @@ flowchart LR
 
 **Pass type**: <data-centric / asset-centric / user-needs-centric / process-centric / code-centric>
 
-| ID | Location / Asset / Need / Process | Category | Threat / Vector | Likelihood | Impact | Risk |
-|----|-----------------------------------|----------|-----------------|------------|--------|------|
-| V1 |                                   |          |                 |            |        |      |
-| V2 |                                   |          |                 |            |        |      |
+| ID | Location / Asset / Need / Process | Category | Threat / Vector | Persona | Event | Source | Likelihood | Impact | Risk |
+|----|-----------------------------------|----------|-----------------|---------|-------|--------|------------|--------|------|
+| V1 |                                   |          |                 |         |       |        |            |        |      |
+| V2 |                                   |          |                 |         |       |        |            |        |      |
 
 > Cross-reference to flow-centric IDs where the same finding surfaced there: `V3 ↔ T7` (don't duplicate; cross-reference).
 
@@ -134,9 +190,9 @@ flowchart LR
 
 > Add LINDDUN if PII/PHI is in scope (Linking / Identifying / Non-repudiation / Detecting / Data disclosure / Unawareness / Non-compliance). Add an AI/ML threat list if ML components are present (prompt injection, model extraction, training-data poisoning, adversarial examples — see OWASP LLM Top 10 / OWASP ML Security Top 10). Delete this subsection if neither applies. Use `PR` prefix to keep these IDs distinct from DFD process labels (`P1`, `P2` …).
 
-| ID | Element / Data | Category | Threat | Likelihood | Impact | Risk |
-|----|----------------|----------|--------|------------|--------|------|
-| PR1 |               |          |        |            |        |      |
+| ID | Element / Data | Category | Threat | Persona | Event | Source | Likelihood | Impact | Risk |
+|----|----------------|----------|--------|---------|-------|--------|------------|--------|------|
+| PR1 |               |          |        |         |       |        |            |        |      |
 
 #### 2.1.d Threat tree(s) for top 1–2 highest-value threats (optional)
 
@@ -173,10 +229,22 @@ flowchart TD
 
 ### Mitigation table — single prioritized list across present strata
 
-| Threat ID(s) | Cross-refs (CAPEC / CWE / ATT&CK / sector) | Risk | Response | Control / mitigation | Owner |
-|--------------|-------------------------------------------|------|----------|----------------------|-------|
-| T1           | CAPEC-151, CWE-287, ATT&CK T1078 | High | Mitigate |                      |       |
-| T2           |                                  | Medium | Accept | (rationale)          |       |
+| Threat ID(s) | Cross-refs (CAPEC / CWE / ATT&CK / sector) | Risk | Response | Control / mitigation | Status | Priority | Owner |
+|--------------|-------------------------------------------|------|----------|----------------------|--------|----------|-------|
+| T1           | CAPEC-151, CWE-287, ATT&CK T1078 | High | Mitigate |                      | suggested | high     |       |
+| T2           |                                  | Medium | Accept | (rationale — no control row in JSON sidecar) | — | — |       |
+
+> **Status** populates the JSON sidecar's `controls[].status`: `assumed / active / suggested / under_review / approved / scheduled / retired / wont_do`. Default for new mitigations: `suggested`. Already deployed → `active`.
+> **Priority** populates `controls[].priority`: `none / low / medium / high / critical`. Translate from Risk: Low→low, Medium→medium, High→high, Critical→critical.
+> The skill's response (`Mitigate / Eliminate / Transfer / Accept`) is captured in the JSON sidecar via the `extensions["tmskill.threat-modeler/response"]` field on the control; `Accept` rows don't get a control entry in the sidecar (record rationale in the threat's `description` instead).
+
+### Risk register (sidecar `risks[]`; one row per threat or per cluster of cross-referenced threats)
+
+> Populates the JSON sidecar's required `risks[]` array. `score` = likelihood-index × impact-index where `rare/unlikely/possible/likely/certain = 1..5` and `negligible/minor/moderate/major/severe = 1..5` — see `references/risk-rating.md` § "L/M/H ↔ TM-BOM enums". `level` derived from §3 Risk: `Low → low`, `Medium → medium`, `High → high` (or `very_high` if both axes top out), `Critical → critical`.
+
+| symbolic_name | Threats | Likelihood | Impact | Score | Level | Impact description |
+|---|---|---|---|---|---|---|
+| risk-1 | t-1 | possible | major | 12 | high |  |
 
 ### Derived security requirements
 

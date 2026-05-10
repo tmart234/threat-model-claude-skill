@@ -73,6 +73,81 @@ A second candidate path that scores `0.65 × 0.30 × 0.20 ≈ 0.039` falls below
 
 The per-element OWASP-RR table still lists the individual flaws; the path-risk table lists the composed attack chains and is what gets triaged. Construction technique: `methodologies.md` § "Risk-prioritized cyber-physical attack paths".
 
+## L/M/H ↔ TM-BOM enums
+
+The OWASP Threat Model Library schema (used as this skill's JSON sidecar — see `SKILL.md` § "Machine-readable sidecar (TM-BOM via OWASP TML)") uses 5-level enums for `risks[].likelihood` and `risks[].impact`, a 6-level enum for `risks[].level`, and an integer 0–25 `risks[].score`. The skill's L/M/H markdown values must translate to these schema enums when emitting the sidecar. Use this table — it's the canonical mapping; don't improvise.
+
+### Likelihood (markdown L/M/H → schema enum)
+
+| Markdown | Schema `likelihood` | When to pick |
+|---|---|---|
+| L | `unlikely` | Default for L; needs unusual conditions / specific access |
+| L (very low) | `rare` | Only when the prerequisites are extreme (physical access to a secured facility, nation-state-only capability) |
+| M | `possible` | Default for M; achievable by a moderately skilled attacker |
+| H | `likely` | Default for H; commodity attack, internet-facing surface, no auth or weak auth |
+| H (near-certain) | `certain` | Reserve for "this is happening today" — observed in production logs, public PoC against this version |
+
+### Impact (markdown L/M/H → schema enum)
+
+| Markdown | Schema `impact` | When to pick |
+|---|---|---|
+| L | `minor` | Default for L; nuisance, recoverable without external coordination |
+| L (very low) | `negligible` | Only for losses with no business / regulatory / safety consequence |
+| M | `moderate` | Default for M; one-team-day to recover, no regulatory notification |
+| H | `major` | Default for H; PHI/PII breach, multi-team-day recovery, regulator notification |
+| H (catastrophic) | `severe` | Reserve for safety-critical outcomes (patient harm, operator injury), unrecoverable data loss, or business-existential reputational hits |
+
+The "very low" and "near-certain" / "catastrophic" sub-buckets are how the 3-level skill scale projects onto the schema's 5-level scale. Most threats land squarely in the default mapping; reserve the edge enums for genuine outliers and document the choice in §1 prose.
+
+### Risk level (matrix output → schema `level`)
+
+| Matrix output | Schema `level` |
+|---|---|
+| Low | `low` (or `very_low` if both likelihood and impact are at the bottom of the 5-level scale) |
+| Medium | `medium` |
+| High | `high` (or `very_high` if both likelihood and impact land in the top two enum buckets, e.g. `likely + major`) |
+| Critical (per the §1 promotion rule) | `critical` |
+
+### Risk score (integer 0–25)
+
+The schema's `score` is `likelihood_index × impact_index` where each index is 1..5 in the order shown above (`rare=1, unlikely=2, possible=3, likely=4, certain=5`; `negligible=1, minor=2, moderate=3, major=4, severe=5`). Compute and emit:
+
+| Likelihood × Impact | Score |
+|---|---|
+| `unlikely × moderate` | 2 × 3 = 6 |
+| `possible × major` | 3 × 4 = 12 |
+| `likely × major` | 4 × 4 = 16 |
+| `likely × severe` | 4 × 5 = 20 |
+| `certain × severe` | 5 × 5 = 25 |
+
+The score is a derived field — recompute it from likelihood/impact rather than asking the user. Validate it against `level` (e.g. `score ≥ 16` should typically have `level: high` or higher).
+
+### Worked translation
+
+A flow-centric threat rated `Likelihood: M`, `Impact: H` in the markdown table → matrix output `High` → JSON sidecar:
+
+```json
+{
+  "symbolic_name": "t-1",
+  "likelihood": "possible",
+  "impact": "major",
+  "score": 12,
+  "level": "high"
+}
+```
+
+A safety-bumped control-loop threat rated `Likelihood: M`, `Impact: H` (catastrophic — patient harm) → matrix output `High` (or `Critical` if the §1 promotion rule applies) → JSON sidecar:
+
+```json
+{
+  "symbolic_name": "t-7",
+  "likelihood": "possible",
+  "impact": "severe",
+  "score": 15,
+  "level": "very_high"
+}
+```
+
 ## Why DREAD is discouraged
 
 DREAD (Damage, Reproducibility, Exploitability, Affected users, Discoverability) was a common scoring model. Both OWASP and Shostack note that DREAD scores tend to be wildly inconsistent between raters — the per-factor definitions are too subjective, and averaging subjective numbers doesn't make them objective. The qualitative L/M/H matrix above is at least honest about being qualitative.

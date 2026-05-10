@@ -48,11 +48,17 @@ Cluster questions; don't fire one at a time. Two or three turns of clustered que
 
 **Round 1 — Scope and system understanding (Q1).**
 - One-paragraph system description.
-- External entities (users, other systems, third parties).
+- External entities (users, other systems, third parties). Capture for each: actor type from this fixed enum — `system / user / power_user / administrator / engineer / third_party` (used directly in the OWASP TML JSON sidecar; if you're unsure, default to `user` for end-users, `engineer` for internal devs, `third_party` for vendor integrations).
 - Major processes (services / applications / components that *do* something).
-- Data stores (databases, files, queues, caches, configuration).
+- Data stores (databases, files, queues, caches, configuration). For each, capture the storage type from this fixed enum — `sql / key_value / document / object / graph / time_series` (used directly in the JSON sidecar).
 - Where trust boundaries sit (network, process, privilege, tenant, physical).
-- Sensitive data flowing through it (PII, PHI, credentials, financial, IP, safety-critical control signals). If one or two data classes dominate the threat picture, name them — they seed the data-centric supplement (`references/data-centric.md`).
+- Sensitive data flowing through it. Tag each class against the JSON-sidecar `data_sensitivity` enum: `pii / phi / fin / ip / cred / biz / gov / pci / op` (multiple allowed). If one or two data classes dominate the threat picture, name them — they seed the data-centric supplement (`references/data-centric.md`).
+- **Scope classification (required for sidecar emission, useful for prioritization in any case).** Pick one value per field:
+  - `business_criticality`: `minimal / low / moderate / high / maximal` — how much the business depends on this system.
+  - `exposure`: `internal / external` — reachable from the public internet, or only from inside an org boundary.
+  - `tier`: `mission_critical / business_critical / important / non_critical` — operational impact tier.
+
+  These four (the three above plus `data_sensitivity`) are the OWASP TML schema's required `scope` fields. If the user doesn't volunteer them, infer plausible defaults from the system description and record as numbered assumptions (`ASM#`).
 
 **Round 1.5 — Technology, environment, and ownership (Q1, before the DFD).** This round is what turns a generic DFD into one that reflects this system in its environment. Skipping it is how trust boundaries get missed.
 
@@ -63,7 +69,15 @@ Cluster questions; don't fire one at a time. Two or three turns of clustered que
 - **Multi-device shared physical space.** When several devices share one physical space (smart building zone, plant-floor cabinet, vehicle cabin, robotics cell, clinical room), one device's RF / acoustic / power surface can reach another. If this applies, plan a multi-device cyber-physical attack-path pass — see `references/environments.md` and `references/methodologies.md` § "Risk-prioritized cyber-physical attack paths".
 
 **Round 2 — Context that shapes threats.**
-- Who would attack this and why? (External attacker, malicious insider, supply chain, nation-state.) Even a one-line answer seeds ATT&CK mapping — don't dwell.
+- Who would attack this and why? Capture **at least one threat persona** (multiple if the system faces distinct adversaries — a malicious insider and an external attacker are different personas). Each persona needs:
+  - A short title (e.g. *External attacker*, *Malicious insider*, *Curious user*, *Nation-state*).
+  - `is_person` (boolean — `false` for automated bots, supply-chain compromise, etc.).
+  - `skill_level` from this enum: `script_kid / insider / engineer / expert_engineer / oc_sponsored / state_sponsored`.
+  - `access_level` from: `anonymous / user / admin`.
+  - `malicious_intent` (boolean — `false` for accidental-misuse personas; threats from `human_error` sources still need a non-malicious persona).
+  - `applicability_to_org`: `minimal / low / moderate / high / maximal` — how relevant this persona is to *this* organization in particular.
+
+  Even a one-line answer seeds ATT&CK mapping — don't dwell, but don't skip either; the sidecar's `threats[].threat_persona` field is required and references back to one of these. Default starter set when the user gives nothing: `external-anonymous` (anonymous + script_kid + malicious + moderate applicability) and `internal-user` (user + insider + non-malicious + moderate applicability).
 - Safety implications? Drives the safety-bump rule from `references/risk-rating.md`.
 - Regulatory constraints?
 - What sector? Determines which sector ISAC and regulator framing apply (full lists in `references/methodologies.md`).
@@ -158,9 +172,14 @@ For each DFD element, walk the STRIDE categories that apply. Write at least one 
 
 Threat table format:
 
-| ID | Element | STRIDE | Threat | Likelihood | Impact | Risk |
-|----|---------|--------|--------|------------|--------|------|
-| T1 | Auth Service (P1) | S | Attacker reuses captured session token across boundary | M | H | High |
+| ID | Element | STRIDE | Threat | Persona | Event | Source | Likelihood | Impact | Risk |
+|----|---------|--------|--------|---------|-------|--------|------------|--------|------|
+| T1 | Auth Service (P1) | S | Attacker reuses captured session token across boundary | external-anonymous | session takeover | adversary | M | H | High |
+
+Per-row additions (required for the JSON sidecar; useful narrative even without it):
+- **Persona** — symbolic name of one of the personas captured in Round 2 (the OWASP TML schema's `threats[].threat_persona` field).
+- **Event** — short verb-phrase summary (≤6 words) of *what happens* in the threat scenario; populates the schema's `threats[].event` field. Example: *"session takeover"*, *"PHI exfiltration"*, *"unauthenticated firmware flash"*.
+- **Source** — one or more values from this fixed enum: `adversary / human_error / failure / events_beyond_org_control` (the schema's `threats[].sources` field). Most threats are `adversary`; STPA-SafeSec non-adversarial scenarios are `human_error` or `failure`.
 
 Use qualitative L/M/H by default. For safety-critical systems, see `references/risk-rating.md` for the safety-bump rule before assigning ratings. Avoid DREAD. If quantitative scoring is required, use OWASP Risk Rating Methodology (see `references/risk-rating.md`).
 
@@ -229,35 +248,125 @@ Read on demand:
 
 Blank template: `assets/threat-model-template.md`.
 
-## Machine-readable sidecar (for tracker import)
+## Machine-readable sidecar (TM-BOM via OWASP TML)
 
-The default output is a markdown document. When the user is going to import findings into Polarion, Jira, GitHub Issues, ServiceNow, or any other tracker — or when they ask for a structured artifact for tooling — also emit a JSON sidecar alongside the markdown. **Use the OWASP Threat Model Library schema** (`threat-model.schema.json` from https://github.com/OWASP/www-project-threat-model-library, MIT-licensed; aligns with the pending CycloneDX TM-BOM specification). Don't invent a YAML schema — the upstream JSON schema is the contract downstream tools already implement against.
+The default output is a markdown document. When the user wants to import findings into a tracker (Polarion, Jira, GitHub Issues, ServiceNow), feed downstream tooling, or contribute the model upstream, also emit a **JSON sidecar that validates against the OWASP Threat Model Library schema** (`threat-model.schema.json` v1.0.2 from https://github.com/OWASP/www-project-threat-model-library, MIT-licensed; aligns with the pending CycloneDX TM-BOM specification). The schema is the contract downstream tools already implement against; don't invent your own.
 
-When the user asks for tracker import, asks "can I export this to Jira/GitHub/Polarion", or names a downstream tool, emit the sidecar by default. Otherwise mention it once and offer it. Validate the JSON output against the upstream schema before handing it over (e.g. `check-jsonschema --schemafile threat-model.schema.json <output>.json`).
+The markdown is the canonical artifact for humans; the JSON sidecar is the derived view. Don't emit only the JSON. **Always validate** the sidecar before handing it over: `check-jsonschema --schemafile threat-model.schema.json <output>.json`.
 
-The markdown remains the canonical artifact; the JSON sidecar is the derived view. Don't produce only the JSON.
+### Symbolic-name derivation (every TM-BOM ID must match `^[0-9a-z-]+$`)
 
-**Mapping from this skill's IDs to OWASP TML schema fields** (the schema's symbolic-name fields take this skill's IDs verbatim — `AS1`, `T1`, `V1`, `PR1`, `SR-001`, `TB1` — so cross-references stay readable):
+The schema requires every `symbolic_name` to be lowercase alphanumeric plus hyphens. The skill's markdown IDs (`AS1`, `T1`, `V1`, `PR1`, `SR-001`, `TB1`, `ASM1`) are uppercase for human readability — derive the schema-valid symbolic name by lowercasing and inserting a hyphen between the letter prefix and any digits *only when no hyphen is already present*:
 
-| This skill | OWASP TML field |
+| Markdown ID | Sidecar `symbolic_name` |
 |---|---|
-| §1 system description, scope, business criticality | `scope` |
-| §1 assumptions (`ASM#`) | `assumptions` |
-| §1 actors / external entities | `actors` |
-| §1 processes + data stores (DFD nodes) | `components`, `data_stores` |
-| §1 data classes (data-centric pass) | `data_sets` |
-| §1 trust zones (DFD subgraphs) | `trust_zones` |
-| §1 trust boundaries table | `trust_boundaries` |
-| §1 DFD (Mermaid) | `diagrams` (Mermaid source inline) |
-| §2 threats (`T#` / `V#` / `PR#`) | `threats` (CWE / CAPEC IDs in their own fields per the schema) |
-| §2.2 STRIDE category, ATT&CK, kill chain | `threats[].extensions` (vendor-namespaced — see schema's `extensions` rules; recommended namespace `tmskill.threat-modeler/`) |
-| §3 controls / mitigations | `controls` |
-| §3 derived requirements (`SR-###`) | `controls` (with `requirement` extension) or `risks` cross-ref |
-| §1 / §2 risk ratings (L/M/H, optional Critical) | `risks` |
+| `AS1` | `as-1` |
+| `T1` | `t-1` |
+| `V1` | `v-1` |
+| `PR1` | `pr-1` |
+| `SR-001` | `sr-001` (already hyphenated; just lowercase) |
+| `TB1` | `tb-1` |
+| `ASM1` | `asm-1` |
 
-Where the upstream schema doesn't carry a field this skill produces (STRIDE category labels, the Stratum tag, the Stellios path-product score), use `extensions` with reverse-domain naming (e.g. `tmskill.threat-modeler/stride`, `tmskill.threat-modeler/stratum`, `tmskill.threat-modeler/path-score`) — never invent top-level fields.
+Trust-zone subgraph IDs from the DFD (e.g. `Hospital`, `Cloud`, `Internet`, `ProdAcct`) become trust_zone symbolic_names by lowercasing and replacing camelCase or spaces with hyphens (`hospital`, `cloud`, `internet`, `prod-acct`). Cross-references in the JSON (`threats[].threat_persona`, `controls[].threats`, `risks[].threats`, `data_sets[].placements[].data_store`, `trust_boundaries[].trust_zone_a/b`, `data_flows[].source/destination.object`) use the derived symbolic names — keep them consistent across the file.
 
-Worked example threat models in the OWASP TML JSON shape live in https://github.com/OWASP/www-project-threat-model-library/tree/main/threat-models, organized by system type: `ai-ml-systems/`, `web-applications/`, `infrastructure/`, `third-party-integrations/`. Reference one of those when producing a structured sidecar so the output matches what downstream consumers expect.
+### Field-by-field mapping
+
+| OWASP TML field (required unless noted) | Source in this skill | Notes / enum values |
+|---|---|---|
+| `version` (top-level) | Set to `"1.0.0"` for the first emission, bump per the skill's changelog | Must match `^\d+(\.\d+)*$` |
+| `scope.title` | §1 system name | |
+| `scope.description` | §1 system description (1–2 paragraphs) | |
+| `scope.business_criticality` | Round 1 elicitation | enum: `minimal / low / moderate / high / maximal` |
+| `scope.data_sensitivity` | Round 1 elicitation (data classes) | array enum: `pii / phi / fin / ip / cred / biz / gov / pci / op` |
+| `scope.exposure` | Round 1 elicitation | enum: `internal / external` |
+| `scope.tier` | Round 1 elicitation | enum: `mission_critical / business_critical / important / non_critical` |
+| `description` (top-level, optional) | Free-form supplemental description | |
+| `repo_link` (optional) | If the user names a repo URL | |
+| `released_at` / `reviewed_at` (optional) | Template metadata block | ISO-8601 date or date-time |
+| `trust_zones[]` | DFD subgraphs (one zone per subgraph) | `symbolic_name` (derived from subgraph ID), `title`, `description` (the `<owner> \| <env-type> \| <trust>` triplet works as the description) |
+| `trust_boundaries[]` | §1 trust-boundary table | `trust_zone_a` / `trust_zone_b` are symbolic refs; `access_control_methods` array enum: `none / acl / rbac / mac / dac / abac`; `authentication_methods` array enum: `none / password / otp / challenge_response / public_key / token / biometrics / sso / social` |
+| `actors[]` | §1 external entities | `type` enum: `system / user / power_user / administrator / engineer / third_party`; `trust_zone` is symbolic ref |
+| `components[]` | DFD processes (rounded boxes / circles) | `trust_zone` is symbolic ref; `parent_component` (optional) for nested subgraphs |
+| `data_stores[]` | DFD data stores (cylinders) | `type` enum: `sql / key_value / document / object / graph / time_series` (elicited in Round 1); `vendor` / `product` optional |
+| `data_sets[]` | Data classes from data-centric pass (if run) | `placements[]` is `[{data_store: <symbolic_name>, encrypted: bool}, …]`; `data_sensitivity` array enum same as `scope.data_sensitivity` |
+| `data_flows[]` | DFD arrows | `source` / `destination` are `{type: "actor"|"component"|"data_store", object: <symbolic_name>}`; `has_sensitive_data` and `encrypted` are booleans (defaults: `false` if no PII/PHI/cred in the flow's data class; `true` if the flow label includes mTLS / TLS / signed) |
+| `diagrams[]` (optional) | The Mermaid DFD itself | `type: "mermaid"`, `source: <full Mermaid block as a string>`, `title: "Data Flow Diagram"` |
+| `assumptions[]` (optional) | §1 assumptions table | `validity` enum: `unconfirmed / confirmed / rejected` (default `unconfirmed`); `topics` (optional) is an array of symbolic refs to other entities the assumption is about |
+| `threat_personas[]` | Round 2 personas (always at least one) | `skill_level` enum: `script_kid / insider / engineer / expert_engineer / oc_sponsored / state_sponsored`; `access_level` enum: `anonymous / user / admin`; `applicability_to_org` enum: `minimal / low / moderate / high / maximal` |
+| `threats[]` | §2.1 / §2.2 / §2.3 threat tables (one row per `T#` / `V#` / `PR#`) | `threat_persona` is symbolic ref; `event` is the verb-phrase event column; `sources` array enum: `adversary / human_error / failure / events_beyond_org_control`; `attack_mechanisms[]` is `[{capec_id: int, capec_title: string}, …]`; `weaknesses[]` is `[{cwe_id: int, cwe_title: string}, …]`; `components_affected[]` is symbolic refs |
+| `controls[]` | §3 mitigation rows | `threats` is array of threat symbolic refs; `status` enum: `assumed / active / suggested / under_review / approved / scheduled / retired / wont_do` (default for new mitigations: `suggested`; for already-in-place: `active`); `priority` enum: `none / low / medium / high / critical` (translate from §3 risk: Low→low, Medium→medium, High→high, Critical→critical); `trust_boundary` (optional) is `{trust_zone_a, trust_zone_b}` |
+| `risks[]` | §3 risk ratings, one risk per threat (or per cluster of cross-referenced threats) | `threats` array of refs; `likelihood` and `impact` use the schema enums (translation table in `references/risk-rating.md` § "L/M/H ↔ TM-BOM enums"); `score` is integer 0–25; `level` enum: `very_low / low / medium / high / very_high / critical` |
+| Skill-specific fields with no schema home (STRIDE category, stratum tag, Stellios path-product score, Mitigate/Eliminate/Transfer/Accept response distinct from `control.status`) | **Top-level `extensions` only** — not per-object (every object def in the schema has `additionalProperties: false`, so per-object extensions fail validation). Key per-object data by the object's `symbolic_name`. | Extension keys must match the schema's regex: `<domain-with-hyphens-allowed>.<letters-only-TLD>/<path>`. Use the namespace `threat-modeler.tmskill/...` — the natural-looking `tmskill.threat-modeler/...` is **rejected** by the schema because the TLD label can't contain hyphens. Recommended paths: `threat-modeler.tmskill/stride-by-threat`, `threat-modeler.tmskill/stratum-by-threat`, `threat-modeler.tmskill/path-score-by-threat`, `threat-modeler.tmskill/response-by-control`. |
+
+**Top-level header.** Every emitted sidecar starts with these two lines so the file declares which schema version it was built against:
+
+```json
+{
+  "$schema": "https://github.com/OWASP/www-project-threat-model-library/blob/v1.0.2/threat-model.schema.json",
+  "version": "1.0.0",
+  ...
+}
+```
+
+Bump `$schema` when the OWASP TML schema version moves; bump `version` per the model's own changelog (it's a free string matching `^\d+(\.\d+)*$`, not the schema version).
+
+**Per-object extension example.** STRIDE category, response, stratum tag — all are per-object data the schema doesn't carry. Top-level extensions look like this:
+
+```json
+"extensions": {
+  "threat-modeler.tmskill/stride-by-threat": {
+    "t-1": "S",
+    "t-2": "T"
+  },
+  "threat-modeler.tmskill/stratum-by-threat": {
+    "t-1": "contextual",
+    "v-1": "contextual"
+  },
+  "threat-modeler.tmskill/response-by-control": {
+    "sr-001": "Mitigate",
+    "sr-002": "Eliminate"
+  }
+}
+```
+
+### Mapping the Mitigate/Eliminate/Transfer/Accept response
+
+The skill's response taxonomy doesn't map 1:1 onto `control.status`. Use this rule:
+
+| Skill response | `control.status` | When to use which |
+|---|---|---|
+| `Mitigate` (control planned/in place) | `suggested` (new) or `active` (existing) | A new control gets `suggested`; if the user confirms the control is already deployed, use `active` |
+| `Eliminate` (remove the threat surface) | `approved` if the design change is approved; `suggested` otherwise | The "control" is the design change itself |
+| `Transfer` (insurance, vendor SLA, customer responsibility) | `assumed` | The control exists outside this system |
+| `Accept` (no control) | Don't emit a `control` row at all | Emit the threat with no control reference; record rationale in the threat's `description` |
+
+Also record the original response verbatim in `controls[].extensions["tmskill.threat-modeler/response"]` so the markdown ↔ JSON round-trip is lossless.
+
+### Validation checklist before shipping the sidecar
+
+- [ ] Top-level `$schema` and `version` are present.
+- [ ] Every `symbolic_name` matches `^[0-9a-z-]+$` (run a regex over the file).
+- [ ] Every cross-ref (`threats[].threat_persona`, `controls[].threats`, `risks[].threats`, `data_sets[].placements[].data_store`, `trust_boundaries[].trust_zone_a/b`, `data_flows[].source/destination.object`, `actors[].trust_zone`, `components[].trust_zone`, `data_stores[].trust_zone`) resolves to a defined symbolic name in the same file.
+- [ ] All nine top-level required fields are present: `version`, `scope`, `trust_zones`, `trust_boundaries`, `actors`, `components`, `data_stores`, `data_sets` (may be empty array if no data-centric pass run), `data_flows`.
+- [ ] All four required `scope` enums are present (`business_criticality`, `data_sensitivity`, `exposure`, `tier`).
+- [ ] At least one `threat_persona` is defined and every threat references one.
+- [ ] `threats[].event` is non-empty for every threat.
+- [ ] `threats[].sources` is non-empty for every threat.
+- [ ] `risks[].score` is in `[0, 25]` and is consistent with `risks[].level`.
+- [ ] No per-object `extensions` (every object has `additionalProperties: false` — extensions only at top level).
+- [ ] Extension keys match the schema's regex (TLD must be letters-only — `threat-modeler.tmskill/<path>`, **not** `tmskill.threat-modeler/<path>`).
+- [ ] `check-jsonschema --schemafile threat-model.schema.json <output>.json` exits 0. **Always run this before handing the file over.**
+
+Worked example threat models live in https://github.com/OWASP/www-project-threat-model-library/tree/main/threat-models — `ai-ml-systems/husky-ai-threat-model.json` is the most-complete reference. Open the closest example before producing a sidecar; mirror its shape and depth.
+
+A minimal validated sidecar exercising every required field of the schema, every cross-reference type, and the top-level `extensions` pattern lives at `assets/sidecar-example.json`. It validates against `threat-model.schema.json` v1.0.2 with `check-jsonschema` exit 0. Use it as the structural starter when you don't want to clone an OWASP TML example. Re-validate after every edit:
+
+```
+curl -sSf -o /tmp/threat-model.schema.json \
+  https://raw.githubusercontent.com/OWASP/www-project-threat-model-library/main/threat-model.schema.json
+check-jsonschema --schemafile /tmp/threat-model.schema.json <your-sidecar>.json
+```
 
 ## Citations
 
