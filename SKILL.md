@@ -9,7 +9,7 @@ You are a working threat modeler producing a deliverable for an engineering team
 
 ## The default output is a hybrid model
 
-Every threat model this skill produces is hybrid. Three strata (Contextual / Operational / Strategic, from Tatam et al. 2021) are always present; what scales with stakes is the *amount* of content per stratum, not the *presence* of all three.
+The default — not the floor — is a hybrid with three strata. The three-stratum framing (Contextual / Operational / Strategic) is the editorial choice this skill makes; it's drawn from Tatam et al. (2021), one paper synthesizing the literature, not a practitioner consensus on the order of STRIDE or the Four Questions. Calling it out so it can be challenged.
 
 - **Contextual stratum** (system-specific): flow-centric DFD + STRIDE-Per-Element as the core, framed by Shostack's Four Question Framework and the Threat Modeling Manifesto. Layer in additional entry points (data-centric per NIST SP 800-154, asset-centric, user-needs-centric, process-centric, attacker-centric, code-centric) and supplemental lenses (LINDDUN for privacy, AI/ML threats) per the system-type matrix.
 - **Operational stratum**: STRIDE → CAPEC → CWE chain on top threats, ATT&CK technique IDs, optional kill-chain mapping and CVSS.
@@ -17,13 +17,17 @@ Every threat model this skill produces is hybrid. Three strata (Contextual / Ope
 
 **Read `references/methodologies.md` § "Hybrid as default" first** — it has the layer catalog, the system-type applicability matrix, and the rules for nesting strata in one document vs. linked documents.
 
-Minimum viable hybrid (small low-stakes system): flow-centric DFD + STRIDE table + one supplementary entry-point pass + ATT&CK technique IDs on the top three threats + one paragraph of sector / regulatory context. Don't ship less.
+Default hybrid (most systems): flow-centric DFD + STRIDE table + one supplementary entry-point pass + ATT&CK technique IDs on the top three threats + one paragraph of sector / regulatory context.
+
+**Ship less when the system warrants it.** A solo dev's side project, a throwaway spike, an internal tool with one trust boundary — those don't need three strata, they need a DFD and a STRIDE pass. Per the Manifesto's "doing threat modeling over talking about it," a one-page model that ships beats a three-stratum model that doesn't. If you drop a stratum, say so on one line: *"Operational stratum: not applicable — single-tenant internal tool, no adversary context to map."* Don't ship a stratum stub.
 
 ## Generate, don't categorize
 
 This skill uses STRIDE *generatively* (as a per-element prompt), not as a post-hoc bucket. Per Shostack, STRIDE is a tool to *guide* threat finding, "and it makes a lousy taxonomy, anyway." If someone asks whether a finding is "really" Spoofing or Information Disclosure: record it and move on.
 
-The entry-point decision (what to walk first) and the categorization-lens decision (what to label findings with) are independent. Flow-centric is always the contextual core and STRIDE is always the categorization on it — but additional entry points layer in alongside (driven by system type), and additional lenses (LINDDUN, AI/ML) supplement STRIDE where they apply. Picking a *single* entry point is the old default and is wrong; picking a *primary* entry point and layering supplements is correct. Full taxonomy: `references/centric-methods.md`.
+The applicability table (which categories apply to which element types) is used as a **coverage check, not a categorization mandate**: it tells you which prompts to *walk* for each element so none gets skipped. Once a threat is found, don't argue about which cell it belongs to — the cell did its job by surfacing it.
+
+The entry-point decision (what to walk first) and the categorization-lens decision (what to label findings with) are independent. **Flow-centric as the contextual core is a pragmatic choice, not a derived truth** — it's chosen because it interops cleanly with STRIDE and is the most teachable. For systems where the threat picture is genuinely asset-shaped (a signing key, a KMS root, a control-loop setpoint), the asset-centric pass is the substantive work and flow-centric becomes the connective tissue around it; weight the supplementary pass accordingly rather than treating it as a checkbox. Picking a *single* entry point is wrong; picking a *primary* entry point and layering supplements is correct. Full taxonomy: `references/centric-methods.md`.
 
 ## What threat modeling produces
 
@@ -87,7 +91,12 @@ Output a single markdown document with the structure below. Use Mermaid for the 
 
 ### Document structure
 
-The default shape is a single-document hybrid (all three strata in one file). For the alternative linked-documents shape (used in larger orgs where the strata are owned by different teams), see `references/methodologies.md` § "How the strata nest in the output document".
+Pick the output shape by **audience**, not by org size. A threat model has up to three readers — engineers (who want testable requirements), detection / red-team (who want ATT&CK IDs and adversary context), and compliance / executive (who want regulatory framing and business impact). One document for one reader is fine; one document for all three usually means each reader skims 30% and skips the rest.
+
+- **Single-document hybrid** — default when there's effectively one reader (small team, one engineer also wearing the security and compliance hats, internal-only system).
+- **Linked documents** — split the strata into separate files (contextual / operational / strategic) when distinct teams or roles will read them, when the operational stratum will be consumed by SOC tooling, or when the strategic stratum needs sign-off independent of the engineering doc. Cross-link by ID. See `references/methodologies.md` § "How the strata nest in the output document".
+
+When in doubt, ask the user once: *"Single doc, or split — who's reading the operational and strategic sections?"* If they don't know, default to single-doc and note that splitting later is cheap because IDs are stable.
 
 ```
 # Threat Model: <System Name>
@@ -187,7 +196,7 @@ The contextual core of the hybrid (§2.1.a in the document structure above) is *
 
 For each DFD element, run through the STRIDE categories that apply to that element type. The applicability table (which categories apply to each of External entity / Process / Data flow / Data store), the category prompts, per-element example threats, the **element-is-the-victim** framing rule, and the **Per-Element vs Per-Interaction** choice all live in `references/stride-prompts.md` — **read it before enumerating threats**. Write at least one concrete threat per applicable cell ("An attacker on the public internet sends crafted DICOM C-STORE requests to the PACS to overflow the parser" — not "DoS").
 
-Exit criterion for the contextual core: at least one threat per check-marked cell in the applicability table. Once mitigations are drafted, do a second pass on them — mitigations are themselves attack surface (a new auth service introduces new spoofing paths; a new logging path introduces new disclosure paths).
+Coverage check (not a quota): you should have walked every check-marked cell in the applicability table at least once. Whether a finding lands in the "right" cell isn't the point — the point is that no prompt was skipped. If a category yielded no threats for an element after honest consideration, write that down ("Repudiation on the read-only health endpoint: no threats — endpoint is unauthenticated and stateless") rather than padding. Once mitigations are drafted, do a second pass on them — mitigations are themselves attack surface (a new auth service introduces new spoofing paths; a new logging path introduces new disclosure paths).
 
 Threat table format:
 
@@ -214,6 +223,8 @@ These come from Shostack's practical guidance and are worth following:
 - **Threats become bugs.** Every recorded threat should end up as a tracked work item in whatever bug/issue system the team uses. This is the exit point from threat modeling — once threats are bugs, normal triage and engineering machinery takes over.
 
 ### Mitigations and responses
+
+A threat model does two jobs in one document and the seam is worth naming: §2 produces *hypothesized* attack scenarios (still need validation by code review, testing, or red-teaming to know if the vulnerability is real); §3 produces *proposed* controls and derived requirements (still need engineering work to implement and verify). Both halves are working drafts, not commitments — `SR-001` isn't yet "the system does this," it's "we propose the system shall do this, and we'll know it does once it's implemented and tested." The numbering and traceability exist so the proposals are tractable downstream, not because the hypotheses themselves are confirmed.
 
 Each threat gets exactly one response: **Mitigate**, **Eliminate**, **Transfer**, or **Accept**. For "Mitigate", give a concrete control mapped to the violated property — the STRIDE → security property → typical mitigations table lives in `references/stride-prompts.md` § "STRIDE → security property → typical mitigations".
 
