@@ -1,6 +1,9 @@
 # Centric methods — choosing the entry point
 
-> **Related**: ← `SKILL.md` • `methodologies.md` (categorization-lens choices: STRIDE / LINDDUN / PASTA / **STPA-SafeSec** …) • `data-centric.md` (data-centric workflow deep-dive) • `stpa-safesec.md` (safety+security joint hazard analysis — swap or supplement, not an entry point) • `stride-prompts.md` (STRIDE-as-generation prompts).
+> **Last verified**: 2026-05. The entry-point taxonomy is stable across the Shostack 2014 / Manifesto 2020 frame; re-confirm with the Threat Modeling Manifesto site before citing the "Multiple representations" pattern verbatim.
+> **Sources paraphrased**: Adam Shostack, *Threat Modeling: Designing for Security* (Wiley, 2014) — Chapter 2 framing of asset / attacker / software focus and the asset-centric / attacker-centric critiques (paraphrase only; substantive direct quotes require Wiley/Shostack attribution); Threat Modeling Manifesto 2020 (CC-BY 4.0); NIST SP 800-154 Draft 2016 (US public domain — see data-centric.md for full attribution).
+
+> **Related**: ← `SKILL.md` • `methodologies.md` (categorization-lens choices: STRIDE / LINDDUN / PASTA / **STPA** …) • `data-centric.md` (data-centric workflow deep-dive) • `stpa.md` (safety+security joint hazard analysis — swap or supplement, not an entry point) • `stride-prompts.md` (STRIDE-as-generation prompts).
 
 This file is the **canonical home** for the entry-point taxonomy and the generation-vs-characterization distinction. SKILL.md and `methodologies.md` reference this; don't duplicate.
 
@@ -22,7 +25,7 @@ code-centric                               CVSS
 
 For example, "STRIDE-Per-Element" is really *flow-centric generation + STRIDE characterization*. STRIDE is doing the prompt work; the DFD is doing the coverage work. Confusing the two leads people to think STRIDE alone is a complete approach. It isn't — STRIDE is a categorization lens that needs an entry point to be applied against.
 
-> **Note on STPA-SafeSec.** STPA-SafeSec is *not* an entry point in this taxonomy — it's a safety+security joint hazard analysis that produces hazard scenarios (a superset of threats), not threats per se. It can run as a **swap** for the contextual core (one joint artifact for FDA / IEC 62304 / IEC 81001-5-1 / IEC 61508 / ISO 26262) or as a **supplement** alongside flow-centric + STRIDE (cross-references threats and adds non-adversarial safety failures). It belongs with the methodology choices in `methodologies.md`, not here. Use it for safety-critical control-loop systems where physical harm is the worst case (medical infusion pumps, ventilators, ICS, automotive, robotics). See `stpa-safesec.md` § "Two modes".
+> **Note on STPA.** STPA is *not* an entry point in this taxonomy — it's a safety+security joint hazard analysis that produces hazard scenarios (a superset of threats), not threats per se. It can run as a **swap** for the contextual core (one joint artifact for FDA / IEC 62304 / IEC 81001-5-1 / IEC 61508 / ISO 26262) or as a **supplement** alongside flow-centric + STRIDE (cross-references threats and adds non-adversarial safety failures). It belongs with the methodology choices in `methodologies.md`, not here. Use it for safety-critical control-loop systems where physical harm is the worst case (medical infusion pumps, ventilators, ICS, automotive, robotics). See `stpa.md` § "Two modes".
 
 ### Mapping to Shostack's three approaches
 

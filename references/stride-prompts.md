@@ -1,19 +1,22 @@
 # STRIDE Prompts (per element type)
 
+> **Last verified**: 2026-05. The STRIDE-Per-Element / Per-Interaction conventions are stable; re-confirm before citing if Microsoft updates its Threat Modeling Tool documentation.
+> **Sources paraphrased**: Adam Shostack, *Threat Modeling: Designing for Security* (Wiley, 2014) — STRIDE-Per-Element framing, applicability table, "victim not perpetrator" rule, exit-criterion guidance, enumeration tactics (paraphrase only); Loren Kohnfelder & Praerit Garg (Microsoft) — original STRIDE; Larry Osterman / Douglas MacIver (Microsoft) — STRIDE-Per-Interaction; Gunnar Peterson — DESIST. Substantive direct quotes from Shostack 2014 require Wiley/Shostack attribution.
+
 > **Related**: ← `SKILL.md` • `dfd-mermaid.md` (draw the DFD first) • `centric-methods.md` (STRIDE as generation vs characterization) • `methodologies.md` (when to swap or supplement STRIDE — LINDDUN, AI/ML, etc.) • `capec.md` (STRIDE → CAPEC → CWE chain) • `validation.md` (Q4 Threats checklist).
 
 This file is the **canonical home** for the STRIDE-Per-Element applicability table and the STRIDE → security property → typical mitigations table. SKILL.md references both; don't duplicate.
 
 When threat-enumerating a DFD, walk each element through the STRIDE categories that apply. The applicability table:
 
-| Element        | S | T | R | I | D | E |
-|----------------|---|---|---|---|---|---|
-| External entity| ✓ |   | ✓ |   |   |   |
-| Process        | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Data flow      |   | ✓ |   | ✓ | ✓ |   |
-| Data store     |   | ✓ | ? | ✓ | ✓ |   |
+| Element        | S | T | R              | I | D | E |
+|----------------|---|---|----------------|---|---|---|
+| External entity| ✓ |   | ✓              |   |   |   |
+| Process        | ✓ | ✓ | ✓              | ✓ | ✓ | ✓ |
+| Data flow      |   | ✓ |                | ✓ | ✓ |   |
+| Data store     |   | ✓ | ✓ (audit only) | ✓ | ✓ |   |
 
-R on a data store applies if and only if it is an audit/logging store. Otherwise data stores can't repudiate — they store what they're told to store.
+R on a data store applies **only when the store is an audit or logging store** — modifying or deleting log rows is a repudiation issue because it undermines accountability for prior actions. Non-audit data stores don't have a repudiation surface (they store what they're told to store), so leave R blank for them. If a single store carries both audit data and non-audit data, split it into two rows so the applicability is unambiguous.
 
 This is **STRIDE-Per-Element** (Shostack), the default for this skill. There are two important alternatives:
 

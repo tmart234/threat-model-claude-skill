@@ -1,5 +1,8 @@
 # Methodologies beyond STRIDE
 
+> **Last verified**: 2026-05. ATT&CK (versioned), the Cyber Kill Chain, OWASP LLM Top 10, OWASP ML Security Top 10, NIST AI RMF, EU AI Act, sector ISAC scopes, and the regulatory framings cited throughout this file all drift on independent cadences. Re-confirm specific technique IDs (e.g. `T1078`), Top-10 entry numbering, regulatory edition years, and ISAC membership eligibility against upstream sources before relying on them in a deliverable.
+> **Sources paraphrased**: Threat Modeling Manifesto (CC-BY 4.0); Tatam, Shanmugam, Azam & Kannoorpatti, Heliyon 7 (2021, CC-BY 4.0); Microsoft STRIDE-Per-Element / Per-Interaction conventions (paraphrase, no direct quote); LINDDUN (linddun.org); UcedaVelez & Morana, *Risk Centric Threat Modeling: Process for Attack Simulation and Threat Analysis* (Wiley, 2015) for PASTA framing; Friedberg et al., *STPA-SafeSec* (2017, CC-BY); Stellios, Kotzanikolaou & Grigoriadis (Computers & Security 107, 2021); MITRE ATT&CK (CC-BY-4.0); Lockheed Martin Cyber Kill Chain (paraphrase); OWASP material (CC-BY 4.0); NIST AI RMF (US public domain); CISA / sector ISAC pointers (public). Substantive direct quotes need attribution upstream; paraphrasing here is permitted under each license.
+
 > **Related**: ← `SKILL.md` • `centric-methods.md` (entry points; canonical home for generation-vs-characterization) • `stride-prompts.md` (STRIDE-Per-Element / Per-Interaction) • `capec.md`, `risk-rating.md`, `validation.md` (operational/strategic-stratum supporting refs).
 
 This file is the **canonical home** for the hybrid-as-default framing (three strata, applicability matrix by system type, single-doc vs linked-doc shapes, pruning rules) and for the categorization-lens choices (LINDDUN, PASTA, attack trees, ATT&CK, kill chains, OCTAVE, VAST, AI/ML). SKILL.md references this; don't duplicate.
@@ -25,18 +28,16 @@ is data-typed (HIPAA / GDPR / PCI / FDA)?
   → Use data-centric (NIST SP 800-154) as the entry point — see centric-methods.md.
     STRIDE still works as the per-location lens.
 
-Worst case is physical (patient harm, operator injury, equipment destruction)
-and the system is a control loop (controllers + sensors + actuators)?
-  → Add STPA-SafeSec. Two modes; pick by what artifact the team needs:
-      - Swap mode: STPA-SafeSec replaces flow-centric DFD + STRIDE for the
-        contextual core. Use when regulators require the joint safety+security
-        artifact (FDA premarket cybersec, IEC 62304, IEC 81001-5-1, IEC 61508,
-        ISO 26262) or when the system is purely a control loop.
-      - Supplement mode: STPA-SafeSec runs alongside flow-centric + STRIDE,
-        adding hazard scenarios that cross-reference threats and capture
-        non-adversarial safety failures STRIDE misses. Use when there's an
-        existing STRIDE practice or substantial non-control attack surface.
-    Deep dive (with full mode-selection guidance): stpa-safesec.md.
+Any plausible worst case involves physical harm — to a person, to
+equipment, or to the environment? (Medical devices, ICS, automotive,
+aerospace, robotics, drones, building control with safety implications,
+consumer IoT that controls something dangerous. Trigger is the
+*consequence*, not control-loop shape or regulator presence.)
+  → Add STPA. Default to supplement mode; switch to swap when a regulator
+    requires the joint safety+security artifact (FDA premarket cybersec,
+    IEC 62304, IEC 81001-5-1, IEC 61508, ISO 26262) or when the system is
+    purely a control loop with negligible non-control attack surface.
+    Deep dive (with full mode-selection guidance): stpa.md.
 
 Privacy is the dominant concern (PII/PHI/GDPR-heavy)?
   → Use LINDDUN alongside STRIDE. Often combine with data-centric entry point.
@@ -140,24 +141,24 @@ Method:
 
 When this beats vanilla attack trees for IoMT: when the threat is *composition* — no single device looks dangerous under per-element STRIDE, but a chain of P2/P3 hops between commodity peripherals reaches a safety-critical target. Also when the team needs a defensible reason for *not* analyzing 95% of the graph (the CVV-pruned subset is the auditable artifact). For the risk-rating side of CVV — when CVSS-based path scoring beats per-element OWASP-RR — see `risk-rating.md` § "CVSS-based attack-path risk (cyber-physical IoT)".
 
-Pair with: STPA-SafeSec (which gives the safety-critical targets to root the tree at, plus non-adversarial hazard scenarios that surface targets a pure security pass would miss) and flow-centric STRIDE (which surfaces the per-device surfaces the P-hops connect).
+Pair with: STPA (which gives the safety-critical targets to root the tree at, plus non-adversarial hazard scenarios that surface targets a pure security pass would miss) and flow-centric STRIDE (which surfaces the per-device surfaces the P-hops connect).
 
-## STPA-SafeSec — safety + security for control-loop systems
+## STPA — safety + security for control-loop systems
 
-A safety+security joint analysis for control-loop systems. **STPA-Sec** (Young & Leveson, 2014) extends STPA hazard analysis to security; **STPA-SafeSec** (Friedberg et al., 2017) integrates safety and security into one workflow and adds the component-layer mapping that closes the abstraction gap. Use STPA-SafeSec, not plain STPA-Sec — the component layer is what makes the analysis actionable.
+A safety + security joint hazard analysis. "STPA" in this skill is the umbrella term — the workflow draws from STPA (Leveson 2011) for the hazard-analysis frame, STPA-Sec (Young & Leveson 2014) for the security extension, and STPA-SafeSec (Friedberg et al. 2017) for the integrated workflow plus the component-layer mapping that makes mitigations enforceable on real hardware. The component layer (Friedberg's contribution) is what closes the abstraction gap; cite the specific paper when the distinction matters in a deliverable.
 
-What STPA-SafeSec generates is **hazard scenarios**, not threats. Adversarial-cause hazard scenarios are threat-shaped; non-adversarial-cause hazard scenarios are safety-failure-shaped. The output is a superset of what STRIDE produces.
+What STPA generates is **hazard scenarios**, not threats. Adversarial-cause hazard scenarios are threat-shaped; non-adversarial-cause hazard scenarios are safety-failure-shaped. The output is a superset of what STRIDE produces.
 
 **Two modes. Pick by what artifact the team needs:**
 
-- **Swap mode** — STPA-SafeSec replaces flow-centric DFD + STRIDE for the contextual core. Use when regulators require the joint safety+security artifact anyway (FDA premarket cybersecurity for control-loop devices; IEC 62304 + IEC 81001-5-1 for medical software; IEC 61508 for industrial functional safety; ISO 26262 for automotive), when the team is greenfield on both safety and threat modeling, or when the system is purely a control loop with negligible non-control attack surface.
-- **Supplement mode** — STPA-SafeSec runs alongside flow-centric + STRIDE. §2.1.a/b run normally; STPA-SafeSec adds a new pass that produces hazard scenarios cross-referencing threats and capturing non-adversarial safety failures STRIDE misses. Use when an existing STRIDE practice / threat-model artifact exists, when there's substantial non-control attack surface (telemetry, OTA, admin UI, mobile companion app), when the security review is independent of the safety case, or when safety and security functions are owned by separate teams.
+- **Swap mode** — STPA replaces flow-centric DFD + STRIDE for the contextual core. Use when regulators require the joint safety+security artifact anyway (FDA premarket cybersecurity for control-loop devices; IEC 62304 + IEC 81001-5-1 for medical software; IEC 61508 for industrial functional safety; ISO 26262 for automotive), when the team is greenfield on both safety and threat modeling, or when the system is purely a control loop with negligible non-control attack surface.
+- **Supplement mode** — STPA runs alongside flow-centric + STRIDE. §2.1.a/b run normally; STPA adds a new pass that produces hazard scenarios cross-referencing threats and capturing non-adversarial safety failures STRIDE misses. Use when an existing STRIDE practice / threat-model artifact exists, when there's substantial non-control attack surface (telemetry, OTA, admin UI, mobile companion app), when the security review is independent of the safety case, or when safety and security functions are owned by separate teams.
 
-When **not** to use either mode: worst case is a data breach or unauthorized access (use STRIDE alone — STPA-SafeSec under-weights confidentiality and audit threats); no controlled physical process.
+When **not** to use either mode: worst case is a data breach or unauthorized access (use STRIDE alone — STPA under-weights confidentiality and audit threats); no controlled physical process.
 
 Output shape: Losses → Hazards → Constraints → Control layer → Component layer → UCAs → System flaws → Hazard-scenario trees → Mitigations at control or component layer + requirements traced to constraints.
 
-Deep dive — both modes, workflow, ID conventions, two-layer system model, integrity/availability causal-factor tables, mitigation strategy effectiveness, Q4 additions: `stpa-safesec.md`.
+Deep dive — both modes, workflow, ID conventions, two-layer system model, integrity/availability causal-factor tables, mitigation strategy effectiveness, Q4 additions: `stpa.md`.
 
 ## MITRE ATT&CK + Cyber Kill Chain
 
@@ -229,10 +230,10 @@ This is a cheat sheet, not a straitjacket. The "core" cell is what the contextua
 | System type | Contextual core | Typical contextual supplement | Typical operational | Typical strategic | Often add | Sometimes |
 |---|---|---|---|---|---|---|
 | Generic web app | flow-centric DFD + STRIDE | user-needs-centric (business logic) | ATT&CK on top threats | OWASP Top 10 framing; sector if regulated | LINDDUN (if PII); CWE on code findings | Process-centric (if ops-heavy); attack tree (one high-value flow) |
-| **Medical device / PACS / DICOM** | flow-centric DFD + STRIDE — **for safety-critical control loops (infusion pumps, ventilators, robotic surgery, dialysis), add STPA-SafeSec as swap (FDA / IEC 62304 / IEC 81001-5-1 joint artifact) or as supplement (alongside STRIDE)** — see `stpa-safesec.md` | **data-centric (PHI / device data)** + LINDDUN | ATT&CK; **CAPEC + CWE chain** (use the medical-device subset in `capec.md`; cite Standard-level patterns by default — DICOM-/HL7-specific Detailed patterns don't exist, see `capec.md` § "Honest about CAPEC coverage"); CISA medical advisories | **H-ISAC; FDA premarket cybersecurity; IEC 62443; IEC 81001-5-1; HIPAA; safety-bump rule from `risk-rating.md`** | asset-centric (signing keys); attack tree on safety-critical path; **STPA-SafeSec on safety-critical control loops** | Code-centric on parser/protocol code; named adversary if applicable; **risk-prioritized cyber-physical attack paths (Stellios) for IoMT patient rooms with multiple co-located devices** |
+| **Medical device / PACS / DICOM** | flow-centric DFD + STRIDE — **for safety-critical control loops (infusion pumps, ventilators, robotic surgery, dialysis), add STPA as swap (FDA / IEC 62304 / IEC 81001-5-1 joint artifact) or as supplement (alongside STRIDE)** — see `stpa.md` | **data-centric (PHI / device data)** + LINDDUN | ATT&CK; **CAPEC + CWE chain** (use the medical-device subset in `capec.md`; cite Standard-level patterns by default — DICOM-/HL7-specific Detailed patterns don't exist, see `capec.md` § "Honest about CAPEC coverage"); CISA medical advisories | **H-ISAC; FDA premarket cybersecurity; IEC 62443; IEC 81001-5-1; HIPAA; safety-bump rule from `risk-rating.md`** | asset-centric (signing keys); attack tree on safety-critical path; **STPA on safety-critical control loops** | Code-centric on parser/protocol code; named adversary if applicable; **risk-prioritized cyber-physical attack paths (Stellios) for IoMT patient rooms with multiple co-located devices** |
 | Cloud-native multi-tenant SaaS | flow-centric DFD + STRIDE | user-needs-centric (tenancy + RBAC); process-centric (deploy / on-call) | ATT&CK; CSP shared-responsibility map | Sector regulator; SOC 2 / ISO 27001 framing | LINDDUN (if PII); asset-centric (signing keys, KMS roots) | Attack tree on tenant-isolation breach |
-| ICS / SCADA / OT | flow-centric DFD + STRIDE — **when the control loop's worst case is physical (process upset, equipment damage, operator injury), add STPA-SafeSec as swap (IEC 61508 / IEC 62443 joint artifact) or supplement** — see `stpa-safesec.md` | asset-centric (control loop, HMI, PLC) + process-centric | ATT&CK for ICS; kill chain | **E-ISAC; CISA ICS-CERT advisories; IEC 62443; named-adversary context (sector is targeted)** | Attack tree (one safety-critical path); **STPA-SafeSec on safety-critical control loops** | LINDDUN if operator PII; data-centric on setpoint integrity; **risk-prioritized cyber-physical attack paths (Stellios) when multiple devices share a physical space / RF medium and the cross-device path is the threat** |
-| Embedded / IoT | flow-centric DFD + STRIDE — **for control-loop devices (automotive ECUs, robotics, drones), add STPA-SafeSec as swap (ISO 26262 joint artifact) or supplement** | data-centric (firmware image; device keys); asset-centric | ATT&CK | Sector regulator; supply-chain framing (SBOM, signed firmware) | Code-centric on bootloader / parser; attack tree on firmware-signing bypass | LINDDUN if device collects PII; **STPA-SafeSec for control-loop devices**; **risk-prioritized cyber-physical attack paths (Stellios) when several devices share a physical space (smart building, IoMT room, vehicle cabin, robotics cell) and per-element STRIDE misses cross-device P2/P3 hops** |
+| ICS / SCADA / OT | flow-centric DFD + STRIDE — **when the control loop's worst case is physical (process upset, equipment damage, operator injury), add STPA as swap (IEC 61508 / IEC 62443 joint artifact) or supplement** — see `stpa.md` | asset-centric (control loop, HMI, PLC) + process-centric | ATT&CK for ICS; kill chain | **E-ISAC; CISA ICS-CERT advisories; IEC 62443; named-adversary context (sector is targeted)** | Attack tree (one safety-critical path); **STPA on safety-critical control loops** | LINDDUN if operator PII; data-centric on setpoint integrity; **risk-prioritized cyber-physical attack paths (Stellios) when multiple devices share a physical space / RF medium and the cross-device path is the threat** |
+| Embedded / IoT | flow-centric DFD + STRIDE — **for control-loop devices (automotive ECUs, robotics, drones), add STPA as swap (ISO 26262 joint artifact) or supplement** | data-centric (firmware image; device keys); asset-centric | ATT&CK | Sector regulator; supply-chain framing (SBOM, signed firmware) | Code-centric on bootloader / parser; attack tree on firmware-signing bypass | LINDDUN if device collects PII; **STPA for control-loop devices**; **risk-prioritized cyber-physical attack paths (Stellios) when several devices share a physical space (smart building, IoMT room, vehicle cabin, robotics cell) and per-element STRIDE misses cross-device P2/P3 hops** |
 | AI / ML system | flow-centric DFD + STRIDE | **data-centric (training data; model weights)** + AI/ML-specific threat list (prompt injection, model extraction, training-data poisoning, etc.) | ATT&CK; OWASP LLM Top 10; OWASP ML Security Top 10 | Sector framing; AI-specific regulator (EU AI Act, NIST AI RMF) | LINDDUN (if PII in training data); attack tree on model extraction | Code-centric on inference pipeline |
 | Greenfield internal tool, low stakes | flow-centric DFD + STRIDE | asset-centric (single-pass, light) | ATT&CK on top 3 threats | One paragraph: sector + regulator | — | (keep light) |
 

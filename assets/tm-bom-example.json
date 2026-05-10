@@ -1,0 +1,165 @@
+{
+    "$schema": "https://github.com/OWASP/www-project-threat-model-library/blob/v1.0.2/threat-model.schema.json",
+    "version": "1.0.0",
+    "scope": {
+        "title": "Demo Web App",
+        "description": "Trace example: a minimal authenticated web app with one external user, one auth service, one user database.",
+        "business_criticality": "moderate",
+        "data_sensitivity": [
+            "pii",
+            "cred"
+        ],
+        "exposure": "external",
+        "tier": "important"
+    },
+    "trust_zones": [
+        {
+            "symbolic_name": "untrusted-internet",
+            "title": "Public internet",
+            "description": "Unowned | public internet | untrusted"
+        },
+        {
+            "symbolic_name": "prod-cloud",
+            "title": "Production cloud",
+            "description": "Vendor | cloud (AWS prod) | high trust"
+        }
+    ],
+    "trust_boundaries": [
+        {
+            "trust_zone_a": "untrusted-internet",
+            "trust_zone_b": "prod-cloud",
+            "access_control_methods": [
+                "rbac"
+            ],
+            "authentication_methods": [
+                "password",
+                "token"
+            ]
+        }
+    ],
+    "actors": [
+        {
+            "symbolic_name": "user-1",
+            "title": "End-user",
+            "description": "Authenticated end-user",
+            "type": "user",
+            "trust_zone": "untrusted-internet"
+        }
+    ],
+    "components": [
+        {
+            "symbolic_name": "p-1",
+            "title": "Auth Service",
+            "description": "Issues and validates session tokens",
+            "trust_zone": "prod-cloud"
+        }
+    ],
+    "data_stores": [
+        {
+            "symbolic_name": "ds-1",
+            "title": "User DB",
+            "description": "Postgres holding user credentials and session metadata",
+            "type": "sql",
+            "trust_zone": "prod-cloud"
+        }
+    ],
+    "data_sets": [],
+    "data_flows": [
+        {
+            "symbolic_name": "flow-1",
+            "title": "User login",
+            "description": "Browser to Auth Service, HTTPS + TLS 1.3",
+            "source": {
+                "type": "actor",
+                "object": "user-1"
+            },
+            "destination": {
+                "type": "component",
+                "object": "p-1"
+            },
+            "has_sensitive_data": true,
+            "encrypted": true
+        }
+    ],
+    "threat_personas": [
+        {
+            "symbolic_name": "external-anonymous",
+            "title": "External attacker",
+            "description": "Untargeted commodity attacker on the public internet",
+            "is_person": true,
+            "skill_level": "script_kid",
+            "access_level": "anonymous",
+            "malicious_intent": true,
+            "applicability_to_org": "moderate"
+        }
+    ],
+    "threats": [
+        {
+            "symbolic_name": "t-1",
+            "title": "Session token reuse across boundary",
+            "description": "Attacker reuses a captured session token to impersonate the legitimate user against the Auth Service.",
+            "threat_persona": "external-anonymous",
+            "event": "session takeover",
+            "sources": [
+                "adversary"
+            ],
+            "components_affected": [
+                "p-1"
+            ],
+            "attack_mechanisms": [
+                {
+                    "capec_id": 21,
+                    "capec_title": "Exploitation of Trusted Identifiers"
+                }
+            ],
+            "weaknesses": [
+                {
+                    "cwe_id": 294,
+                    "cwe_title": "Authentication Bypass by Capture-replay"
+                }
+            ]
+        }
+    ],
+    "controls": [
+        {
+            "symbolic_name": "sr-001",
+            "title": "Bind session token to client certificate",
+            "description": "Issue session tokens bound to the client TLS certificate; reject token presentation from a different cert.",
+            "threats": [
+                "t-1"
+            ],
+            "status": "suggested",
+            "priority": "high",
+            "trust_boundary": {
+                "trust_zone_a": "untrusted-internet",
+                "trust_zone_b": "prod-cloud"
+            }
+        }
+    ],
+    "risks": [
+        {
+            "symbolic_name": "risk-1",
+            "title": "Session takeover on the public-internet boundary",
+            "description": "If a session token is captured (XSS, malware on user device, network MITM during downgrade), the attacker can impersonate the user until token expiry.",
+            "threats": [
+                "t-1"
+            ],
+            "likelihood": "possible",
+            "impact": "major",
+            "impact_description": "Account takeover affecting one user at a time; cascades to PII exposure for the affected account.",
+            "score": 12,
+            "level": "high"
+        }
+    ],
+    "extensions": {
+        "threat-modeler.tmskill/response-by-control": {
+            "sr-001": "Mitigate"
+        },
+        "threat-modeler.tmskill/stride-by-threat": {
+            "t-1": "S"
+        },
+        "threat-modeler.tmskill/stratum-by-threat": {
+            "t-1": "contextual"
+        }
+    }
+}

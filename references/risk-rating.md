@@ -1,16 +1,23 @@
 # Risk rating
 
+> **Last verified**: 2026-05. OWASP Risk Rating Methodology and CVSS specification versions both update; re-confirm against owasp.org and first.org/cvss before citing factor lists or version numbers in a deliverable.
+> **Sources paraphrased**: OWASP Risk Rating Methodology (CC-BY 4.0); CVSS specification (FIRST.org, public); Stellios, Kotzanikolaou & Grigoriadis (Computers & Security 107, 2021) — CVV / pruning math (paraphrase, see methodologies.md for full citation); FMEA conventions (public); Adam Shostack and OWASP critiques of DREAD (paraphrase).
+
 > **Related**: ← `SKILL.md` • `methodologies.md` (the L/M/H scale spans all three strata in the hybrid) • `validation.md` (Q4 cross-stratum check: one risk-rating scale across the whole model).
 
-This skill defaults to **qualitative L/M/H ratings** for likelihood and impact, with risk = function(likelihood, impact). That's enough for most threat models and avoids the false-precision trap of numeric models.
+This skill defaults to **qualitative L/M/H ratings** for likelihood and impact. Risk is L/M/H, derived from the 3×3 matrix below. That's enough for most threat models and avoids the false-precision trap of numeric models.
 
-## Default: 3×3 qualitative matrix
+## Default: 3×3 qualitative matrix (L/M/H output)
 
 |              | Impact: Low | Impact: Medium | Impact: High |
 |--------------|-------------|----------------|--------------|
-| Likelihood: High   | Medium      | High           | Critical     |
+| Likelihood: High   | Medium      | High           | High         |
 | Likelihood: Medium | Low         | Medium         | High         |
 | Likelihood: Low    | Low         | Low            | Medium       |
+
+The risk column in the threat table takes one of `Low / Medium / High` — same scale across §2.1, §2.2, §2.3, and §3 so the prioritized list sorts cleanly.
+
+**Adding a fourth `Critical` tier (optional).** Some teams or regulators want a separate top tier for "drop-everything-now" findings (safety-critical control loops, near-certain catastrophic loss). When that's needed, promote `High + High` to `Critical` and document the promotion rule in §1 prose so the rating stays auditable. Don't introduce `Critical` silently — it inflates everything if not anchored to a concrete promotion rule.
 
 ### Likelihood prompts
 
@@ -48,7 +55,98 @@ For medical device submissions specifically, FMEA-style scoring (severity × occ
 
 Use this **only** when the threat being rated is a composed *path* across several devices in one physical space (multi-device IoMT room, plant-floor cabinet, robotics cell, smart building zone) and the composition is what makes it dangerous — no single hop scores high under per-element OWASP-RR, so OWASP-RR under-rates the chain. This is a path-scoring supplement, not a third numeric option for ordinary single-element threats; for those, stick with L/M/H or OWASP-RR.
 
-Each hop carries a CVSS score (or a CVV — Cyber-physical Vulnerability Vector — extending CVSS with physical-interaction parameters per Stellios et al. 2021), and the path's risk is a function of the per-hop scores (Stellios et al. use the product, with a threshold for pruning). The per-element OWASP-RR table still lists the individual flaws; the path-risk table lists the composed attack chains and is what gets triaged. Construction technique: `methodologies.md` § "Risk-prioritized cyber-physical attack paths".
+Each hop carries a CVSS base score on the standard 0.0–10.0 scale (or a CVV — Cyber-physical Vulnerability Vector — extending CVSS with physical-interaction parameters per Stellios et al. 2021). The path's per-hop scores are normalized to the unit interval (`s_i = CVSS_i / 10`) and the **path score is the product of per-hop normalized scores**: `S_path = ∏ (CVSS_i / 10)`. Lower products mean less feasible composed paths.
+
+**Default pruning threshold**: drop any path whose product falls below `0.05` *before* expanding the next hop. This is the value Stellios et al. demonstrate keeps the working set small enough for human review on IoMT-room-scale graphs (single-digit / low-tens of paths rather than thousands). Adjust upward (e.g. `0.10`) when the analyst wants only the most-feasible chains, or downward (e.g. `0.01`) when the system has high consequence and the team is willing to review more paths. **State the threshold explicitly in §1 prose** so the artifact is auditable — e.g. "Path-risk pruning threshold: `S_path ≥ 0.05` (Stellios default)."
+
+**Worked example — three-hop IoMT path** (rogue BLE peripheral → Wi-Fi AP → infusion pump):
+
+| Hop | Surface | CVSS | Normalized |
+|---|---|---|---|
+| H1 | P3 — rogue BLE peripheral DoSing the 2.4 GHz band shared with the AP | 6.5 | 0.65 |
+| H2 | P2 — degraded AP retransmits expose pump's mTLS-less management VLAN | 7.5 | 0.75 |
+| H3 | P1 — exposed serial console on the pump accepts unauthenticated commands | 8.8 | 0.88 |
+
+`S_path = 0.65 × 0.75 × 0.88 ≈ 0.43`. Above the `0.05` default threshold by an order of magnitude — keep the path and triage it.
+
+A second candidate path that scores `0.65 × 0.30 × 0.20 ≈ 0.039` falls below the default threshold and is dropped before further expansion (any deeper hops can only make the product smaller, since each `s_i ≤ 1`). The pruning argument is exactly that: the product is monotone-non-increasing in path length, so a sub-threshold prefix never produces a super-threshold extension.
+
+The per-element OWASP-RR table still lists the individual flaws; the path-risk table lists the composed attack chains and is what gets triaged. Construction technique: `methodologies.md` § "Risk-prioritized cyber-physical attack paths".
+
+## L/M/H ↔ TM-BOM enums
+
+The OWASP Threat Model Library schema (used as this skill's TM-BOM — see `SKILL.md` § "Producing the TM-BOM") uses 5-level enums for `risks[].likelihood` and `risks[].impact`, a 6-level enum for `risks[].level`, and an integer 0–25 `risks[].score`. The skill's L/M/H markdown values must translate to these schema enums when emitting the TM-BOM. Use this table — it's the canonical mapping; don't improvise.
+
+### Likelihood (markdown L/M/H → schema enum)
+
+| Markdown | Schema `likelihood` | When to pick |
+|---|---|---|
+| L | `unlikely` | Default for L; needs unusual conditions / specific access |
+| L (very low) | `rare` | Only when the prerequisites are extreme (physical access to a secured facility, nation-state-only capability) |
+| M | `possible` | Default for M; achievable by a moderately skilled attacker |
+| H | `likely` | Default for H; commodity attack, internet-facing surface, no auth or weak auth |
+| H (near-certain) | `certain` | Reserve for "this is happening today" — observed in production logs, public PoC against this version |
+
+### Impact (markdown L/M/H → schema enum)
+
+| Markdown | Schema `impact` | When to pick |
+|---|---|---|
+| L | `minor` | Default for L; nuisance, recoverable without external coordination |
+| L (very low) | `negligible` | Only for losses with no business / regulatory / safety consequence |
+| M | `moderate` | Default for M; one-team-day to recover, no regulatory notification |
+| H | `major` | Default for H; PHI/PII breach, multi-team-day recovery, regulator notification |
+| H (catastrophic) | `severe` | Reserve for safety-critical outcomes (patient harm, operator injury), unrecoverable data loss, or business-existential reputational hits |
+
+The "very low" and "near-certain" / "catastrophic" sub-buckets are how the 3-level skill scale projects onto the schema's 5-level scale. Most threats land squarely in the default mapping; reserve the edge enums for genuine outliers and document the choice in §1 prose.
+
+### Risk level (matrix output → schema `level`)
+
+| Matrix output | Schema `level` |
+|---|---|
+| Low | `low` (or `very_low` if both likelihood and impact are at the bottom of the 5-level scale) |
+| Medium | `medium` |
+| High | `high` (or `very_high` if both likelihood and impact land in the top two enum buckets, e.g. `likely + major`) |
+| Critical (per the §1 promotion rule) | `critical` |
+
+### Risk score (integer 0–25)
+
+The schema's `score` is `likelihood_index × impact_index` where each index is 1..5 in the order shown above (`rare=1, unlikely=2, possible=3, likely=4, certain=5`; `negligible=1, minor=2, moderate=3, major=4, severe=5`). Compute and emit:
+
+| Likelihood × Impact | Score |
+|---|---|
+| `unlikely × moderate` | 2 × 3 = 6 |
+| `possible × major` | 3 × 4 = 12 |
+| `likely × major` | 4 × 4 = 16 |
+| `likely × severe` | 4 × 5 = 20 |
+| `certain × severe` | 5 × 5 = 25 |
+
+The score is a derived field — recompute it from likelihood/impact rather than asking the user. Validate it against `level` (e.g. `score ≥ 16` should typically have `level: high` or higher).
+
+### Worked translation
+
+A flow-centric threat rated `Likelihood: M`, `Impact: H` in the markdown table → matrix output `High` → TM-BOM:
+
+```json
+{
+  "symbolic_name": "t-1",
+  "likelihood": "possible",
+  "impact": "major",
+  "score": 12,
+  "level": "high"
+}
+```
+
+A safety-bumped control-loop threat rated `Likelihood: M`, `Impact: H` (catastrophic — patient harm) → matrix output `High` (or `Critical` if the §1 promotion rule applies) → TM-BOM:
+
+```json
+{
+  "symbolic_name": "t-7",
+  "likelihood": "possible",
+  "impact": "severe",
+  "score": 15,
+  "level": "very_high"
+}
+```
 
 ## Why DREAD is discouraged
 

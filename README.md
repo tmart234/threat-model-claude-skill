@@ -23,7 +23,7 @@ threat-modeler/
     ├── medical.md                       # Medical-device / PACS / DICOM / IoMT domain notes (FDA, IEC 81001-5-1, HL7)
     ├── methodologies.md                 # Hybrid framing, system-type matrix; STRIDE, PASTA, LINDDUN, OCTAVE, VAST, etc.
     ├── risk-rating.md                   # Risk rating frameworks (DREAD, CVSS, OWASP RR)
-    ├── stpa-safesec.md                  # STPA-Sec / STPA-SafeSec for safety-critical systems
+    ├── stpa.md                          # STPA — safety + security joint hazard analysis (umbrella for STPA / STPA-Sec / STPA-SafeSec lineage)
     ├── stride-prompts.md                # STRIDE per-element prompts and checklists
     └── validation.md                    # Threat model validation and review guidance
 ```

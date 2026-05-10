@@ -1,5 +1,8 @@
 # CAPEC — using the attack-pattern catalog in a hybrid threat model
 
+> **Last verified**: 2026-05 against the live CAPEC catalog (capec.mitre.org). CAPEC IDs and CWE references in this file were spot-checked at that date; the catalog updates regularly, so re-confirm pattern numbers when citing. Re-verify quarterly or whenever a referenced pattern is added/retired.
+> **Sources paraphrased**: MITRE CAPEC (public domain) and MITRE CWE (public domain). Cite the upstream pattern ID directly in any output that references it — paraphrasing pattern names and CWE numbers in this file does not require attribution per upstream license, but the threat-model artifact this skill produces should still cite `MITRE CAPEC` and `MITRE CWE` once in its references section.
+
 > **Related**: ← `SKILL.md` • `stride-prompts.md` (STRIDE is the input to the CAPEC chain) • `centric-methods.md` (CAPEC is a characterization layer, not an entry point) • `methodologies.md` § "Hybrid as default" (CAPEC's place in the operational stratum).
 
 This file is the working reference for CAPEC (Common Attack Pattern Enumeration and Classification, MITRE) inside this skill's hybrid output. CAPEC is one of the operational-stratum characterization layers (see `methodologies.md` § "Hybrid as default"). It is **not** an entry point — you don't enumerate threats from CAPEC; you map already-enumerated threats to CAPEC patterns to make them concrete and traceable.
@@ -29,6 +32,8 @@ Worked chain:
 The columns to the right of each CAPEC ID come from CAPEC itself (each pattern lists its CWEs and typical mitigations). Don't reinvent them; cite them.
 
 ## Three CAPEC abstraction levels — which to cite when
+
+The abstraction level is **modeler bookkeeping**, not a column the user has to read. Pick the level using the SDLC-stage rule below and emit only the CAPEC ID in the threat row. The one exception: when no Detailed pattern exists for the domain-specific protocol (DICOM PDU, HL7 v2, Modbus/OPC), drop to the closest Standard or Meta pattern and footnote the row with `(closest pattern; no Detailed available)` so a downstream reviewer knows the choice was forced rather than lazy. Don't make users figure out Meta-vs-Standard-vs-Detailed themselves.
 
 CAPEC patterns come at three abstraction levels. Citing the wrong level is a common mistake: too abstract makes the citation decorative; too detailed claims more knowledge of the implementation than the threat model has.
 

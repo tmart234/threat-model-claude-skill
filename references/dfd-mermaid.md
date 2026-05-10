@@ -1,10 +1,13 @@
 # DFD → Mermaid mapping
 
+> **Last verified**: 2026-05. Mermaid syntax (especially `classDef` / `style` / `linkStyle` and the v10+ comma-escape rule) updates between Mermaid releases — re-verify against the live Mermaid docs if a deliverable target depends on a specific version.
+> **Sources paraphrased**: Adam Shostack, *Threat Modeling: Designing for Security* (Wiley, 2014) — DFD3 dashed-trust-boundary convention, "focus on data flow" / "no data sinks" / "data can't move itself" / "tell a story" / "don't draw an eye chart" / "combine equivalent elements" rules-of-thumb, the diagramming checklist (paraphrase only). Mermaid syntax (mermaid-js.github.io, MIT licensed). Substantive direct quotes from Shostack 2014 require Wiley/Shostack attribution.
+
 > **Related**: ← `SKILL.md` • `environments.md` (per-environment boundary patterns + ownership taxonomy) • `centric-methods.md` (flow-centric entry point) • `stride-prompts.md` (enumerate threats once the DFD is drawn) • `validation.md` (canonical diagramming checklist)
 
 Mermaid renders well in GitHub, GitLab, Markdown editors, and Polarion (with the Mermaid plugin). It's the practical default for a text-first threat modeling workflow.
 
-Mermaid doesn't natively render trust boundaries the way a dedicated threat modeling tool does, but solid `subgraph` borders read visually as *containment* (UML-package-style "this is part of that"), not as a *boundary an attacker crosses*. The default is to render every trust-boundary subgraph with a **dashed border** via `style <SubgraphID> fill:none,stroke:#888,stroke-dasharray: 5 5`. Pattern, classDef variant, and worked example are in § "Rendering trust boundaries as dashed subgraphs" below. Apply it to every diagram — it is not optional.
+Mermaid doesn't natively render trust boundaries the way a dedicated threat modeling tool does, but solid `subgraph` borders read visually as *containment* (UML-package-style "this is part of that"), not as a *boundary an attacker crosses*. The default is to render every trust-boundary subgraph with a **dashed border** via the `classDef tb fill:none,stroke:#888,stroke-dasharray: 5 5` declaration plus a `class <SubgraphID>,<SubgraphID>,... tb` line that lists every trust-zone subgraph. This is the canonical pattern across this skill — use it on every diagram, the worked example (`references/dfd-mermaid.md` § "Worked example"), and the blank template (`assets/threat-model-template.md`). The per-subgraph `style ID fill:none,stroke:#888,stroke-dasharray: 5 5` form is acceptable only when there's a single subgraph; for two or more, use `classDef`. Pattern, examples, and the rare per-subgraph alternative are in § "Rendering trust boundaries as dashed subgraphs" below. Apply it to every diagram — it is not optional.
 
 ## Element mapping
 
@@ -89,7 +92,7 @@ subgraph ID["<owner> | <env-type> | <trust>"]
 
 Where:
 
-- **`<owner>`** — who owns the underlying network, host, account, or device (and therefore who can change configuration / patch / control access). Pick from the ownership taxonomy in `environments.md` § "Ownership taxonomy". When ownership is unclear, write `Unknown` and record an explicit assumption — don't guess silently. When two owners share a zone, write the one with operational control (e.g. `Customer IT (vendor service-account exception — A3)`).
+- **`<owner>`** — who owns the underlying network, host, account, or device (and therefore who can change configuration / patch / control access). Pick from the ownership taxonomy in `environments.md` § "Ownership taxonomy". When ownership is unclear, write `Unknown` and record an explicit assumption — don't guess silently. When two owners share a zone, write the one with operational control (e.g. `Customer IT (vendor service-account exception — ASM3)`).
 - **`<env-type>`** — the environment kind from a fixed taxonomy, **without redundant prefixes**: `cloud (<provider>)`, `on-prem (<sub-zone, e.g. AD Tier 0 / corp VLAN / DMZ>)`, `embedded (<sub-zone, e.g. application core / secure element / baseband>)`, `Purdue L<n> (<named zone>)` for OT/ICS (don't write `OT/ICS (Purdue L2 — supervisory)` — `Purdue L2` already says it's OT and `L2` already says supervisory; just `Purdue L2 (supervisory)` or even `Purdue L2` once the model has established the cell is OT), `mobile (<sub-zone>)`, or `public internet`. Use the per-environment patterns in `environments.md` for sub-zones; collapsing a whole environment into one box loses most of the boundaries that matter.
 - **`<trust>`** — qualitative trust level: `untrusted`, `low trust`, `medium trust`, `high trust`, `very high trust`, or domain-specific qualifiers like `safety-critical`, `out-of-scope owner`, `unknown`. Use the same scale across every diagram in one model so the prioritized §3 list is consistent.
 
@@ -129,22 +132,22 @@ A small follow-on: when two zones legitimately sit at the same Purdue level but 
 
 Mermaid renders `subgraph` borders as solid rectangles by default. Solid borders read visually as *containment* — UML-package-style "this object contains those objects." That's the wrong semantic for a threat model. A trust boundary is a *line an attacker crosses*, and Shostack's DFD3 convention (and every commercial threat-modeling tool) renders it dashed for exactly this reason.
 
-Two patterns work in Mermaid; pick one and use it consistently in one diagram.
+**Default to the `classDef` + `class` pattern below** for every diagram in this skill, including diagrams with only one subgraph (consistent with the worked example and the template). The per-subgraph `style` form is a fallback for tooling that doesn't render `classDef` correctly; mention it once if you fall back to it.
 
-**Pattern A: per-subgraph `style` (verbose but explicit):**
+**Canonical pattern: `classDef` with `class` assignment.** Place these two lines at the bottom of the Mermaid block, listing every trust-zone subgraph in the `class` line:
+
+```
+classDef tb fill:none,stroke:#888,stroke-dasharray: 5 5
+class HospNet,Internet,Cloud tb
+```
+
+**Fallback only: per-subgraph `style`.** Use only if `classDef` doesn't render in your target environment. One line per subgraph:
 
 ```
 subgraph HospNet["Hospital IT | on-prem (clinical VLAN) | moderate trust"]
     PACS(PACS Server)
 end
 style HospNet fill:none,stroke:#888,stroke-dasharray: 5 5
-```
-
-**Pattern B: `classDef` with `class` assignment (preferred when there are several boundaries):**
-
-```
-classDef tb fill:none,stroke:#888,stroke-dasharray: 5 5
-class HospNet,Internet,Cloud tb
 ```
 
 `stroke-dasharray: 5 5` (5px dash, 5px gap) is the Shostack-DFD3-equivalent default. Other values (`3 3` for a tighter dash, `8 4` for a longer one) are fine — pick one per diagram. **`fill:none` matters**: without it, the subgraph fill obscures elements behind it when the renderer overlaps zones; `fill:none` makes the boundary a true outline.
