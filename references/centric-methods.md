@@ -8,12 +8,12 @@ This file is about the **entry point** to threat generation — the question of 
 ENTRY POINT (centric method)        +    LENS (categorization)
 ──────────────────────────────             ────────────────────
 asset-centric                              STRIDE
-flow-centric                               LINDDUN
-process-centric                            CAPEC
-user-needs-centric                         ATT&CK
-attacker-centric                           kill chain
-code-centric                               CWE
-                                           CVSS
+data-centric (NIST SP 800-154)             LINDDUN
+flow-centric                               CAPEC
+process-centric                            ATT&CK
+user-needs-centric                         kill chain
+attacker-centric                           CWE
+code-centric                               CVSS
 ```
 
 For example, "STRIDE-Per-Element" is really *flow-centric generation + STRIDE characterization*. STRIDE is doing the prompt work; the DFD is doing the coverage work. Confusing the two leads people to think STRIDE alone is a complete approach. It isn't — STRIDE is a categorization lens that needs an entry point to be applied against.
@@ -22,7 +22,7 @@ For example, "STRIDE-Per-Element" is really *flow-centric generation + STRIDE ch
 
 Shostack's *Threat Modeling: Designing for Security* (Ch. 2) frames structured threat modeling as a choice between three approaches: **focusing on assets, focusing on attackers, or focusing on software** — and recommends focusing on software. His "focus on software" maps onto a cluster of entry points in the more granular taxonomy used here: flow-centric, process-centric, and user-needs-centric all model the software (or system) directly via DFDs, workflow descriptions, or user stories. This skill's default — flow-centric generation with STRIDE-Per-Element — is squarely inside Shostack's "focus on software" recommendation.
 
-User-needs-centric and code-centric entries below are extensions beyond Shostack's three categories — they capture modes of work (abuse-case inversion, implementation review) that have become more visible in the threat-modeling community since 2014.
+User-needs-centric, code-centric, and data-centric entries below are extensions beyond Shostack's three categories — they capture modes of work (abuse-case inversion, implementation review, and data-lifecycle modeling per NIST SP 800-154) that have become more visible in the threat-modeling community since 2014.
 
 ## Generation vs. characterization
 
@@ -57,6 +57,22 @@ This is why code-centric review is a validation layer, not a generation method (
 **Use when**: the system has a small number of obvious high-value assets (PHI database, signing key, patient safety control loop). Less useful when "everything is sensitive."
 
 **Shostack's critique** (Ch. 2): "There's no direct line from assets to threats, and no prescriptive set of steps. Essentially, effort put into enumerating assets is effort you're not spending finding or fixing threats." Asset enumeration tends to bog down in arguments about what *counts* as an asset (he distinguishes "things attackers want," "things you want to protect," and "stepping stones," which mostly overlap). The output of all that work is a list of things to look for in your software model — at which point you might as well have started with the software model. Asset thinking is most useful for *prioritizing* threats once you've found them, not for finding them in the first place.
+
+### Data-centric (NIST SP 800-154)
+
+**Start by**: pick one piece of data (e.g. "a DICOM study", "a refresh token", "a firmware image"). Enumerate every **authorized location** the data can exist in across its lifecycle — **storage / transmission / execution / input / output** — then walk attack vectors per location. Defined in NIST SP 800-154 (Draft, *Guide to Data-Centric System Threat Modeling*, 2016).
+
+**One-line distinction**: flow-centric draws the system and walks elements; data-centric picks the data and walks its lifecycle.
+
+**Strengths**: forces narrow, explicit security-objective scope (drop objectives that don't apply, e.g. PHI = C+I, not A); catches lifecycle-only locations the DFD doesn't render (process memory, core dumps, debug logs); aligns with data-typed regulatory framings (HIPAA / GDPR / PCI / ITAR / FDA).
+
+**Weaknesses**: bounded by chosen data scope (multi-class systems → multiple passes); misses system-level threats unrelated to the chosen data; one data class per pass — see `data-centric.md` for the misapplication callout.
+
+**Use when**: a specific data type dominates (PHI, signing keys, tokens); regulatory framing is data-typed; "everything is sensitive" makes asset-centric flounder. Often the *primary* contextual entry point for medical-device / DICOM work.
+
+**Distinction from asset-centric**: asset-centric enumerates broadly across kinds of things ("what crown jewels exist?"); data-centric drills the lifecycle of one thing ("for *this* data, where can it be?"). They overlap but the entry move is different.
+
+**Deep dive**: workflow (the four NIST steps, three modes for acquiring the data scope, per-data-class scoping rule, STRIDE-against-locations caveat, hybrid bridge to flow-centric, and worked example) is in `data-centric.md`.
 
 ### Flow-centric
 
@@ -166,6 +182,7 @@ Default for this skill: **flow-centric, with STRIDE-Per-Element as the lens**. I
 
 Supplement with one or more of:
 
+- **Data-centric (NIST SP 800-154)** — when a specific data type dominates (PHI, signing keys, tokens) or when regulatory framing is data-typed (HIPAA / GDPR / PCI / FDA). Often the *primary* entry for medical-device / DICOM work where "what threatens this study?" is the real question.
 - **Asset-centric** — when you can name a small set of crown jewels. Quick to do alongside flow-centric.
 - **User-needs-centric** — when the system has rich business logic. Catches what STRIDE misses.
 - **Process-centric** — when operational surface is significant.
