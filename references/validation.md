@@ -53,6 +53,23 @@ As the team gets close to shipping or deploying, run a query for every threat-de
 
 A `tmtest` or `threat-model` tag/label on each bug makes this query trivial.
 
+## Eight Q4 dimensions (MITRE Threat Modeling Playbook §2.6.2)
+
+The three Shostack checks above (model/reality conformance, task/process completion, bug checking) are the *activities* of Q4. The MITRE Threat Modeling Playbook §2.6.2 adds a complementary lens: **eight dimensions of completeness review** to apply across the artifact as a whole. Use these as a final pass over the full document before shipping. They overlap the Shostack checks rather than replacing them.
+
+| Dimension | Question | Where this skill addresses it |
+|---|---|---|
+| **Completeness** | Has every applicable element / cell / threat / response been populated, with no silent omissions? | "Diagramming" and "Threats" checklists below; `stride-prompts.md` § "Empty STRIDE cells require an explicit rationale" |
+| **Clarity** | Can a reader who wasn't in the room understand each entry? Are the terms defined, the abbreviations expanded, the diagrams legible? | `dfd-mermaid.md` § "Don't draw an eye chart"; the "Validating-threats" checklist's plain-language threat sentences |
+| **Specificity** | Is each element appropriately specific and at the right level of detail for the intended audience? Protocols named (DICOM C-STORE, not "imaging traffic"), versions where they matter (TLS 1.2 vs 1.3), configuration modes (mTLS-required vs optional). | `dfd-mermaid.md` § "Diagramming checklist" ("every data flow is labeled with the actual protocol and authentication"); `manifesto.md` § "Failure-mode catalog" ("Generic mitigations", "STRIDE label without a concrete attack") |
+| **Traceability** | Can each threat trace back to a DFD element / asset / data class, and forward to a mitigation row, a derived requirement (`SR-###`), and a tracked bug? | `SKILL.md` § "Producing the threat model" ID conventions (`AS#` / `T#` / `V#` / `PR#` / `SR-###` / `ASM#`); `manifesto.md` § "Failure-mode catalog" ("Mitigation table that doesn't match the threat table") |
+| **Consistency** | Do the diagrams, threat tables, mitigation table, and prose tell the same story? Do strata cross-reference instead of contradicting? Does the §1 assumption register match what §2 / §3 lean on? | `SKILL.md` § "DFD" rule 3 ("Reconcile the DFD against §1 before threat enumeration"); the "Cross-stratum" subsection of the Threats checklist below |
+| **Roles and responsibilities** | Is it explicit *who* owns each control, each `Accept`, each `Transfer`? For multi-party systems (vendor / HDO / patient; vendor / customer / integrator), is the ownership boundary named on every threat that crosses it? | `SKILL.md` § "Mitigations and Q4" ("Avoid silent transference and silent acceptance"); `manifesto.md` § "Anti-patterns" → "Silent risk transference / silent risk acceptance"; every `Transfer` row names the receiving party + threats covered + concrete control; every `Accept` row records `{rationale, decision_maker, decided_at}` |
+| **Assumptions** | Is every assumption the model leans on captured in the §1 assumptions register (`ASM#`), in falsifiable form, and re-checked when the model is revised? | § "Document assumptions as you go" below; `SKILL.md` ID conventions (`ASM#` register placed early in §1) |
+| **Rationales** | For every choice that could have gone another way — `Accept` vs `Mitigate`, swap-vs-supplement methodology choice, scope inclusion / exclusion, residual-risk acceptance — is the rationale recorded so the next reviewer can audit the decision? | The three Shostack checks above; `Accept`-row rationale field; `methodologies.md` swap-vs-supplement guidance; §1 scope-out section |
+
+The skill's three closing checklists below are *operational instances* of these eight dimensions — not a replacement. The Specificity and Roles-and-responsibilities dimensions in particular tend to fail silently in real artifacts (they don't block the document from looking complete), so promote them to first-class review items in the closing pass.
+
 ## The closing checklists
 
 Drop these into the threat-model document itself with check-marks. The Diagramming and Validating-threats checklists are adapted from Shostack Chapter 1's end-of-chapter checklists; the Threats checklist is extended to cover this skill's hybrid output (three strata + cross-stratum).
@@ -100,6 +117,7 @@ The hybrid layout's three strata are scaffolding, not a coverage quota — only 
 - [ ] Threats are *cross-referenced* across strata that are present, not duplicated.
 - [ ] All threats share one ID space and one risk-rating scale, so the §3 prioritized list is single-sorted.
 - [ ] No section that's present is empty or stubbed — populated, or omitted entirely.
+- [ ] **Empty STRIDE applicability cells carry an explicit rationale, not silent omission.** For every check-marked cell in the STRIDE applicability table that has no threat, the threat table records a no-threat row with rationale (`stride-prompts.md` § "Empty STRIDE cells require an explicit rationale"). Silent blanks are indistinguishable from "we forgot to walk this cell".
 
 ### Validating-threats checklist
 

@@ -91,6 +91,15 @@ If something's still missing after Round 2, ask one focused round — but err on
 
 Output a single markdown document. Default to a single document; only split into linked documents if the user asks. Use Mermaid for the DFD. **Copy `assets/threat-model-template.md` and fill it in** rather than rebuilding the skeleton — the template carries the full structure (header metadata, scope-classification table, DFD element catalog, trust-boundary table, threat-personas table, the §2.1 / §2.2 / §2.3 tables, mitigation table, risk register, derived requirements, Q4 checklist, changelog).
 
+**Artifact taxonomy (MITRE Threat Modeling Playbook §2.4.6).** A complete threat-modeling deliverable is composed of *four* artifact types, not one. Pick where each finding lives based on who needs to act on it — don't try to push everything into the markdown:
+
+1. **Process documentation** — what's in scope, what's out, what assumptions are taken as given, how threats were identified, when the model is re-reviewed. The markdown produced by this skill (the `assets/threat-model-template.md` instance) is the process doc.
+2. **Ticketing system** — every threat becomes a tracked work item in the team's bug tracker (Jira, Polarion, GitHub Issues, ServiceNow). This is the *exit point* from threat modeling per `references/stride-prompts.md` § "Enumeration tactics" — once threats are bugs, normal triage and engineering machinery takes over. The markdown's threat IDs (`T#`, `V#`, `PR#`, `SR-###`) are the cross-reference back from the tracker.
+3. **Diagrams** — DFDs (`references/dfd-mermaid.md`), sequence / swim-lane / state diagrams (`references/non-dfd-models.md`), attack trees (`references/methodologies.md`). Embed inline in the markdown when small; link out to a dedicated diagram source when large or maintained separately (e.g. a Threat Dragon `.tdt` file or pytm script in the repo).
+4. **Threat table / register** — the §2 / §3 tables. Default home is inside the markdown; for large systems with hundreds of threats, link a spreadsheet or database export (the TM-BOM JSON described in § "Producing the TM-BOM" below is the structured form of this register).
+
+The placement choice is consequential: a threat that lives only in the markdown but never reaches the tracker won't be triaged; a threat that lives only in the tracker but isn't reflected in the markdown won't survive the next model revision. Cross-reference between the artifacts explicitly — ID conventions below exist precisely to make these cross-references unambiguous.
+
 The four top-level sections are fixed (Q1 / Q2 / Q3 / Q4). §2 has three subsections by default — Contextual / Operational / Strategic — populated when warranted.
 
 **Default scaffold rule.** Add content to a §2 subsection when you have something to say there. Omit a subsection entirely when you don't. No "not applicable" stubs. The three-stratum layout is *available scaffolding*, not a coverage quota — it comes from Tatam et al. (2021), one paper, not a practitioner consensus. Background and the system-type matrix that suggests which supplements to add: `references/methodologies.md` § "Hybrid as default".
