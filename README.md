@@ -12,15 +12,16 @@ threat-modeler/
 ├── README.md                            # This file
 ├── SKILL.md                             # Skill body (frontmatter + instructions); entry point loaded by Claude
 ├── assets/
-│   └── threat-model-template.md         # Blank hybrid threat model template
+│   └── threat-model-template.md         # Blank threat model template
 └── references/
     ├── capec.md                         # CAPEC attack pattern catalog guidance
-    ├── centric-methods.md               # Attacker/asset/system-centric methodology selection
-    ├── data-centric.md                  # Data-centric threat modeling guidance
+    ├── centric-methods.md               # Entry-point taxonomy (asset / data / flow / process / etc.)
+    ├── data-centric.md                  # Data-centric threat modeling (NIST SP 800-154)
     ├── dfd-mermaid.md                   # Data flow diagrams in Mermaid syntax
-    ├── environments.md                  # Environment-specific guidance (IoT, medical, cloud, etc.)
+    ├── environments.md                  # Per-environment trust-boundary patterns + domain notes (embedded / cloud-native / AI-ML / third-party)
     ├── manifesto.md                     # Threat Modeling Manifesto principles
-    ├── methodologies.md                 # STRIDE, PASTA, LINDDUN, OCTAVE, VAST, Trike, etc.
+    ├── medical.md                       # Medical-device / PACS / DICOM / IoMT domain notes (FDA, IEC 81001-5-1, HL7)
+    ├── methodologies.md                 # Hybrid framing, system-type matrix; STRIDE, PASTA, LINDDUN, OCTAVE, VAST, etc.
     ├── risk-rating.md                   # Risk rating frameworks (DREAD, CVSS, OWASP RR)
     ├── stpa-safesec.md                  # STPA-Sec / STPA-SafeSec for safety-critical systems
     ├── stride-prompts.md                # STRIDE per-element prompts and checklists

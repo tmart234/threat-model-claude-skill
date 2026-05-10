@@ -196,7 +196,7 @@ Example threat-row note: *"CAPEC-272 (Protocol Manipulation, Meta) — no DICOM-
 
 ## How CAPEC slots into the hybrid output
 
-In the document structure (SKILL.md § "Producing the threat model"):
+In a hybrid threat model with §2 split into three strata (see `methodologies.md` § "Three strata as default scaffolding"):
 
 - **§2.1 Contextual stratum** — STRIDE/data-centric/etc. produce the threats. Don't add CAPEC IDs here yet; the contextual stratum is about what could go wrong, not its catalog ID.
 - **§2.2 Operational stratum** — this is where the CAPEC column lives, alongside ATT&CK, CWE, CVSS. Each row: threat ID → CAPEC pattern (with abstraction level) → CWE(s) → ATT&CK mapping → kill-chain stage → detection notes.

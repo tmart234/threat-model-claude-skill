@@ -194,8 +194,61 @@ Most real systems span multiple environment types: a cloud backend + mobile app 
 - The boundaries *between* environments (mobile app ↔ cloud backend, embedded device ↔ vendor cloud, on-prem connector ↔ SaaS) are usually the highest-value boundaries in the model. Label flows across them with the actual protocol and authentication ("mTLS over HTTPS", "device-cert OAuth2 client credentials", "WebSocket with bearer token after device-attestation").
 - Ownership often *changes* across the boundary (vendor-owned cloud ↔ customer-owned device, customer-owned backend ↔ user-owned phone). Make these transitions explicit in the trust-boundary prose section.
 
+## Multi-device shared-space modeling
+
+When several devices share one physical space (smart building zone, plant-floor cabinet, vehicle cabin, robotics cell, clinical room), one device's RF / acoustic / power surface can reach another. Element-by-element STRIDE often misses multi-hop cyber-physical attack paths where each individual device looks fine but their composition over inter-device hops reaches a high-value target.
+
+Classify the **between-device** surface (Stellios et al. 2021):
+
+- **P1 — direct contact.** USB, JTAG/UART/SWD, attached cable, attached storage, hardwired serial console.
+- **P2 — proximity.** BLE/NFC reach, line-of-sight IR, audible-range acoustic, near-field EM, Wi-Fi-Direct / Wi-Fi associated network, Zigbee mesh.
+- **P3 — shared physical medium without proximity.** The 2.4 GHz ISM band shared across Wi-Fi / BLE / Zigbee in a building, where a rogue BLE peripheral can DoS a Wi-Fi-attached device without ever associating with it; shared power lines; shared HVAC for acoustic; shared EM environment.
+
+For systems where this composition is plausible, run a target-rooted walk from each safety-critical or high-value asset outward through P1/P2/P3 hops — see `methodologies.md` § "Risk-prioritized cyber-physical attack paths" for the construction. Score paths with the CVV scoring (Stellios) so the top paths get mitigations rather than every theoretically-possible path.
+
+Domains where this is regularly worth running: medical (IoMT — clinical rooms with infusion pumps + monitors + Wi-Fi APs + nurse-call peripherals + clinician phones; OR/cath-lab; NICU bays); industrial (plant-floor cabinets with shared backplane; robotics cells with shared safety controllers); automotive (vehicle cabin with infotainment + telematics + body-control modules); smart buildings (HVAC + access-control + lighting on shared OT segments).
+
+## Domain notes
+
+The skill's defaults are domain-neutral. These subsections collect domain-specific defaults, regulators, and gotchas that don't fit into the per-environment boundary catalog above. Load the relevant subsection when the system fits the domain. Medical-device specifics (PACS / DICOM / IoMT / FDA / IEC 81001-5-1 / HL7 / patient-as-asset / clinical workflow misuse) live in `medical.md` rather than here.
+
+### Embedded / IoT — domain notes
+
+- **Physical attack surface belongs in the DFD.** Debug ports (JTAG/UART/SWD), USB, removable media, exposed serial consoles, programming headers, test pads — each is a trust boundary or an opening into one. Tamper protections (secure boot chain, secure element / TEE / TrustZone, anti-glitching, encrypted firmware-at-rest) are mitigations against specific named threats; if the device claims them, name the specific protections in the DFD prose and threat rows.
+- **The trust boundary between device and network is often the most consequential.** A device that "trusts the LAN it's on" is treating LAN compromise as out-of-scope; that assumption needs to be explicit and falsifiable.
+- **Side channels** (timing, power, EM, acoustic) are legitimate threats for devices handling cryptographic secrets without an HSM-class component. CAPEC-189 (Black Box Reverse Engineering) and CAPEC-188 (Reverse Engineering) are the operational-stratum mappings.
+- **Firmware attack surface** — code-signing chain, OTA-update server, update manifest format, anti-rollback. Each is a control whose absence promotes Tampering threats (CAPEC-441, CWE-494).
+- **Supply chain** is a real and rarely-fixable surface — provenance (SBOM, signed releases, reproducible builds), manufacturing-stage compromise (CAPEC-438), distribution-stage tampering (CAPEC-439). When a supply-chain finding has no in-product mitigation, name it as Accept with explicit residual-risk language.
+- **Multi-device shared space** — see § "Multi-device shared-space modeling" above. Routine in IoMT, smart buildings, vehicle cabins, robotics cells, plant cabinets.
+- **Safety-critical control loops** — for control-loop devices (automotive ECUs, robotics, drones, industrial actuators), add STPA-SafeSec — swap or supplement, depending on whether ISO 26262 / IEC 61508 require the joint artifact. See `stpa-safesec.md` § "Two modes".
+
+### Cloud-native — domain notes
+
+- **Shared-responsibility model.** The cloud provider owns the hypervisor, control plane, managed-service internals, and data-center physical security. You own everything inside your account — IAM, network, host configuration, workload code, data, secrets. Make this split explicit in §1's ownership table; threats below the provider's line are out of scope but should be named, not silently dropped.
+- **IAM is usually under-modeled.** "Authentication is via Cognito" doesn't enumerate the IAM threats — privilege escalation through misconfigured roles, cross-account confused-deputy attacks, instance-profile credential theft, OIDC trust-policy misconfigurations. Walk IAM separately as an asset-centric pass for any non-trivial cloud system.
+- **Managed services** are usually under-modeled. The default assumption is "the managed service is secure"; what's missing is the user's *configuration* of that service (S3 bucket policy, KMS key policy, RDS parameter groups, EventBridge rules). Treat each managed-service interaction as a flow whose boundary is the configuration the user controls.
+- **Account / VPC / subnet nesting.** Cloud trust boundaries nest three deep at minimum (account → VPC → subnet); often more (organization → account → VPC → subnet → security group → workload). Use nested subgraphs in the DFD.
+- **Strategic stratum**: SOC 2 / ISO 27001 framing is conventional; CIS Benchmarks for the specific cloud(s) supply concrete strategic-stratum references; sector regulator on top if the workload is regulated.
+
+### AI / ML — domain notes
+
+- **STRIDE still works**, but extend with model-specific threats: prompt injection (direct and indirect), training-data poisoning, model extraction / stealing, membership inference, model inversion, adversarial examples, supply chain on pre-trained weights, jailbreak / system-prompt exfiltration, tool-use abuse for agentic systems, hallucination-driven downstream failure.
+- **Data-centric supplement is usually warranted** — training data, validation/test data, model weights, fine-tuning data, RAG corpus, embedding stores, system prompts, and user-data-in-prompts each have distinct security objectives and authorized locations.
+- **The model itself is an asset.** Model weights are exfiltratable via the API surface (model extraction); training data is reconstructable via membership inference. Both belong in §1's asset table.
+- **Operational stratum**: ATT&CK has limited AI/ML coverage; supplement with **OWASP LLM Top 10** and **OWASP ML Security Top 10** as the primary technique catalogs.
+- **Strategic stratum**: EU AI Act, NIST AI RMF, sector-specific AI regulators where they exist (e.g. healthcare AI). The risk classification under the AI Act drives the regulatory framing.
+- **Agentic systems** add tool-use as an attack surface: any tool a model can call is a control-flow path the prompt can hijack. Treat each tool integration as a trust boundary.
+
+### Third-party / acquired code — domain notes
+
+For components the team didn't write (acquired products, OEM firmware, third-party SaaS embedded as a dependency, open-source libraries with significant attack surface), internal documentation, architecture diagrams, and source may all be missing. The inside-out workflow in `validation.md` § "Validating threats addressed in third-party / acquired code" is the entry point: enumerate accounts and processes the component runs as, listening ports and IPC endpoints, administrative interfaces (including documented backdoors and account-recovery paths), and platform changes the component makes (OS changes, firewall rules, permissions, auto-updater behavior). The result is enough to construct a software model and run threat enumeration against it.
+
+Components that ship with their own threat model and operational security guide are worth significantly more than those that don't — flag this in any buy/build decision.
+
 ## How to use this file
 
 After Round 1.5 you know each environment type and owner. Pick the matching section(s), walk the boundary list as a checklist (in DFD, should be, or explicitly out — "A4: no MDM in scope, personal-device deployment only"), label subgraphs with the convention, and fill in the trust-boundary table (`dfd-mermaid.md` § "Trust boundary prose template") with owners on each side. Cross-check the system-type matrix in `methodologies.md` for matching contextual supplements (data-centric / asset-centric / etc.).
+
+If the system is medical / PACS / DICOM / IoMT, also load `medical.md` — domain-specific defaults (patient-as-asset, clinical workflow misuse, DICOM/HL7 STRIDE specifics, FDA / IEC 81001-5-1 framing) live there rather than in this file.
 
 This is a checklist, not a straitjacket. Drop boundaries that genuinely don't apply, but say so explicitly — silent omission is the anti-pattern that this file is here to prevent.

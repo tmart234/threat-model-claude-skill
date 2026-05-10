@@ -177,3 +177,18 @@ STRIDE is element-centric and design-time. It tends to under-cover certain thing
 - **Adversarial-ML threats** — for systems with ML components, supplement with model-specific threats (prompt injection, training-data poisoning, model extraction, etc.).
 
 If any of these feel under-covered after the STRIDE pass, do a focused supplementary pass and add a short "Beyond STRIDE" subsection to the threat enumeration.
+
+## Enumeration tactics
+
+Practical guidance for working through STRIDE-Per-Element efficiently. Drawn from Shostack's chapter on threat enumeration; the tactics are method-agnostic but most relevant when STRIDE-Per-Element is the working lens.
+
+- **Top-down, breadth-first.** Start from the highest-level view of the whole system and iterate breadth-first across elements rather than depth-first into one component. Bottom-up — building per-feature models and trying to aggregate them — does not produce a coherent system view, and is a known failure mode.
+- **Pick an iteration axis.** Three valid options: walk **across trust boundaries** (highest-value threats live there), walk **across diagram elements** (good when multiple sub-teams collaborate), or walk **across the threats themselves** ("where are all the spoofing threats?" — good for finding related threats). Pick one; don't let the choice become a straitjacket. If unsure, start at trust boundaries.
+- **Start with external entities** (or whatever crosses the outermost trust boundary). It's a natural anchor for "where could an attacker reach in?".
+- **Never skip a threat because it's not what you're looking for right now.** If you're walking Spoofing and notice a Tampering issue, write it down. Redundancy is fine.
+- **Focus on feasible threats.** "Someone might insert a backdoor at the chip factory" is a real possibility, but for most systems it's not a productive threat to model. Stay where the team can act.
+- **Threats follow data flow, not control flow** — and they cluster around trust boundaries *and* complex parsing. Trust-boundary clustering is a starting point, not a limit; complex parsers (deserializers, image decoders, structured-document parsers) are threat-rich even inside a trust zone.
+- **Five threats per diagram element is a reasonable rule of thumb** when using DFD + STRIDE. Significantly fewer probably means an element was under-analyzed; significantly more probably means redundant threats that can be combined.
+- **Document assumptions as you go**, not upfront. When someone says "I assume that…", write it down right then, in falsifiable form. The assumption list becomes test cases, not pedantry. (More in `validation.md` § "Document assumptions as you go".)
+- **Threats become bugs.** Every recorded threat ends up as a tracked work item in whatever bug/issue system the team uses. This is the exit point from threat modeling — once threats are bugs, normal triage and engineering machinery takes over.
+- **Mitigations are themselves attack surface.** Once mitigations are drafted, do a second pass on them — a new auth service introduces new spoofing paths; a new logging path introduces new disclosure paths.
