@@ -31,6 +31,20 @@ The applicability table above is essentially the Microsoft STRIDE-Per-Element ch
 
 A reasonable exit criterion (Shostack): when there's at least one threat per check-marked cell in the table, you're doing reasonably well. If you also circle back to consider threats against your *mitigations* (and ways to bypass them), you're doing pretty well.
 
+## Empty STRIDE cells require an explicit rationale, not silent omission
+
+STRIDE-Per-Element is a **gap-finding tool, not a coverage quota** (MITRE Threat Modeling Playbook §2.4.1: "STRIDE per Element approach can be helpful when trying to identify when to stop brainstorming"). The skill's framing is *generate, don't categorize* — but the playbook adds a rule that's worth elevating here: **if a check-marked applicability cell yields no threat for a given element, document why, don't leave it silently blank**.
+
+The playbook's specific call-out is for Repudiation: "Repudiation threats can often be easy to skip over… If you have performed an initial pass… and have a process that does not include a Repudiation threat associated with it, it can be productive to spend additional time brainstorming to identify if that threat applies. That threat may not exist, in which case it may be helpful to document why it doesn't apply." The same logic generalizes to every applicability cell.
+
+Concrete rule for the threat table:
+
+- For every applicability cell marked `✓` in the table above (External entity S/R; Process S/T/R/I/D/E; Data flow T/I/D; audit-only Data store S/T/R/I/D), either record a concrete threat or record an explicit *no-threat row* with rationale. *"R / Process — no repudiation surface: this stateless validator emits no audit log because all actions are reflected in the downstream service's signed audit stream (T7's countermeasure)"* is a no-threat row. A blank cell is not.
+- Silent omission is indistinguishable from "we forgot to walk this cell" — the same anti-pattern as silent acceptance / silent transference (`manifesto.md` § "Anti-patterns" → "Silent risk transference / silent risk acceptance"). A reviewer reading the model can't tell the difference.
+- The "split a data store that holds both audit and non-audit data into two rows" rule above (line 19) is one instance of this rule — it makes R-applicability explicit per-row instead of letting it go silent.
+
+In TM-BOM emission, no-threat rows do not become `threats[]` entries (the schema requires `event` to be non-empty); record them in the markdown only, or in the top-level `extensions` block as a per-element rationale map if downstream tooling needs to consume them.
+
 ## Category prompts
 
 For each category, the question to ask is "How could an attacker accomplish [violation] against this element?"

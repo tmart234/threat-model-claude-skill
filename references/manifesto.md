@@ -94,6 +94,12 @@ The Manifesto's anti-patterns above describe *practitioner* failure modes ("admi
 
 If you find yourself producing any of these in a draft, the right move is to fix the draft before shipping — a threat model with these failure modes is worse than no threat model, because it gives the team the false impression that their threats have been considered.
 
+## "All models are wrong, some are useful"
+
+The MITRE Threat Modeling Playbook closes (Appendix B) by citing George Box's aphorism: *"All models are wrong, some are useful."* The threat model is a model — a deliberate simplification of the system. Some details have to be wrong, or the model would just be the system. The point is *useful* simplification: keep the abstractions that surface design decisions (trust boundaries, data flows, threats), drop the abstractions that don't (every internal function call, every config-file field that doesn't change a threat).
+
+This is the same pragmatism `SKILL.md` invokes as *"Bias toward shipping a useful approximation over polishing a perfect artifact"* and that the Manifesto encodes as the **Perfect representation** anti-pattern (above): refusing to ship until the model is comprehensive yields no model at all, which is the worst outcome. A v1 with known gaps, an explicit assumptions register (`ASM#`), and a re-review trigger is more useful than a never-shipped v∞.
+
 ## Authors
 
 Zoe Braiterman, Adam Shostack, Jonathan Marcil, Stephen de Vries, Irene Michlin, Kim Wuyts, Robert Hurlbut, Brook S.E. Schoenfield, Fraser Scott, Matthew Coles, Chris Romeo, Alyssa Miller, Izar Tarandach, Avi Douglen, Marc French.
