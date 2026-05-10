@@ -60,44 +60,19 @@ This is why code-centric review is a validation layer, not a generation method (
 
 ### Data-centric (NIST SP 800-154)
 
-**Start by**: pick one piece of data — or a small set of closely related data items (e.g. "a DICOM study", "a refresh token", "a firmware image"). Enumerate every **authorized location** the data can exist in across its lifecycle, then walk attack vectors per location. Defined in NIST SP 800-154 (Draft, *Guide to Data-Centric System Threat Modeling*, 2016).
+**Start by**: pick one piece of data (e.g. "a DICOM study", "a refresh token", "a firmware image"). Enumerate every **authorized location** the data can exist in across its lifecycle — **storage / transmission / execution / input / output** — then walk attack vectors per location. Defined in NIST SP 800-154 (Draft, *Guide to Data-Centric System Threat Modeling*, 2016).
 
-**The four NIST SP 800-154 steps**:
+**One-line distinction**: flow-centric draws the system and walks elements; data-centric picks the data and walks its lifecycle.
 
-1. *Identify and characterize the system and data of interest* — pick the data, name the security objectives that matter for it (often a *subset* of CIA: e.g. for PHI you may scope to confidentiality + integrity and explicitly drop availability for the modeling pass).
-2. *Identify and select attack vectors* — for each authorized location, enumerate what could happen to the data there.
-3. *Characterize security controls* — existing and proposed, mapped to the vectors.
-4. *Analyze the threat model* — gaps, residual risk, what to mitigate.
+**Strengths**: forces narrow, explicit security-objective scope (drop objectives that don't apply, e.g. PHI = C+I, not A); catches lifecycle-only locations the DFD doesn't render (process memory, core dumps, debug logs); aligns with data-typed regulatory framings (HIPAA / GDPR / PCI / ITAR / FDA).
 
-**Authorized data locations** (the enumeration framework):
+**Weaknesses**: bounded by chosen data scope (multi-class systems → multiple passes); misses system-level threats unrelated to the chosen data; one data class per pass — see `data-centric.md` for the misapplication callout.
 
-| Location | What it is | Typical attack vectors |
-|----------|-----------|------------------------|
-| **Storage** | Persistent at rest (DB, files, backups, config, caches, archived studies) | Offline media theft, backup exfiltration, broken file perms, unencrypted snapshots, residual data after delete |
-| **Transmission** | In motion across networks/buses/channels | Eavesdropping, MITM, downgrade, traffic analysis, replay |
-| **Execution / Processing** | In memory while being processed | Memory scraping, core dumps, debug interfaces, side channels, swap, malicious co-tenant |
-| **Input** | Entering the system (UI, API, sensor, file upload, modality) | Source spoofing, malformed/poisoned input, injection that pivots into other locations |
-| **Output** | Leaving the system (UI render, export, log, telemetry, print) | Over-disclosure, leakage via error/log/telemetry, side-channel-in-response, unintended recipients |
+**Use when**: a specific data type dominates (PHI, signing keys, tokens); regulatory framing is data-typed; "everything is sensitive" makes asset-centric flounder. Often the *primary* contextual entry point for medical-device / DICOM work.
 
-**Strengths**:
-- Forces a narrow, explicit security-objective scope ("for *this* data, only confidentiality matters") instead of running every category against everything.
-- Catches threats that span the data lifecycle but never appear on a single DFD edge — e.g. PHI fine in transit and at rest but exposed in a debug log (output) or a core dump (execution).
-- Naturally aligned with regulatory framings that are themselves data-typed: HIPAA (PHI), GDPR (personal data), PCI (CHD), ITAR (controlled technical data), FDA premarket cybersecurity submissions (data inputs/outputs of the device).
+**Distinction from asset-centric**: asset-centric enumerates broadly across kinds of things ("what crown jewels exist?"); data-centric drills the lifecycle of one thing ("for *this* data, where can it be?"). They overlap but the entry move is different.
 
-**Weaknesses**:
-- Bounded by the chosen data scope. Multiple data types → multiple passes (or a deliberate decision to model only the highest-value data).
-- Doesn't surface system-level threats unrelated to the chosen data (DoS against an unrelated process, supply-chain on tooling).
-- Overlap with asset-centric is real but the entry point is different: asset-centric says "what crown jewels exist?", data-centric says "for *this* data, where can it be?". Asset-centric tends to enumerate broadly across kinds of things (keys, services, datasets); data-centric drills the lifecycle of one thing.
-
-**Use when**:
-- A specific data type clearly dominates the threat picture (PHI in a PACS, signing-key material in a build pipeline, refresh tokens in an auth service).
-- You want to scope security objectives narrowly and defensibly (NIST 800-154 explicitly endorses dropping objectives that don't apply for the modeling pass).
-- "Everything is sensitive" makes asset-centric flounder, but you can still name a few *data types* of concern.
-- Regulatory framing is data-typed (FDA, HIPAA, GDPR, PCI). The deliverable maps cleanly to "what threatens this data?".
-
-**When to prefer over flow-centric**: flow-centric draws the system and walks elements; data-centric picks the data and walks its lifecycle. For a medical-device or PACS engagement where the question is "what threatens this PHI study?", data-centric is the more direct entry — a flow-centric DFD will get you there too, but takes a longer path. Conversely, if the system has many data types of comparable sensitivity, or the dominant concerns are availability/safety rather than data-typed, flow-centric wins.
-
-**Pairing**: data-centric pairs cleanly with STRIDE as the per-location lens (run STRIDE against each authorized location, restricted to the security objectives in scope) and with LINDDUN when the chosen data is privacy-sensitive. The output is "vectors per location", which is shaped differently from a STRIDE-Per-Element table — see the data-centric template at `assets/data-centric-threat-model-template.md`.
+**Deep dive**: workflow (the four NIST steps, three modes for acquiring the data scope, per-data-class scoping rule, STRIDE-against-locations caveat, hybrid bridge to flow-centric, and worked example) is in `data-centric.md`.
 
 ### Flow-centric
 

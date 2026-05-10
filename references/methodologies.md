@@ -144,6 +144,59 @@ For systems with ML/AI components, run STRIDE first, then a supplementary pass f
 
 OWASP has a Top 10 for LLM Applications and a Machine Learning Security Top 10 that map to these. Reference, don't reinvent.
 
-## Hybrid is normal
+## Hybrid as default
 
-The Manifesto's "Multiple representations" pattern applies here: it's fine and often correct to use STRIDE for design, LINDDUN for privacy, an attack tree for the most consequential asset, and an ATT&CK-based operational view — all on the same system. Each illuminates different threats. The risk is producing more documentation than the team will read, so prune ruthlessly.
+This skill's default is **not** a single STRIDE-Per-Element document. The default output is a **hybrid threat model** that draws from every applicable layer the skill knows about, organized into three strata.
+
+The framing is from Tatam et al. (*A review of threat modelling approaches for APT-style attacks*, Heliyon 7 (2021)): no single threat-modeling approach covers all permutations of system, adversary, and operational concern, so mature programs layer multiple methods. The Threat Modeling Manifesto's "Multiple representations" pattern says the same thing more loosely. This skill operationalizes both.
+
+### The three strata
+
+| Stratum | What it covers | What goes in it (from this skill) |
+|---------|----------------|------------------------------------|
+| **Contextual** (system-specific) | "What's threatening *this* system?" — the design-time, system-level model | Flow-centric DFD + STRIDE-Per-Element (always), plus one or more supplementary entry points (data-centric, asset-centric, user-needs-centric, process-centric), plus LINDDUN if privacy is in scope, plus AI/ML-specific threats if ML components, plus an attack tree on the top 1–2 highest-value threats, plus code-centric as validation if code is available |
+| **Operational / Tactical** (generic techniques) | "How would an attacker actually realize these threats? How would we see it?" — adversary TTPs, detection, IR | MITRE ATT&CK mapping for the top threats; Cyber Kill Chain mapping where it clarifies sequencing; CAPEC pattern references where they fit; CWE references where code-centric findings exist; CVSS for any threats that map to known CVEs |
+| **Strategic** (sector landscape) | "What does the threat picture for *our sector* look like? Who are the named adversaries and what regimes apply?" | Sector threat-intel pointers (H-ISAC for medical, FS-ISAC for finance, E-ISAC for energy, MS-ISAC for state/local gov, ICS-CERT/CISA advisories for ICS); named-adversary context where one applies; regulatory framing (FDA premarket cybersecurity, IEC 62443, IEC 81001-5-1, HIPAA, GDPR, PCI, ISO 27001); business-impact framing borrowed from PASTA where executive sign-off is needed; org-level context (OCTAVE / VAST) if part of a portfolio review |
+
+Risk rating (qualitative L/M/H by default, or OWASP-RR / FMEA where the org requires it — see `risk-rating.md`) sits *across* the strata: every threat at every layer gets rated on the same scale so they can be merged into one prioritized list.
+
+### Why every output is hybrid (not just complex / regulated systems)
+
+Earlier guidance treated hybrid as something you reach for when a system is "complex enough." That bar is the wrong one — it lets simple-looking systems ship with single-method models that miss whole categories. Even a small internal tool benefits from a contextual supplement (one extra entry point catches what STRIDE-on-DFD misses) and a strategic note (one paragraph: what sector, what regulator, what landscape). The amount of *content* per stratum scales with stakes; the *presence* of all three strata does not.
+
+Minimum viable hybrid for a small system: DFD + STRIDE table + one short supplementary entry-point pass + ATT&CK technique IDs on the top 3 threats + one paragraph of sector / regulatory context. That's still a hybrid. It's still better than a single-method model.
+
+### Decision matrix — which layers, by system type
+
+This is a cheat sheet, not a straitjacket. Always include the "always" cells. Add "often" cells unless there's a clear reason not to. "Sometimes" cells are situational.
+
+| System type | Contextual core (always) | Contextual supplement (always pick at least one) | Operational (always) | Strategic (always) | Often add | Sometimes |
+|---|---|---|---|---|---|---|
+| Generic web app | flow-centric DFD + STRIDE | user-needs-centric (business logic) | ATT&CK on top threats | OWASP Top 10 framing; sector if regulated | LINDDUN (if PII); CWE on code findings | Process-centric (if ops-heavy); attack tree (one high-value flow) |
+| **Medical device / PACS / DICOM** | flow-centric DFD + STRIDE | **data-centric (PHI / device data)** + LINDDUN | ATT&CK; CISA medical advisories | **H-ISAC; FDA premarket cybersecurity; IEC 62443; IEC 81001-5-1; HIPAA; safety-bump rule from `risk-rating.md`** | asset-centric (signing keys); attack tree on safety-critical path | Code-centric on parser/protocol code; named adversary if applicable |
+| Cloud-native multi-tenant SaaS | flow-centric DFD + STRIDE | user-needs-centric (tenancy + RBAC); process-centric (deploy / on-call) | ATT&CK; CSP shared-responsibility map | Sector regulator; SOC 2 / ISO 27001 framing | LINDDUN (if PII); asset-centric (signing keys, KMS roots) | Attack tree on tenant-isolation breach |
+| ICS / SCADA / OT | flow-centric DFD + STRIDE | asset-centric (control loop, HMI, PLC) + process-centric | ATT&CK for ICS; kill chain | **E-ISAC; CISA ICS-CERT advisories; IEC 62443; named-adversary context (sector is targeted)** | Attack tree (one safety-critical path) | LINDDUN if operator PII; data-centric on setpoint integrity |
+| Embedded / IoT | flow-centric DFD + STRIDE | data-centric (firmware image; device keys); asset-centric | ATT&CK | Sector regulator; supply-chain framing (SBOM, signed firmware) | Code-centric on bootloader / parser; attack tree on firmware-signing bypass | LINDDUN if device collects PII |
+| AI / ML system | flow-centric DFD + STRIDE | **data-centric (training data; model weights)** + AI/ML-specific threat list (prompt injection, model extraction, training-data poisoning, etc.) | ATT&CK; OWASP LLM Top 10; OWASP ML Security Top 10 | Sector framing; AI-specific regulator (EU AI Act, NIST AI RMF) | LINDDUN (if PII in training data); attack tree on model extraction | Code-centric on inference pipeline |
+| Greenfield internal tool, low stakes | flow-centric DFD + STRIDE | asset-centric (single-pass, light) | ATT&CK on top 3 threats | One paragraph: sector + regulator | — | (keep light) |
+
+### How the strata nest in the output document
+
+Two valid shapes; pick by audience.
+
+**Single-document hybrid (default).** All strata in one markdown file, with the document structure from SKILL.md § "Producing the threat model". Section 2 ("What can go wrong?") gets nested subsections — 2.1 Contextual, 2.2 Operational, 2.3 Strategic — and threats from each stratum share a single ID space and a single risk-rating scale so Section 3 ("What are we going to do about it?") can prioritize across them. This is what most engineering teams want.
+
+**Linked-documents hybrid.** Contextual stratum lives in the per-system threat model file; Operational stratum lives in a SOC-owned ATT&CK / detection coverage doc; Strategic stratum lives in a program- or org-level threat landscape doc. The per-system doc *links* to the operational and strategic docs rather than embedding them. Use this when the strata are owned by different teams and updated on different cadences (typical of larger orgs with a separate CTI / SOC function). The per-system doc still references the higher strata explicitly — never leave them out, even when they live elsewhere.
+
+In either shape: cross-reference threats across strata by ID. *"V3 (data-centric) ≈ T7 (flow-centric); maps to ATT&CK T1119 (Automated Collection); within-sector precedent: H-ISAC advisory 2023-07."* That's the chain that makes a hybrid actually hybrid rather than three disconnected lists.
+
+### Pruning
+
+Hybrid's failure mode is producing more documentation than the team will read. Two pruning rules:
+
+1. **Don't repeat threats across strata** — cross-reference instead. If the same finding shows up in flow-centric, data-centric, and ATT&CK mapping, it gets one ID, one row in the prioritized list, and pointers from the other strata.
+2. **Drop the stratum's section if there's genuinely nothing to add** — but say so explicitly ("Strategic: not applicable; this is a single-tenant internal tool with no sector adversary"). Silent omission is the anti-pattern; deliberate omission is fine.
+
+### Worked example
+
+A worked hybrid example for a DICOM PACS lives in `data-centric.md` § "Worked example" (the contextual data-centric stratum) and is referenced from `dfd-mermaid.md` § "Worked example" (the contextual flow-centric stratum). Together they show the contextual-stratum layering. For the operational and strategic strata of the same system, the pattern is: ATT&CK technique IDs on the V1–V5 vectors and on the corresponding flow-centric threats; H-ISAC + FDA premarket cybersecurity + IEC 81001-5-1 references in a one-paragraph strategic section.
