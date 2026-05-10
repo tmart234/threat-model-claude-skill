@@ -208,3 +208,30 @@ In a hybrid threat model with §2 split into three strata (see `methodologies.md
 - **§3 Mitigation table** — the CAPEC and CWE columns make the mitigation traceable. Derived security requirements (`SR-###`) cite both the threat ID and the CWE class so they're traceable to a known weakness.
 
 Cross-stratum: a CAPEC pattern can be the bridge between a contextual threat (`T1`) and an operational ATT&CK technique. Don't duplicate — cross-reference: *"T1 (Spoofing of AE Title) ↔ CAPEC-151 ↔ CWE-287 ↔ ATT&CK T1078 (Valid Accounts)"*. One row in §3, four IDs across the chain.
+
+## Closing the loop with MITRE D3FEND on the defensive side
+
+CAPEC + CWE + ATT&CK is the *offensive* chain — what the attacker does, the weakness they exploit, the technique they use in the wild. **MITRE D3FEND** completes the loop on the *defensive* side: a knowledge graph of countermeasure techniques (each with a `D3-XXX` ID) that's explicitly mapped to ATT&CK techniques. When the operational stratum (§2.2) carries an ATT&CK technique ID for a top threat, the corresponding mitigation in §3 should carry the matching D3FEND defensive technique ID — the same way the threat row carries CWE.
+
+The cross-stratum chain becomes:
+
+```
+STRIDE  →  CAPEC  →  CWE  →  ATT&CK  →  D3FEND  →  Mitigation (SR-###)
+              ↑offensive↑                  ↑defensive↑
+```
+
+Worked extension of the example above:
+
+| Threat | CAPEC | CWE | ATT&CK | D3FEND | Mitigation |
+|---|---|---|---|---|---|
+| T1 — Spoofing of AE Title via reused session token | CAPEC-151 (Identity Spoofing) | CWE-287 (Improper Authentication) | T1078 (Valid Accounts) | D3-MFA (Multi-factor Authentication), D3-CH (Credential Hardening) | SR-001: mTLS + AE-Title pinning to certificate |
+| T7 — Buffer overflow in DICOM PDU parser | CAPEC-100 (Overflow Buffers) | CWE-787 (Out-of-bounds Write) | T1203 (Exploitation for Client Execution) | D3-PSEP (Process Segment Execution Prevention), D3-EAL (Exception Handler Pointer Validation), D3-DLIC (Dynamic Library Loading Integrity Check) | SR-014: bounds-checked parser; fuzz suite `dicom_parser_fuzz_test`; DEP/ASLR enforced |
+| T12 — Unsigned firmware accepted by update path | CAPEC-441 (Malicious Logic Insertion) | CWE-494 (Download of Code Without Integrity Check) | T1542.001 (Pre-OS Boot: System Firmware) | D3-FBV (File Content Rules), D3-EAL (Boot loader integrity) | SR-022: signed-firmware verification with hardware root of trust |
+
+**When to populate D3FEND.** The same SDLC rule as CAPEC applies: cite D3FEND when the operational stratum (§2.2) is being produced and the threat carries an ATT&CK technique ID. Don't add D3FEND IDs to threats that don't have ATT&CK IDs — D3FEND's value comes from the mapping, not from its own taxonomy. For a minimum-viable threat model with no §2.2, skip D3FEND entirely; the STRIDE → property → mitigation table in `stride-prompts.md` is sufficient.
+
+**Honest about D3FEND coverage.** D3FEND's mappings to ATT&CK are good for enterprise / network / endpoint techniques and patchier for ICS, mobile, and embedded-firmware techniques where ATT&CK itself has lighter coverage. For medical-device-specific techniques (DICOM-protocol attacks, OTA-update attacks on MCU-class devices), expect the closest-mapped D3FEND technique to be one or two abstraction levels up from the actual control. Cite the closest match and note the gap in the row, the same way CAPEC handles missing Detailed patterns (§ "Honest about CAPEC coverage").
+
+D3FEND knowledge graph: https://d3fend.mitre.org/
+
+**Cross-reference with NIST CSF.** D3FEND techniques map roughly onto the NIST CSF Protect / Detect / Respond / Recover functions (`stride-prompts.md` § "NIST CSF function — Protect / Detect / Respond / Recover"). D3FEND has a "Harden / Detect / Isolate / Deceive / Evict / Restore" classification of its own which is finer-grained than CSF; for FDA-facing artifacts, lead with CSF (it's what reviewers cite) and use D3FEND IDs as the technical anchors below the CSF tag.

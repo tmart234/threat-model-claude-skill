@@ -164,6 +164,29 @@ These are illustrative, not exhaustive. Use them as seeds, not a checklist.
 | Denial of Service | Availability | rate limiting, quotas, backpressure, redundancy, autoscaling, graceful degradation, watchdogs |
 | Elevation of Privilege | Authorization | least privilege, sandboxing, input validation, output encoding, RBAC/ABAC, separation of duties |
 
+## NIST CSF function — Protect / Detect / Respond / Recover
+
+The STRIDE → property → control axis above answers *what kind of control*. There's a second axis FDA reviewers and the MITRE Threat Modeling Playbook §2.5.2 expect to see populated alongside it: **which NIST Cybersecurity Framework function** the control implements. Defense in depth is the goal; a mitigation table where every control is `Protect` and nothing is `Detect`, `Respond`, or `Recover` is itself a finding — it means the design assumes prevention will hold and has nothing to fall back on when it doesn't.
+
+| NIST CSF function | What the control does | Examples |
+|---|---|---|
+| **Protect** | Prevent the threat from succeeding in the first place | mTLS, signed firmware, RBAC, input validation, rate limiting (most of the controls in the table above) |
+| **Detect** | Notice the attack happening or that it has happened | Anomaly detection, audit-log forwarding to SIEM, integrity-check alerts on signed binaries, watchdogs on safety-critical loops, intrusion detection at trust boundaries |
+| **Respond** | Contain and act on a detected event | Incident-response runbooks, automated key rotation on suspected compromise, network isolation playbooks, alarm-acknowledgement procedures, the device's "fail-safe mode" trigger |
+| **Recover** | Restore service and integrity after a successful attack | Backup-restore procedures, firmware rollback, key re-issuance, post-incident state reconciliation, communications plan to clinicians/operators |
+
+(`Identify` and `Govern` round out the CSF v2 model but live in the strategic stratum / governance program, not in per-threat mitigations — record them in §1 prose, not in §3 rows.)
+
+How to use this in §3:
+
+- **Tag every Mitigate row with the CSF function it implements.** A `controls[]` row in the TM-BOM extension namespace can carry this as `threat-modeler.tmskill/csf-function-by-control` keyed by the control's symbolic name; in the markdown, add a column or inline annotation: *"SR-001 (Protect): mTLS for service-to-service calls"*.
+- **Audit the table for balance.** When all controls cluster under `Protect`, prompt the team for at least one `Detect` control per high-risk threat and at least one `Respond` / `Recover` path per safety-critical threat. The question to ask: *"if this Protect control fails silently, what tells us, and what do we do?"*
+- **Detect/Respond/Recover gaps are findings.** A model where a high-risk threat has only `Protect` controls and no `Detect` is incomplete — log it as an open question in §4 or as a derived requirement (`SR-###`) for the missing function.
+
+The CSF function is independent of STRIDE — Spoofing controls can be Protect (mTLS), Detect (impossible-travel detection on the IdP), Respond (force-logout on suspected token compromise), or Recover (re-issue all session tokens after a confirmed key compromise). The two axes (STRIDE category, CSF function) compose; populate both.
+
+NIST CSF v2.0: https://www.nist.gov/cyberframework
+
 ## When STRIDE-Per-Element misses things
 
 STRIDE is element-centric and design-time. It tends to under-cover certain things, but the reasons differ:
