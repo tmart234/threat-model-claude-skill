@@ -5,7 +5,9 @@ description: Use when the user asks the assistant to *produce* a threat model, s
 
 # Threat Modeler
 
-Produce a working threat model for an engineering team. State assumptions and proceed rather than interrogating the user. Ship a useful approximation rather than polishing a perfect artifact. When STRIDE categorization is debatable, record the threat and move on. Avoid two anti-patterns: **Admiration for the problem** (analyzing without producing solutions — every threat gets a response) and **Asset rabbit-holing** (padding the asset list). Full Manifesto values, principles, and pattern catalog: `references/manifesto.md`. Before shipping a draft, scan it against the failure-mode catalog in `references/manifesto.md` § "Failure-mode catalog — what bad output looks like" — padded asset lists, single-threat-per-element, generic mitigations ("apply RBAC"), STRIDE labels with no concrete attack, etc. If the draft has those shapes, fix them before sending; a model with those failure modes is worse than no model because it implies threats were considered when they weren't.
+Produce a working threat model for an engineering team. State assumptions and proceed rather than interrogating. Ship a useful approximation rather than polishing a perfect artifact. When STRIDE categorization is debatable, record the threat and move on. Before shipping, scan the draft against `references/manifesto.md` § "Failure-mode catalog" (padded asset lists, single-threat-per-element, generic mitigations like "apply RBAC", STRIDE labels with no concrete attack, mitigation table that doesn't match the threat table) — a model with those shapes is worse than no model because it implies threats were considered when they weren't. Manifesto values, principles, and anti-patterns: `references/manifesto.md`.
+
+**Minimum viable threat model.** For low-stakes systems (internal tool, no sector adversary, no regulator, no SOC handoff), the complete deliverable is: §1 with a DFD + a few assumptions, §2.1 STRIDE-Per-Element, §3 with one response per threat, and the three-check Q4. That's a finished threat model — not a single-method deficient one. The three-stratum layout, TM-BOM JSON emission, persona/event/source columns, and CAPEC → CWE chain are escalations the *system* pulls in (regulated, multi-tenant, safety-critical, sector-targeted), not defaults the skill imposes. Match output to stakes; the skill is a menu, not a coverage quota.
 
 ## Pick a mode
 
@@ -17,8 +19,6 @@ Produce a working threat model for an engineering team. State assumptions and pr
   - **If the existing document already uses the three-stratum hybrid**: extend it in place; that's what the defaults are for.
   - **Default to ASK before restructuring.** If you're tempted to convert their model to the three-stratum layout because it would be cleaner, surface that as an explicit offer ("Your model uses §1/§2/§3/§4 without strata; want me to keep that, or convert to the hybrid layout?") rather than rewriting silently. The user's existing structure is usually load-bearing — it ties to a tracker, a regulator template, or a team convention.
   - **ID-prefix conventions stay flexible in update mode.** If the existing model uses `A1, A2, ...` for assets (instead of `AS1, AS2, ...`) or `RR-001` for requirements (instead of `SR-001`), match their prefixes. The convention serves the team, not the skill.
-
-When in doubt, state assumptions and proceed.
 
 ## Handling sensitive input
 
@@ -87,60 +87,13 @@ If something's still missing after Round 2, ask one focused round — but err on
 
 ## Producing the threat model
 
-Output a single markdown document. Default to a single document; only split into linked documents if the user asks. Use Mermaid for the DFD. Copy the skeleton from `assets/threat-model-template.md` rather than rebuilding it.
+Output a single markdown document. Default to a single document; only split into linked documents if the user asks. Use Mermaid for the DFD. **Copy `assets/threat-model-template.md` and fill it in** rather than rebuilding the skeleton — the template carries the full structure (header metadata, scope-classification table, DFD element catalog, trust-boundary table, threat-personas table, the §2.1 / §2.2 / §2.3 tables, mitigation table, risk register, derived requirements, Q4 checklist, changelog).
 
-```
-# Threat Model: <System Name>
+The four top-level sections are fixed (Q1 / Q2 / Q3 / Q4). §2 has three subsections by default — Contextual / Operational / Strategic — populated when warranted.
 
-## 1. What are we working on?  (Contextual setup)
-   - System description (1–2 paragraphs)
-   - In-scope / out-of-scope (explicit list)
-   - Assets (the things worth protecting; don't pad)
-   - Trust levels
-   - Assumptions (numbered, so they can be challenged)
-   - Technology stack and environment (Round 1.5 outputs)
-   - Data Flow Diagram (Mermaid)
-   - Trust boundary table
+**Default scaffold rule.** Add content to a §2 subsection when you have something to say there. Omit a subsection entirely when you don't. No "not applicable" stubs. The three-stratum layout is *available scaffolding*, not a coverage quota — it comes from Tatam et al. (2021), one paper, not a practitioner consensus. Background and the system-type matrix that suggests which supplements to add: `references/methodologies.md` § "Hybrid as default".
 
-## 2. What can go wrong?
-   ### 2.1 Contextual stratum (system-specific)
-       - Flow-centric STRIDE-Per-Element threat table
-       - Optional: a supplementary entry-point pass (data-centric, asset-centric,
-         user-needs-centric, process-centric, code-centric) when one is warranted
-         per the system-type matrix in `references/methodologies.md`
-       - Optional: LINDDUN privacy table if PII/PHI is in scope; AI/ML-specific
-         threat list if ML components are present
-       - Optional: threat tree(s) for the top 1–2 highest-value threats
-
-   ### 2.2 Operational / Tactical stratum (generic adversary techniques)
-       - ATT&CK technique IDs on top threats
-       - If included, the STRIDE → CAPEC → CWE → mitigation chain on top threats
-         (the design-time payoff over plain ATT&CK; format and STRIDE→CAPEC mapping
-         in `references/capec.md`)
-       - Optional: Cyber Kill Chain mapping; CVSS where threats map to known CVEs
-
-   ### 2.3 Strategic stratum (sector landscape)
-       - Sector ISAC / threat-intel pointers (full lists in `references/methodologies.md`)
-       - Regulatory framing
-       - Named-adversary context where applicable; PASTA business-impact framing
-         if executive sign-off is needed
-
-## 3. What are we going to do about it?
-   - Mitigation table covering threats from any stratum present, in one prioritized
-     list — sharing one ID space and one risk-rating scale (qualitative L/M/H by
-     default; OWASP-RR or FMEA where the org requires — see `references/risk-rating.md`)
-   - Each row: threat ID → response (Mitigate/Eliminate/Transfer/Accept) → control(s)
-   - Cross-stratum references where the same finding surfaced in multiple strata —
-     never duplicate threats; cross-reference
-   - Derived security requirements (numbered, testable, importable into a tracker)
-
-## 4. Did we do a good enough job?
-   - Self-assessment (see §"Mitigations and Q4")
-   - Open questions and assumptions still to validate
-   - Recommended next review trigger
-```
-
-**Default scaffold rule.** The default layout has three top-level subsections under §2 — Contextual, Operational, Strategic. Add content to a subsection when you have something to say there. Omit a subsection entirely when you don't. No "not applicable" stubs. The three-stratum layout is *available scaffolding*, not a coverage quota — it comes from Tatam et al. (2021), one paper, not a practitioner consensus. Background and the system-type matrix that suggests which supplements to add: `references/methodologies.md` § "Hybrid as default".
+**Threats span strata, mitigations don't.** Threats live in §2.1 / §2.2 / §2.3 with one shared ID space and one risk scale. §3 produces a single prioritized mitigation table over all of them — never duplicate a threat across strata, cross-reference instead.
 
 ID conventions to keep cross-stratum references unambiguous (one prefix per namespace, chosen so single-letter prefixes can't be misread as truncations of multi-letter ones):
 
@@ -193,11 +146,12 @@ Each threat gets exactly one response: **Mitigate**, **Eliminate**, **Transfer**
 
 If you produce §2.2 (operational stratum), include CAPEC and CWE alongside ATT&CK. The CAPEC → CWE bridge is what makes derived requirements (`SR-###`) traceable to a known weakness class rather than a free-text threat sentence. **Pick the CAPEC abstraction level for the user, by SDLC stage** (Meta for early architecture, Standard for design review, Detailed for component-level work) and don't expose the level in the row unless you were forced to use a higher abstraction because no Detailed pattern exists for the domain-specific protocol (DICOM, HL7, ICS). When forced, footnote `(closest pattern; no Detailed available)`. Format, the abstraction-level rule of thumb, and STRIDE→CAPEC mapping: `references/capec.md`.
 
-Derive security requirements from mitigations. Each one is testable and stable enough to import into a tracker:
+Derive security requirements from mitigations. Each one is testable, stable enough to import into a tracker, and **names how it's verified** — a test ID, an integration suite, an audit step, a manual checklist, or a runbook drill. An SR with no verification activity is an unverified claim; QE / regulator-facing reviewers will flag it:
 
 ```
 SR-001: The system SHALL authenticate all service-to-service API calls using mutual TLS with X.509 certificates issued by <CA>.
    Mitigates: T3, T7
+   Verification: integration test `auth/mTLS_handshake_test.py::test_invalid_cert_rejected`; quarterly SOC drill (runbook RB-04)
 ```
 
 **Q4 — minimum viable.** Three checks (full Shostack-style checklists in `references/validation.md`):
@@ -206,7 +160,15 @@ SR-001: The system SHALL authenticate all service-to-service API calls using mut
 2. **Every threat has a response** — Mitigate / Eliminate / Transfer / Accept, each tracked in the team's bug system.
 3. **Every section that's present is populated** — no empty subsections, no stratum stubs.
 
-Plus: open questions / assumptions still to validate, and a **next review trigger** (e.g. "before the cloud upload feature ships," "next architecture revamp," "annually"). Q4 is the most-skipped step in real threat models. Don't skip it.
+Plus: open questions / assumptions still to validate, and a **next review trigger** — pick at least one concrete trigger from this candidate list (a bare "annually" alone is weak):
+
+- **Architecture / design change** above a threshold (new external integration, new data class, new trust boundary, change of identity provider).
+- **New dependency** above a criticality threshold (new SDK, vendor, SaaS).
+- **Security incident** in this system or in the sector (CVE in a load-bearing dependency; sector ISAC advisory matching this system's profile).
+- **Time-elapsed** (no shorter than 12 months for low-stakes systems; quarterly for safety-critical or regulated).
+- **Regulatory update** affecting the framing (new FDA guidance, new IEC revision, new GDPR opinion).
+
+Record the chosen trigger(s) in §4 *and* in the template header so the TM is bound to a re-review event, not a date guess. Q4 is the most-skipped step in real threat models. Don't skip it.
 
 ## Picking supplements
 
@@ -252,9 +214,7 @@ Blank template: `assets/threat-model-template.md`.
 
 > **What "TM-BOM" means here**: a Threat Model Bill of Materials — a structured, machine-readable description of the system, threats, controls, and risks, analogous to an SBOM for software components. The concrete schema this skill emits against is the **OWASP Threat Model Library** JSON schema (`threat-model.schema.json` v1.0.2, MIT-licensed), which itself aligns with the pending CycloneDX TM-BOM specification. Tools that consume CycloneDX BOMs (SBOM, SaaSBOM, HBOM today; TM-BOM when published) will be the consumers; OWASP TML is the working contract today.
 
-The default output is a markdown document. When the user wants to import findings into a tracker (Polarion, Jira, GitHub Issues, ServiceNow), feed downstream tooling, or contribute the model upstream, also emit a TM-BOM (JSON) that validates against the OWASP TML schema. The schema is the contract downstream tools already implement against; don't invent your own.
-
-The markdown is the canonical artifact for humans; the TM-BOM is the derived view. Don't emit only the JSON. **Always validate** the TM-BOM before handing it over: `check-jsonschema --schemafile threat-model.schema.json <your-tm-bom>.json`.
+**TM-BOM emission is opt-in.** The markdown is the always-shipped artifact; the TM-BOM (JSON) is a derived view, emitted only when the user asks for tracker import (Polarion, Jira, GitHub Issues, ServiceNow), tooling-pipeline integration, or upstream contribution to the OWASP TML library. Don't emit it unprompted, and never emit only the JSON — the markdown is the canonical artifact for humans, the TM-BOM is the machine-readable companion. When you do emit one, validate against the OWASP TML schema before handing it over (the schema is the contract downstream tools already implement against; don't invent your own — command in § "Validation checklist" below).
 
 ### Symbolic-name derivation (every TM-BOM ID must match `^[0-9a-z-]+$`)
 
@@ -299,7 +259,7 @@ Trust-zone subgraph IDs from the DFD (e.g. `Hospital`, `Cloud`, `Internet`, `Pro
 | `threats[]` | §2.1 / §2.2 / §2.3 threat tables (one row per `T#` / `V#` / `PR#`) | `threat_persona` is symbolic ref; `event` is the verb-phrase event column; `sources` array enum: `adversary / human_error / failure / events_beyond_org_control`; `attack_mechanisms[]` is `[{capec_id: int, capec_title: string}, …]`; `weaknesses[]` is `[{cwe_id: int, cwe_title: string}, …]`; `components_affected[]` is symbolic refs |
 | `controls[]` | §3 mitigation rows | `threats` is array of threat symbolic refs; `status` enum: `assumed / active / suggested / under_review / approved / scheduled / retired / wont_do` (default for new mitigations: `suggested`; for already-in-place: `active`); `priority` enum: `none / low / medium / high / critical` (translate from §3 risk: Low→low, Medium→medium, High→high, Critical→critical); `trust_boundary` (optional) is `{trust_zone_a, trust_zone_b}` |
 | `risks[]` | §3 risk ratings, one risk per threat (or per cluster of cross-referenced threats) | `threats` array of refs; `likelihood` and `impact` use the schema enums (translation table in `references/risk-rating.md` § "L/M/H ↔ TM-BOM enums"); `score` is integer 0–25; `level` enum: `very_low / low / medium / high / very_high / critical` |
-| Skill-specific fields with no schema home (STRIDE category, stratum tag, Stellios path-product score, Mitigate/Eliminate/Transfer/Accept response distinct from `control.status`) | **Top-level `extensions` only** — not per-object (every object def in the schema has `additionalProperties: false`, so per-object extensions fail validation). Key per-object data by the object's `symbolic_name`. | Extension keys must match the schema's regex: `<domain-with-hyphens-allowed>.<letters-only-TLD>/<path>`. Use the namespace `threat-modeler.tmskill/...` — the natural-looking `tmskill.threat-modeler/...` is **rejected** by the schema because the TLD label can't contain hyphens. Recommended paths: `threat-modeler.tmskill/stride-by-threat`, `threat-modeler.tmskill/stratum-by-threat`, `threat-modeler.tmskill/path-score-by-threat`, `threat-modeler.tmskill/response-by-control`. |
+| Skill-specific fields with no schema home (STRIDE category, stratum tag, Stellios path-product score, Mitigate/Eliminate/Transfer/Accept response distinct from `control.status`, Accept-rationale + decision-maker for threats with no `control` row) | **Top-level `extensions` only** — not per-object (every object def in the schema has `additionalProperties: false`, so per-object extensions fail validation). Key per-object data by the object's `symbolic_name`. | Extension keys must match the schema's regex: `<domain-with-hyphens-allowed>.<letters-only-TLD>/<path>`. Use the namespace `threat-modeler.tmskill/...` — the natural-looking `tmskill.threat-modeler/...` is **rejected** by the schema because the TLD label can't contain hyphens. Recommended paths: `threat-modeler.tmskill/stride-by-threat`, `threat-modeler.tmskill/stratum-by-threat`, `threat-modeler.tmskill/path-score-by-threat`, `threat-modeler.tmskill/response-by-control`, `threat-modeler.tmskill/accept-rationale-by-threat`. |
 
 **Top-level header.** Every emitted TM-BOM starts with these two lines so the file declares which schema version it was built against:
 
@@ -341,9 +301,23 @@ The skill's response taxonomy doesn't map 1:1 onto `control.status`. Use this ru
 | `Mitigate` (control planned/in place) | `suggested` (new) or `active` (existing) | A new control gets `suggested`; if the user confirms the control is already deployed, use `active` |
 | `Eliminate` (remove the threat surface) | `approved` if the design change is approved; `suggested` otherwise | The "control" is the design change itself |
 | `Transfer` (insurance, vendor SLA, customer responsibility) | `assumed` | The control exists outside this system |
-| `Accept` (no control) | Don't emit a `control` row at all | Emit the threat with no control reference; record rationale in the threat's `description` |
+| `Accept` (no control) | Don't emit a `control` row at all | Record rationale + decision-maker in the top-level `extensions["threat-modeler.tmskill/accept-rationale-by-threat"]` block, keyed by the threat's symbolic name (`{rationale, decision_maker, decided_at}`); also note rationale in the threat's `description`. An unjustified `Accept` is indistinguishable from a missed threat — failure-mode catalog. |
 
-Also record the original response verbatim in `controls[].extensions["tmskill.threat-modeler/response"]` so the markdown ↔ JSON round-trip is lossless.
+Also record the original response verbatim in the top-level `extensions["threat-modeler.tmskill/response-by-control"]` (and `…/accept-rationale-by-threat` for Accept rows) so the markdown ↔ JSON round-trip is lossless.
+
+Example Accept-rationale extension:
+
+```json
+"extensions": {
+  "threat-modeler.tmskill/accept-rationale-by-threat": {
+    "t-12": {
+      "rationale": "Mitigation cost (~$200k re-architecting the legacy importer) exceeds expected loss; risk re-evaluated annually.",
+      "decision_maker": "A. Smith, Engineering Director",
+      "decided_at": "2026-05-10"
+    }
+  }
+}
+```
 
 ### Validation checklist before shipping the TM-BOM
 
@@ -358,17 +332,15 @@ Also record the original response verbatim in `controls[].extensions["tmskill.th
 - [ ] `risks[].score` is in `[0, 25]` and is consistent with `risks[].level`.
 - [ ] No per-object `extensions` (every object has `additionalProperties: false` — extensions only at top level).
 - [ ] Extension keys match the schema's regex (TLD must be letters-only — `threat-modeler.tmskill/<path>`, **not** `tmskill.threat-modeler/<path>`).
-- [ ] `check-jsonschema --schemafile threat-model.schema.json <your-tm-bom>.json` exits 0. **Always run this before handing the file over.**
+- [ ] Schema validation exits 0. Run, against the v1.0.2 schema:
 
-Worked example threat models live in https://github.com/OWASP/www-project-threat-model-library/tree/main/threat-models — `ai-ml-systems/husky-ai-threat-model.json` is the most-complete reference. Open the closest example before producing a TM-BOM; mirror its shape and depth.
+  ```
+  curl -sSf -o /tmp/threat-model.schema.json \
+    https://raw.githubusercontent.com/OWASP/www-project-threat-model-library/main/threat-model.schema.json
+  check-jsonschema --schemafile /tmp/threat-model.schema.json <your-tm-bom>.json
+  ```
 
-A minimal validated TM-BOM exercising every required field of the schema, every cross-reference type, and the top-level `extensions` pattern lives at `assets/tm-bom-example.json`. It validates against `threat-model.schema.json` v1.0.2 with `check-jsonschema` exit 0. Use it as the structural starter when you don't want to clone an OWASP TML example. Re-validate after every edit:
-
-```
-curl -sSf -o /tmp/threat-model.schema.json \
-  https://raw.githubusercontent.com/OWASP/www-project-threat-model-library/main/threat-model.schema.json
-check-jsonschema --schemafile /tmp/threat-model.schema.json <your-tm-bom>.json
-```
+Starters: `assets/tm-bom-example.json` (minimal, exercises every required field and the top-level `extensions` pattern, validates against v1.0.2 with `check-jsonschema` exit 0); the OWASP TML library at https://github.com/OWASP/www-project-threat-model-library/tree/main/threat-models for fuller worked examples (`ai-ml-systems/husky-ai-threat-model.json` is the most complete). Open the closest example before producing a TM-BOM; mirror its shape and depth.
 
 ## Citations
 
