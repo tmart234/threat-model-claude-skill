@@ -214,17 +214,19 @@ The framing is from Tatam et al. (*A review of threat modelling approaches for A
 
 Risk rating (qualitative L/M/H by default, or OWASP-RR / FMEA where the org requires it — see `risk-rating.md`) sits *across* the strata: every threat at every layer gets rated on the same scale so they can be merged into one prioritized list.
 
-### Why every output is hybrid (not just complex / regulated systems)
+### Three strata as default scaffolding, not a coverage quota
 
-Earlier guidance treated hybrid as something you reach for when a system is "complex enough." That bar is the wrong one — it lets simple-looking systems ship with single-method models that miss whole categories. Even a small internal tool benefits from a contextual supplement (one extra entry point catches what STRIDE-on-DFD misses) and a strategic note (one paragraph: what sector, what regulator, what landscape). The amount of *content* per stratum scales with stakes; the *presence* of all three strata does not.
+The three-stratum layout is the default scaffold for `§2 What can go wrong?` — it gives the document a stable shape and makes cross-stratum cross-references easy. **Add content to a stratum when there's something to say there. Omit a stratum entirely when there isn't. Don't write "not applicable" stubs.** The default *layout* shows three subsections; the *content* per stratum scales with stakes — sometimes that's three populated subsections, sometimes that's only the contextual stratum.
 
-Minimum viable hybrid for a small system: DFD + STRIDE table + one short supplementary entry-point pass + ATT&CK technique IDs on the top 3 threats + one paragraph of sector / regulatory context. That's still a hybrid. It's still better than a single-method model.
+The Tatam et al. (2021) framing this scaffold comes from describes mature-program practice across multiple methods; it isn't a practitioner consensus and isn't a coverage requirement. Treat it as available scaffolding the user can override. For a small internal tool with no sector adversary, no regulator, and no operational SOC handoff, the right output is contextual-only — a DFD, a STRIDE table, and a mitigation list. That's a complete threat model, not a "single-method" deficient one.
+
+The system-type matrix below suggests which contextual supplements *typically* fit each system type; the operational and strategic strata are added when the team will use them, not because the layout has slots for them.
 
 ### Decision matrix — which layers, by system type
 
-This is a cheat sheet, not a straitjacket. Always include the "always" cells. Add "often" cells unless there's a clear reason not to. "Sometimes" cells are situational.
+This is a cheat sheet, not a straitjacket. The "core" cell is what the contextual stratum starts from. The "typical supplement" cell is the contextual supplement most systems of this type warrant — add it when one is warranted; skip it when nothing in the system asks for it. Operational and strategic columns list what's *typically* worth including for that system type; include them when the team will use them, omit when they'd be padding. "Often" / "Sometimes" columns are situational.
 
-| System type | Contextual core (always) | Contextual supplement (always pick at least one) | Operational (always) | Strategic (always) | Often add | Sometimes |
+| System type | Contextual core | Typical contextual supplement | Typical operational | Typical strategic | Often add | Sometimes |
 |---|---|---|---|---|---|---|
 | Generic web app | flow-centric DFD + STRIDE | user-needs-centric (business logic) | ATT&CK on top threats | OWASP Top 10 framing; sector if regulated | LINDDUN (if PII); CWE on code findings | Process-centric (if ops-heavy); attack tree (one high-value flow) |
 | **Medical device / PACS / DICOM** | flow-centric DFD + STRIDE — **for safety-critical control loops (infusion pumps, ventilators, robotic surgery, dialysis), add STPA-SafeSec as swap (FDA / IEC 62304 / IEC 81001-5-1 joint artifact) or as supplement (alongside STRIDE)** — see `stpa-safesec.md` | **data-centric (PHI / device data)** + LINDDUN | ATT&CK; **CAPEC + CWE chain** (use the medical-device subset in `capec.md`; cite Standard-level patterns by default — DICOM-/HL7-specific Detailed patterns don't exist, see `capec.md` § "Honest about CAPEC coverage"); CISA medical advisories | **H-ISAC; FDA premarket cybersecurity; IEC 62443; IEC 81001-5-1; HIPAA; safety-bump rule from `risk-rating.md`** | asset-centric (signing keys); attack tree on safety-critical path; **STPA-SafeSec on safety-critical control loops** | Code-centric on parser/protocol code; named adversary if applicable; **risk-prioritized cyber-physical attack paths (Stellios) for IoMT patient rooms with multiple co-located devices** |
@@ -238,7 +240,7 @@ This is a cheat sheet, not a straitjacket. Always include the "always" cells. Ad
 
 Two valid shapes; pick by audience.
 
-**Single-document hybrid (default).** All strata in one markdown file, with the document structure from SKILL.md § "Producing the threat model". Section 2 ("What can go wrong?") gets nested subsections — 2.1 Contextual, 2.2 Operational, 2.3 Strategic — and threats from each stratum share a single ID space and a single risk-rating scale so Section 3 ("What are we going to do about it?") can prioritize across them. This is what most engineering teams want.
+**Single-document hybrid (default).** All strata in one markdown file, with the document structure from SKILL.md § "Producing the threat model". Section 2 ("What can go wrong?") has up to three subsections — 2.1 Contextual, 2.2 Operational, 2.3 Strategic — each populated when there's content for it. Threats across present strata share a single ID space and a single risk-rating scale so Section 3 ("What are we going to do about it?") can prioritize across them. This is what most engineering teams want.
 
 **Linked-documents hybrid.** Contextual stratum lives in the per-system threat model file; Operational stratum lives in a SOC-owned ATT&CK / detection coverage doc; Strategic stratum lives in a program- or org-level threat landscape doc. The per-system doc *links* to the operational and strategic docs rather than embedding them. Use this when the strata are owned by different teams and updated on different cadences (typical of larger orgs with a separate CTI / SOC function). The per-system doc still references the higher strata explicitly — never leave them out, even when they live elsewhere.
 
@@ -249,7 +251,7 @@ In either shape: cross-reference threats across strata by ID. *"V3 (data-centric
 Hybrid's failure mode is producing more documentation than the team will read. Two pruning rules:
 
 1. **Don't repeat threats across strata** — cross-reference instead. If the same finding shows up in flow-centric, data-centric, and ATT&CK mapping, it gets one ID, one row in the prioritized list, and pointers from the other strata.
-2. **Drop the stratum's section if there's genuinely nothing to add** — but say so explicitly ("Strategic: not applicable; this is a single-tenant internal tool with no sector adversary"). Silent omission is the anti-pattern; deliberate omission is fine.
+2. **Drop the stratum's section entirely if there's genuinely nothing to add.** Silent omission is fine when the stratum has no content for this system. No "not applicable" stubs and no coverage check that demands all three strata be present.
 
 ### Worked example
 

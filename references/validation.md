@@ -59,10 +59,10 @@ Drop these into the threat-model document itself with check-marks. The Diagrammi
 - [ ] We can tell a story about how the system works without changing the diagram.
 - [ ] We can tell that story without using the words "sometimes" or "also" — anywhere those came up, we broke the case into separate flows or added detail.
 - [ ] We can look at the diagram and see exactly where the software will make a security decision.
-- [ ] Every element is inside exactly one zone subgraph — no floating elements (SKILL.md DFD rule #1).
+- [ ] Every element is inside exactly one zone subgraph — no floating elements (`dfd-mermaid.md` § "Trust boundaries — what to include").
 - [ ] Every trust boundary is rendered as a dashed-border subgraph (`dfd-mermaid.md` § "Rendering trust boundaries as dashed subgraphs").
 - [ ] Sub-trust-boundaries are nested subgraphs where they exist — controller dual-OS, account/VPC/subnet, host/VM/container, device/secure-element (`dfd-mermaid.md` § "Nested subgraphs for sub-trust boundaries").
-- [ ] Every `AS#` from §1 appears in the DFD as a tagged element label, and every §1 trust boundary is drawn (SKILL.md DFD rule #3).
+- [ ] Every `AS#` from §1 appears in the DFD as a tagged element label, and every §1 trust boundary is drawn (DFD ↔ §1 reconciliation rule from SKILL.md § "DFD").
 - [ ] Methodology framing (Purdue, AD Tier, cloud account/VPC, mobile sandbox) is named in §1 prose, not repeated on every subgraph label.
 - [ ] The diagram shows all trust boundaries: every UID/account boundary, every application role, every network interface, every place different principals interact.
 - [ ] Every subgraph is labeled `<owner> | <env-type> | <trust>` per `dfd-mermaid.md` § "Subgraph labeling convention" — env-type without redundant prefixes (`Purdue L2`, not `OT/ICS (Purdue L2)`); compression-rule key applied where owner/env-type repeats.
@@ -72,28 +72,31 @@ Drop these into the threat-model document itself with check-marks. The Diagrammi
 - [ ] We can see where all the data goes and who uses it (no data sinks — every written piece of data has a reader).
 - [ ] We see the processes that move data from one data store to another (data can't move itself).
 
-### Threats checklists (hybrid)
+### Threats checklists
 
-**Contextual stratum (§2.1)**
-- [ ] Have we looked for each STRIDE category, at each element, *and* at each data flow specifically? (Flows get overlooked — belt-and-suspenders.)
-- [ ] Has at least one supplementary entry-point pass been run (data-centric / asset-centric / user-needs-centric / process-centric — driven by the system-type matrix in `methodologies.md`)?
-- [ ] LINDDUN pass run if PII/PHI is in scope?
-- [ ] AI/ML-specific threats considered if ML components are present?
+The hybrid layout's three strata are scaffolding, not a coverage quota — only check the strata you actually populated. Omitted strata get no checklist; they're absent because they had no content for this system, not because they were skipped.
 
-**Operational stratum (§2.2)**
-- [ ] At least the top 3 threats carry the full **STRIDE → CAPEC → CWE → mitigation** chain (CAPEC pattern with explicit abstraction level, the CWE(s) it exploits, and the mitigation class)?
-- [ ] At least the top 3 threats mapped to ATT&CK technique IDs?
-- [ ] Where no Detailed CAPEC pattern exists for a domain-specific protocol (DICOM, HL7, ICS), the closest Standard or Meta pattern is cited *and the row says so explicitly* (per `capec.md` § "Honest about CAPEC coverage")?
-- [ ] Kill-chain / CVSS references added where they aid handoff to SOC / IR / engineering?
+**Contextual stratum (§2.1) — if produced**
+- [ ] Each STRIDE category walked at each applicable element *and* at each data flow specifically (flows get overlooked — belt-and-suspenders).
+- [ ] If a supplementary entry-point pass is included (data-centric / asset-centric / user-needs-centric / process-centric / code-centric), it covers what flow-centric STRIDE under-covers for this system.
+- [ ] If PII/PHI is in scope, LINDDUN pass run.
+- [ ] If ML components are present, AI/ML-specific threats considered.
 
-**Strategic stratum (§2.3)**
-- [ ] Sector ISAC / threat-intel context noted (or explicitly marked "not applicable: <reason>")?
-- [ ] Regulatory framing captured (FDA / IEC / HIPAA / GDPR / PCI / EU AI Act — whichever apply)?
-- [ ] Named-adversary context included if the sector has one?
+**Operational stratum (§2.2) — if produced**
+- [ ] Top threats mapped to ATT&CK technique IDs.
+- [ ] If a STRIDE → CAPEC → CWE → mitigation chain is included, CAPEC patterns carry an explicit abstraction level and the CWE(s) the pattern exploits are named.
+- [ ] Where no Detailed CAPEC pattern exists for a domain-specific protocol (DICOM, HL7, ICS), the closest Standard or Meta pattern is cited *and the row says so explicitly* (per `capec.md` § "Honest about CAPEC coverage").
+- [ ] Kill-chain / CVSS references added where they aid handoff to SOC / IR / engineering.
+
+**Strategic stratum (§2.3) — if produced**
+- [ ] Sector ISAC / threat-intel context cited where relevant.
+- [ ] Regulatory framing captured (FDA / IEC / HIPAA / GDPR / PCI / EU AI Act — whichever apply).
+- [ ] Named-adversary context included if the sector has one.
 
 **Cross-stratum**
-- [ ] Threats are *cross-referenced* across strata, not duplicated?
-- [ ] All threats share one ID space and one risk-rating scale, so the §3 prioritized list is single-sorted?
+- [ ] Threats are *cross-referenced* across strata that are present, not duplicated.
+- [ ] All threats share one ID space and one risk-rating scale, so the §3 prioritized list is single-sorted.
+- [ ] No section that's present is empty or stubbed — populated, or omitted entirely.
 
 ### Validating-threats checklist
 

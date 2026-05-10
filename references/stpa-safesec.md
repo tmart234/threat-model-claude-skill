@@ -48,7 +48,7 @@ Don’t use it when:
 |Q1           |DFD with trust boundaries          |Losses → Hazards → Constraints → Control layer → Component layer              |
 |Q2           |STRIDE-Per-Element on DFD elements |UCAs → System flaws → Hazard scenarios (tree)                                 |
 |Q3           |Mitigations + security requirements|Mitigations at control or component layer + requirements traced to constraints|
-|Q4           |Standard checklists (see SKILL.md) |Standard checklists + tree-coverage + traceability checks                     |
+|Q4           |Standard checklists (see `validation.md` § "The closing checklists") |Standard checklists + tree-coverage + traceability checks                     |
 
 ## Q1 — Losses, hazards, constraints, two-layer system model
 
@@ -128,7 +128,7 @@ Derived requirements trace upward: requirement → mitigation → hazard scenari
 
 ## Q4 — Validation additions
 
-Standard Q4 checklists (in SKILL.md) still apply. Add:
+Standard Q4 checklists (`validation.md` § "The closing checklists") still apply. Add:
 
 - [ ] Every loss has at least one hazard
 - [ ] Every hazard has at least one constraint
@@ -147,6 +147,27 @@ STPA-SafeSec does not replace pen testing, vulnerability assessment, or fuzzing 
 STRIDE is not the default companion to STPA-SafeSec — the integrity/availability causal-factor tables are more specific to control-loop systems and cover the relevant adversarial cases. Layer STRIDE in only for non-control flows that appear at the component layer (telemetry uploads, OTA updates, audit log paths) where confidentiality and repudiation matter; the integrity/availability tables don’t cover those.
 
 For multi-device cyber-physical environments where compromise of a low-criticality peripheral can reach a high-criticality target across the room or plant floor (IoMT patient rooms, ICS plant floors with shared RF, robotics cells), the safety-critical components STPA-SafeSec produces are natural roots for the **risk-prioritized cyber-physical attack-path** construction in `methodologies.md` § "Risk-prioritized cyber-physical attack paths (Stellios et al., 2021)" — STPA-SafeSec answers "which target," and the Stellios construction answers "which paths to it are worth analyzing." Pair them when the system has both control-loop safety implications and a multi-device shared-physical-space attack surface.
+
+## Section template (copy when in scope)
+
+When STPA-SafeSec is in scope, paste this scaffold into §1 of the threat-model document (under "Data of interest" or in its own subsection); it carries the Q1 outputs the rest of the analysis depends on. The threat-model template at `assets/threat-model-template.md` deliberately omits this scaffold so non-safety-critical work isn't burdened with it.
+
+```
+### Losses, hazards, constraints (STPA-SafeSec)
+
+- **Losses** (`L-1` …): unacceptable stakeholder outcomes (patient harm, equipment destruction, environmental damage, mission failure)
+- **Hazards** (`H-1 [L-x]` …): system states that, in worst case, lead to a loss
+- **Constraints** (`CSTR-S-1 [H-x]` …): system SHALL prevent / limit / detect each hazard condition
+- **Control layer** (Mermaid `flowchart TD` — controllers `CTRL-N-x`, controlled processes, control actions `CTRL-C-x` as solid arrows down, feedback as dashed arrows up)
+- **Component layer** (concrete nodes `CPT-N-x`, concrete connections `CPT-C-x`; wired vs wireless, end-to-end vs IP-routed)
+```
+
+In §2.1 of the threat-model document, two modes apply:
+
+- **Swap mode**: §2.1.a (flow-centric STRIDE-Per-Element) is replaced by the STPA-SafeSec workflow — UCAs (`HC-N`), system flaws (`F-N`), hazard-scenario trees, integrity/availability constraints (`CSTR-I-N`, `CSTR-A-N`). STRIDE may still layer in for non-control flows (telemetry, OTA, audit) at the component layer.
+- **Supplement mode**: §2.1.a runs normally; add an §2.1.e "Hazard scenarios (STPA-SafeSec)" sub-section. Hazard scenarios cross-reference the threats they propagate from (`HS-3 ← T7`) and add non-adversarial safety failures STRIDE misses (`HS-4: sensor degradation; not a threat`).
+
+Q4 additions for either mode are in § "Q4 — Validation additions" above.
 
 ## References
 
