@@ -93,6 +93,8 @@ When to use: regulated enterprise environments, executive-sponsored security pro
 
 Trade-off: thorough but slow. Don't pick PASTA for a sprint-level review.
 
+**Compliance touch.** PASTA's stage-1 business-impact framing is occasionally requested by FDA / IEC 81001-5-1 reviewers and enterprise compliance teams as the executive-tied risk view that connects technical findings to revenue / fine / reputational exposure. When that's the ask, bolt PASTA's stage 1 onto the strategic stratum (`§2.3` of the threat-model template) — write the business-impact framing as a §2.3 sub-paragraph and cross-reference the affected threats. Don't redo the contextual or operational work; the rest of PASTA's seven stages largely overlap with what STRIDE + ATT&CK + the risk register already produced.
+
 ## Attack trees
 
 A tree where the root is an attacker goal ("steal the firmware signing key", "fraudulently issue a refund", "modify a CT scan after acquisition") and the children are sub-goals or attack steps. Leaves are atomic actions. Branches are AND (all required) or OR (any sufficient).
@@ -184,6 +186,8 @@ When *not* to use as the primary lens: greenfield design. ATT&CK assumes a syste
 **VAST** — Visual, Agile, and Simple Threat modeling. Designed for DevOps and scale; differentiates "application threat models" from "operational threat models". Vendor-aligned with ThreatModeler.
 
 When to use either: portfolio or organization-level risk programs. Not for a single system review.
+
+**Compliance touch.** OCTAVE shows up in IEC 62443 / industrial-control compliance contexts as the org-level risk-management lens; if a regulator or compliance team asks for it alongside a per-system threat model, surface it as a §2.3 strategic-stratum reference ("this system is part of an OCTAVE-managed portfolio; org-level threat catalog at `<link>`") rather than re-running OCTAVE on the single system. Same pattern for VAST in DevOps / portfolio-tooling contexts.
 
 ## ML/AI-specific threats (supplement, not replacement)
 

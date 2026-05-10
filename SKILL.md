@@ -60,6 +60,8 @@ Cluster questions; don't fire one at a time. Two or three turns of clustered que
 
   These four (the three above plus `data_sensitivity`) are the OWASP TML schema's required `scope` fields. If the user doesn't volunteer them, infer plausible defaults from the system description and record as numbered assumptions (`ASM#`).
 
+- **Medical-device intake (conditional).** If the system is a medical device, a PACS / RIS / VNA, a DICOM- or HL7-adjacent service, or anything heading for FDA premarket / IEC 81001-5-1 / IEC 62304 / MDR / IVDR review, also collect the structured intake from `references/medical.md` § "Medical-device §1 intake template" — device class, intended use (verbatim), period of expected use, invasiveness, core use case, core technology, user roles. These shape the safety-case framing the threat model has to compose with; skip them for non-medical systems and the standard Round 1 fields above are sufficient.
+
 **Round 1.5 — Technology, environment, and ownership (Q1, before the DFD).** This round is what turns a generic DFD into one that reflects this system in its environment. Skipping it is how trust boundaries get missed.
 
 - **Protocols on each flow and runtimes per process.** Cite the actual protocol per flow ("HTTPS + mTLS", "MQTT over TLS", "BLE GATT") — generic labels like "data" hide threats. Identify each process's runtime/host, the identity provider, the secrets store, and the crypto modules. Per-environment protocol catalog: `references/environments.md`.
@@ -98,7 +100,7 @@ The four top-level sections are fixed (Q1 / Q2 / Q3 / Q4). §2 has three subsect
 ID conventions to keep cross-stratum references unambiguous (one prefix per namespace, chosen so single-letter prefixes can't be misread as truncations of multi-letter ones):
 
 - Assets in §1: `AS1`, `AS2`, …
-- Assumptions in §1: `ASM1`, `ASM2`, … (avoid bare `A1` — it's visually confusable with `AS1` and breaks grep)
+- Assumptions in §1: `ASM1`, `ASM2`, … (avoid bare `A1` — it's visually confusable with `AS1` and breaks grep). The §1 Assumptions block is the model's **assumptions register** — the MITRE Threat Modeling Playbook §2.4.6 deliverable that survives across iterations. Place it early in §1 (immediately after Scope, before the asset and trust-level tables) so a reviewer scanning §1 sees what's been taken as given before they see what's been claimed as fact. Every `ASM#` referenced in §2 / §3 prose must resolve to this register; new or revised assumptions across revisions are reflected in the §4 changelog.
 - Flow-centric STRIDE threats: `T1`, `T2`, …
 - Supplementary entry-point findings: `V1`, `V2`, … (data-centric / asset-centric / user-needs-centric / process-centric / code-centric — use the `V` prefix regardless of pass type, with the pass type recorded in the row; avoid `A#` for asset-centric findings since it collides with assets)
 - Privacy / LINDDUN / AI-ML findings: `PR1`, `PR2`, …
@@ -183,6 +185,8 @@ The contextual core (flow-centric DFD + STRIDE) almost never gets swapped. Add s
 | Asset-centric | Clear crown-jewel assets (signing keys, KMS roots, control-loop setpoints) | `references/centric-methods.md` |
 | Code-centric | Source available; use as a validation pass after STRIDE | `references/centric-methods.md` |
 | Attack tree | Top 1–2 highest-value threats where adversarial reasoning adds value | `references/methodologies.md` § Attack trees |
+| Sequence / swim-lane diagram | Ordered multi-actor workflow, two-person rule, service-mode access, replay/reorder threats are plausible | `references/non-dfd-models.md` § Sequence diagrams |
+| State diagram | Device or service has named operational modes with documented transitions; auth/interlock checks are gated on state, not on requests | `references/non-dfd-models.md` § State diagrams |
 | AI/ML threat list | ML components in scope (prompt injection, training-data poisoning, model extraction) | `references/methodologies.md` § ML/AI; OWASP LLM Top 10 |
 | PASTA framing | Borrow the business-impact stage when executive sign-off is needed | `references/methodologies.md` § PASTA |
 | STPA | Load whenever the system has **safety impact** — any plausible worst-case outcome involves physical harm to a person, equipment, or the environment (medical devices, ICS, automotive, aerospace, robotics, consumer IoT that controls something dangerous). Swap or supplement mode; default to supplement. | `references/stpa.md` |
@@ -201,7 +205,8 @@ Read on demand:
 - `data-centric.md` — NIST SP 800-154 workflow.
 - `capec.md` — Operational-stratum reference: STRIDE → CAPEC → CWE → mitigation chain, three abstraction levels (Meta / Standard / Detailed), CAPEC-1000 and CAPEC-3000 views, coverage gaps.
 - `stride-prompts.md` — STRIDE category prompts, per-element example threats, Per-Element vs Per-Interaction, DESIST variant, enumeration tactics.
-- `dfd-mermaid.md` — DFD-to-Mermaid mapping with worked examples, dashed-subgraph pattern, subgraph labeling convention, nested-subgraph pattern, diagramming checklist.
+- `dfd-mermaid.md` — DFD-to-Mermaid mapping with worked examples (Level 0 + Level 1), dashed-subgraph pattern, subgraph labeling convention, nested-subgraph pattern, diagramming checklist. Also documents the skill's deliberate one-way-arrow deviation from DFD3 and the MITRE Playbook "complete shape" rule for trust boundaries.
+- `non-dfd-models.md` — When the DFD isn't enough: swim-lane / sequence diagrams (Mermaid `sequenceDiagram`) for ordered multi-actor workflows, and state diagrams (Mermaid `stateDiagram-v2`) for devices with named operational modes. Both are *supplements* to the DFD, not replacements. Load whenever the system has clinical workflow, two-person rules, service-mode access, or a documented state machine — typical for medical devices, OT/ICS, and multi-step approval flows.
 - `validation.md` — Q4 deep dive: model/reality conformance, the three Shostack-style checklists, pen testing as complement, validating threats in third-party code.
 - `manifesto.md` — Threat Modeling Manifesto values, principles, patterns, anti-patterns (paraphrased).
 - `risk-rating.md` — Qualitative L/M/H, OWASP-RR pointer, safety-bump rule, why DREAD is discouraged.
@@ -346,7 +351,8 @@ Starters: `assets/tm-bom-example.json` (minimal, exercises every required field 
 
 Concepts in this skill paraphrase from:
 
-- **OWASP** — Threat Modeling community page, Threat Modeling Process, Threat Modeling Cheat Sheet, Security Culture v1.0 §6, Threat Modeling Playbook (Toreon), **Threat Model Library** (https://github.com/OWASP/www-project-threat-model-library, MIT-licensed; TM-BOM JSON schema and the curated example-models repository the skill defers to for worked examples).
+- **OWASP** — Threat Modeling community page, Threat Modeling Process, Threat Modeling Cheat Sheet, Security Culture v1.0 §6, **Threat Model Library** (https://github.com/OWASP/www-project-threat-model-library, MIT-licensed; TM-BOM JSON schema and the curated example-models repository the skill defers to for worked examples).
+- **MITRE Threat Modeling Playbook** (Toreon, OWASP) — §2.3.1.1 DFD3 conformance items (trust boundary as a complete shape; data-flow arrow convention noted as a deliberate deviation in `references/dfd-mermaid.md`); §2.3.2 sequence / swim-lane diagrams; §2.3.3 state diagrams; §2.4.6 Assumptions register as a first-class deliverable.
 - **Threat Modeling Manifesto** — values, principles, patterns, anti-patterns (CC-BY 4.0).
 - **Adam Shostack**, *Threat Modeling: Designing for Security* (Wiley, 2014) — Four Question Framework, STRIDE-Per-Element, diagramming and validation checklists, iteration tactics, bug-filing as exit point.
 - **NIST SP 800-154** (Draft, Souppaya & Scarfone, 2016) — data-centric methodology.
@@ -356,5 +362,8 @@ Concepts in this skill paraphrase from:
 - **STRIDE** — Loren Kohnfelder & Praerit Garg (Microsoft). **DESIST** — Gunnar Peterson.
 - **STPA** (umbrella term in this skill; lineage: Leveson, *Engineering a Safer World*, MIT Press, 2011 → STPA-Sec, Young & Leveson, 2014 → STPA-SafeSec, Friedberg et al., 2017, CC-BY — the workflow draws from across the lineage; cite the specific paper when the distinction matters).
 - **Risk-prioritized cyber-physical attack paths** — Stellios, Kotzanikolaou & Grigoriadis (2021).
+- **ISO 14971:2019** — *Medical devices — Application of risk management to medical devices* (severity-of-harm × probability-of-occurrence-of-harm decomposition; the safety-risk language regulators expect cybersecurity risk to be expressed in for medical-device submissions).
+- **AAMI TIR57:2023** — *Principles for medical device security — Risk management* (the `P1 × P2` cyber-to-safety bridge into ISO 14971; mapping table in `references/risk-rating.md` § "ISO 14971 / AAMI TIR57 mapping for medical-device submissions").
+- **US FDA** — *Cybersecurity in Medical Devices: Quality System Considerations and Content of Premarket Submissions* (2023 final guidance; sets the joint cyber/safety risk-model expectation for premarket review).
 
 Cite these in any output that quotes or substantively summarizes them.

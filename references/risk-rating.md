@@ -1,7 +1,7 @@
 # Risk rating
 
-> **Last verified**: 2026-05. OWASP Risk Rating Methodology and CVSS specification versions both update; re-confirm against owasp.org and first.org/cvss before citing factor lists or version numbers in a deliverable.
-> **Sources paraphrased**: OWASP Risk Rating Methodology (CC-BY 4.0); CVSS specification (FIRST.org, public); Stellios, Kotzanikolaou & Grigoriadis (Computers & Security 107, 2021) — CVV / pruning math (paraphrase, see methodologies.md for full citation); FMEA conventions (public); Adam Shostack and OWASP critiques of DREAD (paraphrase).
+> **Last verified**: 2026-05. OWASP Risk Rating Methodology, CVSS specification, ISO 14971 (current edition 14971:2019), and AAMI TIR57 (current edition 2023) all update; re-confirm against owasp.org, first.org/cvss, the ISO store, and the AAMI catalog before citing factor lists or version numbers in a regulatory deliverable.
+> **Sources paraphrased**: OWASP Risk Rating Methodology (CC-BY 4.0); CVSS specification (FIRST.org, public); Stellios, Kotzanikolaou & Grigoriadis (Computers & Security 107, 2021) — CVV / pruning math (paraphrase, see methodologies.md for full citation); FMEA conventions (public); Adam Shostack and OWASP critiques of DREAD (paraphrase); ISO 14971:2019 — *Medical devices — Application of risk management to medical devices* (proprietary ISO standard, paraphrase only — severity / probability decomposition referenced, no direct quote); AAMI TIR57:2023 — *Principles for medical device security — Risk management* (proprietary AAMI technical information report, paraphrase only — `P1 × P2` cyber-to-safety bridge referenced, no direct quote); US FDA *Cybersecurity in Medical Devices: Quality System Considerations and Content of Premarket Submissions* (2023, US government work — joint cyber/safety risk-model expectation cited).
 
 > **Related**: ← `SKILL.md` • `methodologies.md` (the L/M/H scale spans all three strata in the hybrid) • `validation.md` (Q4 cross-stratum check: one risk-rating scale across the whole model).
 
@@ -40,6 +40,53 @@ The risk column in the threat table takes one of `Low / Medium / High` — same 
 ### Safety bump
 
 For safety-critical systems (medical devices, automotive, industrial control, aerospace, robotics), bump the impact rating any time patient / operator / public safety is in play. Don't rate physical-harm scenarios as "Medium impact"; that's almost always High. The bump applies whether the harm is intentional (adversarial) or non-adversarial (sensor failure cascading to harm) — the safety case doesn't care which.
+
+### ISO 14971 / AAMI TIR57 mapping for medical-device submissions
+
+For FDA premarket cybersecurity submissions, IEC 81001-5-1, IEC 62304, and MDR / IVDR submissions, the safety bump above is the right *instinct* but not the right *artifact*. Regulators expect cybersecurity risk to be expressed in the same language as patient-safety risk — specifically the **ISO 14971** risk-management framework (severity-of-harm × probability-of-occurrence-of-harm), with **AAMI TIR57** as the bridge that maps cyber threats into the ISO 14971 model. The 2023 FDA *Cybersecurity in Medical Devices* final guidance is explicit that the joint cyber/safety risk model is what reviewers will look for.
+
+Use this mapping to translate the skill's L/M/H ratings into ISO 14971 / TIR57 terms. The mapping is what closes the loop from a STRIDE threat to an ISO 14971 unacceptable-risk finding.
+
+**Severity of harm** (ISO 14971 severity scale — `S1..S5`):
+
+| Markdown impact | ISO 14971 severity | When to pick (clinical / safety lens) |
+|---|---|---|
+| L | **S1 — Negligible** | Inconvenience, no clinical consequence (e.g. delayed non-urgent report) |
+| L (very low) | (use S1) | — |
+| M | **S2 — Minor** | Temporary discomfort, no lasting harm, no intervention beyond standard care |
+| M (towards H) | **S3 — Serious** | Reversible injury requiring medical intervention; non-permanent harm |
+| H | **S4 — Critical** | Permanent injury, life-threatening, major intervention required |
+| H (catastrophic) | **S5 — Catastrophic** | Death, permanent disabling injury, multiple-patient harm |
+
+**Probability of occurrence of harm** under TIR57 decomposes into two stages — `P1 × P2`:
+
+- **P1** — probability that the cybersecurity threat materializes (a hazardous *situation* arises). This is roughly the L/M/H *Likelihood* column from the matrix above. A network-reachable, weakly-authenticated, easily-automated attack scores P1 high; a physical-access-only attack on a tamper-resistant device scores P1 low.
+- **P2** — probability that, given the hazardous situation, harm to the patient *actually occurs*. This is what the safety case calculates — interlocks, alarms, clinician oversight, mechanical limits. A dosing-setpoint tamper with a hard mechanical flow limit and an alarm scores P2 low even when P1 is high; the same tamper on a device whose only check is software-based scores P2 high.
+
+Total probability of harm `P = P1 × P2`. The TIR57 framing makes the safety case's mitigations (interlocks, alarms, clinician-in-the-loop) visible as P2-reducers — which is what a reviewer will look for when they ask "if the attacker wins the cyber argument, does the safety case still hold?"
+
+| Probability range | TIR57 / ISO 14971 band | Skill-side interpretation |
+|---|---|---|
+| Frequent | High `P1` × high `P2` | Safety case has no working barrier against a likely attack — unacceptable on its face |
+| Probable / Occasional | Mixed | The triage band: safety mitigations exist but may be defeatable; argue case-by-case |
+| Remote / Improbable | Low `P1` × low `P2` | Safety case demonstrably reduces residual risk; document the barrier explicitly |
+
+ISO 14971 risk = `severity × probability`; an "unacceptable risk" classification typically falls out of the upper-right region (high severity × frequent / probable probability). The exact band thresholds are an organization-level / submission-level decision, not a skill default — record the team's band rules in §1 prose.
+
+**Worked example — Tampering threat on a dosing setpoint.**
+
+A Tampering threat on an infusion pump's dosing-setpoint flow over the management VLAN. Skill-side rating: `Likelihood: H` (network-reachable, no mTLS, public exploit for a similar pump exists), `Impact: H (catastrophic — overdose risk)`.
+
+Translated to ISO 14971 / TIR57:
+
+- **Severity**: S5 (Catastrophic) — overdose can cause death.
+- **P1**: high — the cyber threat is feasible and demonstrated.
+- **P2**: depends on the safety case. If the pump has a hard mechanical flow limit independent of the software setpoint, and the dose-rate alarm is reliably annunciated to clinical staff, P2 is *low* — the safety case absorbs the cyber compromise. If neither barrier is present (software-only enforcement), P2 is *high* — the cyber compromise reaches the patient.
+- **Combined**: with safety-case barriers, `S5 × low-P` lands in the `Probable / Occasional` × `S5` band — *still requires mitigation* under most submission frameworks, but the residual is bounded. Without safety-case barriers, `S5 × high-P` is unacceptable on its face.
+
+The point: the cybersecurity-risk score (`Likelihood: H, Impact: H, Risk: High`) doesn't tell the regulator whether the device is acceptable — the ISO 14971 view does. **For medical-device submissions, every safety-bumped threat in §3 should carry both ratings**: the skill's L/M/H for the engineering-team triage view, and the `severity × P1 × P2` for the regulator-facing safety-case view. Worked alongside the Risk register in §3, this is the single artifact FDA reviewers thumb through to confirm cybersecurity has been integrated with the ISO 14971 risk file rather than bolted on.
+
+**Cross-references**: `references/medical.md` § "Regulators and threat-intel sources" lists the underlying standards. `references/stpa.md` is the right home when the *control loop itself* is the analysis target — STPA generates losses → hazards → constraints in a form that maps directly into ISO 14971 hazardous situations. The combination of STPA hazards + TIR57 cyber-to-safety mapping is what the joint IEC 62304 / IEC 81001-5-1 artifact actually contains.
 
 ## When to use OWASP Risk Rating Methodology instead
 
