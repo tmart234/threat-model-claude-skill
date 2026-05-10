@@ -4,7 +4,7 @@
 
 Mermaid renders well in GitHub, GitLab, Markdown editors, and Polarion (with the Mermaid plugin). It's the practical default for a text-first threat modeling workflow.
 
-Mermaid doesn't natively render trust boundaries the way a dedicated threat modeling tool does, so we use `subgraph` blocks to group elements by trust zone and a prose key to explain the convention.
+Mermaid doesn't natively render trust boundaries the way a dedicated threat modeling tool does, but solid `subgraph` borders read visually as *containment* (UML-package-style "this is part of that"), not as a *boundary an attacker crosses*. The default is to render every trust-boundary subgraph with a **dashed border** via `style <SubgraphID> fill:none,stroke:#888,stroke-dasharray: 5 5`. Pattern, classDef variant, and worked example are in § "Rendering trust boundaries as dashed subgraphs" below. Apply it to every diagram — it is not optional.
 
 ## Element mapping
 
@@ -15,7 +15,7 @@ Mermaid doesn't natively render trust boundaries the way a dedicated threat mode
 | Multi-process | `MP[[Label]]` (subroutine shape) | Use only when decomposition is shown elsewhere |
 | Data store | `DS[(Label)]` (cylinder) | Standard cylinder shape |
 | Data flow | `A -- "label" --> B` | Always label what flows |
-| Trust boundary | `subgraph Zone["<owner> \| <env-type> \| <trust>"]` ... `end` | Each subgraph is one trust zone — see § "Subgraph labeling convention" |
+| Trust boundary | `subgraph Zone["<owner> \| <env-type> \| <trust>"]` ... `end` + dashed-border styling | Each subgraph is one trust zone; nest subgraphs for sub-boundaries — see § "Subgraph labeling convention", § "Rendering trust boundaries as dashed subgraphs", and § "Nested subgraphs for sub-trust boundaries" |
 
 Per-edge styling (optional, for emphasis on highest-risk flows):
 
@@ -27,7 +27,7 @@ linkStyle 0 stroke:#d62728,stroke-width:2px
 
 ```mermaid
 flowchart LR
-    subgraph Hospital["Hospital IT | on-prem enterprise (clinical VLAN) | moderate trust"]
+    subgraph Hospital["Hospital IT | on-prem (clinical VLAN) | moderate trust"]
         Modality(CT Modality)
         Workstation[Clinician Workstation]
         PACS(PACS Server)
@@ -50,10 +50,19 @@ flowchart LR
     PACS -- "audit events" --> AuditDB
     PACS -- "tiered archive (mTLS)" --> Archive
     Archive -- "object PUT (SigV4)" --> ArchiveStore
-    Vendor -- "remote support session (VPN + MFA)" --> PACS
+    Vendor -. "remote support session (VPN + MFA)" .-> PACS
+
+    classDef tb fill:none,stroke:#888,stroke-dasharray: 5 5
+    class Hospital,Internet,Cloud tb
 ```
 
-Trust boundaries (the implicit "dotted lines"):
+Note three things this example demonstrates:
+
+- **Every element is inside exactly one zone.** Vendor isn't floating; it's in an explicit `Untrusted` subgraph for the public internet.
+- **Boundaries are dashed.** The `classDef tb` + `class … tb` pattern applies the dashed border to all three zone subgraphs at once.
+- **The flow from `untrusted` is dashed too.** `Vendor -. "..." .-> PACS` uses Mermaid's dashed-arrow syntax to mark the highest-attention crossing; the in-zone flows stay solid.
+
+Trust boundaries (the dashed subgraph borders above):
 
 - `Hospital` ↔ `Internet` — vendor support is the riskiest crossing.
 - `Hospital` ↔ `Cloud` — egress over TLS to cloud archive.
@@ -80,30 +89,113 @@ subgraph ID["<owner> | <env-type> | <trust>"]
 Where:
 
 - **`<owner>`** — who owns the underlying network, host, account, or device (and therefore who can change configuration / patch / control access). Pick from the ownership taxonomy in `environments.md` § "Ownership taxonomy". When ownership is unclear, write `Unknown` and record an explicit assumption — don't guess silently. When two owners share a zone, write the one with operational control (e.g. `Customer IT (vendor service-account exception — A3)`).
-- **`<env-type>`** — the environment kind, from the fixed taxonomy: `cloud (<provider>)`, `on-prem enterprise (<sub-zone, e.g. AD Tier 0 / corp VLAN / DMZ>)`, `embedded (<sub-zone, e.g. application core / secure element / baseband>)`, `OT/ICS (<Purdue level or named zone>)`, `mobile (<sub-zone, e.g. app sandbox / keystore>)`, or `public internet`. Use the per-environment patterns in `environments.md` for sub-zones; collapsing a whole environment into one box loses most of the boundaries that matter.
+- **`<env-type>`** — the environment kind from a fixed taxonomy, **without redundant prefixes**: `cloud (<provider>)`, `on-prem (<sub-zone, e.g. AD Tier 0 / corp VLAN / DMZ>)`, `embedded (<sub-zone, e.g. application core / secure element / baseband>)`, `Purdue L<n> (<named zone>)` for OT/ICS (don't write `OT/ICS (Purdue L2 — supervisory)` — `Purdue L2` already says it's OT and `L2` already says supervisory; just `Purdue L2 (supervisory)` or even `Purdue L2` once the model has established the cell is OT), `mobile (<sub-zone>)`, or `public internet`. Use the per-environment patterns in `environments.md` for sub-zones; collapsing a whole environment into one box loses most of the boundaries that matter.
 - **`<trust>`** — qualitative trust level: `untrusted`, `low trust`, `medium trust`, `high trust`, `very high trust`, or domain-specific qualifiers like `safety-critical`, `out-of-scope owner`, `unknown`. Use the same scale across every diagram in one model so the prioritized §3 list is consistent.
 
-Examples:
+**Compression rule.** When the same `<owner>` or `<env-type>` repeats across most of the subgraphs in one diagram (e.g. five OT zones all owned by "Hospital biomed"), state the common value once in a one-line key above the diagram and shorten the labels to just the distinguishing fields. Example:
 
 ```
-subgraph HospNet["Hospital IT | on-prem enterprise (clinical VLAN) | moderate trust"]
+Owners: Hospital biomed unless noted. Environment: OT/ICS Purdue levels.
+
+subgraph L0["L0 (field) | safety-critical"]
+subgraph L1_PLC["L1 PLC (interlocks) | very high trust"]
+subgraph L1_RT["KUKA OEM | L1 (real-time motion) | very high trust"]
+subgraph L2_App["L2 (application) | medium-high trust"]
+subgraph L2_Sup["KUKA OEM | L2 (supervisory) | high trust"]
+```
+
+Compression preserves all three pieces of information without making each label a 60-character sentence. Never compress a field that *isn't* repeated — owners that differ between zones (KUKA OEM vs Hospital biomed) are exactly the boundaries that matter; show them.
+
+Examples (uncompressed, when the diagram has heterogeneous owners and environments):
+
+```
+subgraph HospNet["Hospital IT | on-prem (clinical VLAN) | moderate trust"]
 subgraph DeviceSE["Vendor | embedded (secure element) | very high trust"]
-subgraph SIS["Plant Operator | OT/ICS (Safety Instrumented System) | safety-critical, isolated"]
+subgraph SIS["Plant Operator | Purdue (Safety Instrumented System) | safety-critical, isolated"]
 subgraph Keystore["OS Vendor (Apple/Google) | mobile (hardware-backed keystore) | very high trust"]
-subgraph CSPCtrl["AWS | cloud provider control plane | out-of-scope owner"]
+subgraph CSPCtrl["AWS | cloud (provider control plane) | out-of-scope owner"]
 ```
 
-Why three fields and not one: a subgraph label like `Hospital network — moderate trust` (the older convention) tells the reader the trust level but hides the *owner* and the *environment kind* — both of which drive which mitigations are even possible. The three-field label makes responsibility-for-mitigation legible from the diagram, which is what §3 of the threat model needs to answer.
+Why three fields and not one: a label like `Hospital network — moderate trust` (the older convention) tells the reader the trust level but hides the *owner* and the *environment kind* — both of which drive which mitigations are even possible. The three-field label makes responsibility-for-mitigation legible from the diagram, which is what §3 of the threat model needs to answer.
 
 When a system spans multiple environments (almost always the case), every subgraph gets its own owner / env-type / trust triplet. Don't share labels across environments.
 
+**Methodology framing belongs in §1 prose, not on labels.** A label is for identification (`Purdue L1 (PLC)`); the prose that explains *why* the diagram uses Purdue levels at all — "this cell is OT-shaped, so we segment per the Purdue Enterprise Reference Architecture" — belongs in the §1 system-description or environment paragraph. Same pattern for any other environment skeleton: AD Tier model on enterprise systems, Purdue on OT/ICS, the cloud account/VPC/subnet hierarchy on cloud, the iOS/Android sandbox model on mobile. Name the skeleton once in §1; let the labels carry just the level. Without this split, label space fills with redundant context (`OT/ICS (Purdue L2 — supervisory)` thrice) and the diagram gets noisier without telling the reader anything new.
+
+A small follow-on: when two zones legitimately sit at the same Purdue level but are owned by different parties (e.g. a vendor's L1 real-time motion controller alongside the hospital biomed's L1 safety PLC), the diagram is *correct* — both are L1, that's the whole point — but readers used to a clean Purdue stack may second-guess it. A one-line note in §1 ("two L1 zones, distinguished by owner: KUKA OEM RT motion vs. hospital biomed PLC") prevents the misread.
+
+## Rendering trust boundaries as dashed subgraphs
+
+Mermaid renders `subgraph` borders as solid rectangles by default. Solid borders read visually as *containment* — UML-package-style "this object contains those objects." That's the wrong semantic for a threat model. A trust boundary is a *line an attacker crosses*, and Shostack's DFD3 convention (and every commercial threat-modeling tool) renders it dashed for exactly this reason.
+
+Two patterns work in Mermaid; pick one and use it consistently in one diagram.
+
+**Pattern A: per-subgraph `style` (verbose but explicit):**
+
+```
+subgraph HospNet["Hospital IT | on-prem (clinical VLAN) | moderate trust"]
+    PACS(PACS Server)
+end
+style HospNet fill:none,stroke:#888,stroke-dasharray: 5 5
+```
+
+**Pattern B: `classDef` with `class` assignment (preferred when there are several boundaries):**
+
+```
+classDef tb fill:none,stroke:#888,stroke-dasharray: 5 5
+class HospNet,Internet,Cloud tb
+```
+
+`stroke-dasharray: 5 5` (5px dash, 5px gap) is the Shostack-DFD3-equivalent default. Other values (`3 3` for a tighter dash, `8 4` for a longer one) are fine — pick one per diagram. **`fill:none` matters**: without it, the subgraph fill obscures elements behind it when the renderer overlaps zones; `fill:none` makes the boundary a true outline.
+
+**Comma-escape note for newer Mermaid (v10+):** when writing `stroke-dasharray` inside a `style` directive, some versions require the comma between dash and gap to be escaped — `stroke-dasharray: 5\,5` — because comma is a style-property delimiter. The space-separated form (`5 5`) sidesteps this and is supported across all Mermaid versions. Default to spaces.
+
+Pair the dashed boundaries with these two visual conventions to keep the diagram legible:
+
+- **Solid arrows for trusted/in-scope flows, dashed arrows for untrusted/external flows.** `A -- "label" --> B` vs `A -. "label" .-> B`. This way a reader can spot trust crossings at a glance: dashed-into-dashed-zone = the highest-attention edges.
+- **Don't double-style.** A flow that's already crossing a dashed-border subgraph doesn't *also* need a dashed arrow. Reserve the dashed-arrow style for flows that cross from `untrusted` zones (public internet, attacker, untrusted external entity).
+
+## Nested subgraphs for sub-trust boundaries
+
+Real systems have trust boundaries inside trust boundaries. Mermaid supports nesting trivially — flat zones are a tooling habit, not a requirement.
+
+When to nest:
+
+- A controller that runs two operating systems with a documented privilege boundary (KUKA Sunrise's Windows-10-IoT side ↔ VxWorks RT side; Android's normal world ↔ TrustZone secure world; an iOS app sandbox ↔ Secure Enclave).
+- Cloud zones at multiple depths (account → VPC → subnet → security group; or account → VPC → cluster namespace).
+- A Windows host that hosts a hypervisor (host OS ↔ guest VM ↔ container).
+- An embedded device with a secure element distinct from the application processor.
+
+Pattern:
+
+```mermaid
+flowchart LR
+    subgraph Cabinet["KUKA OEM | OT (Sunrise Cabinet) | high trust"]
+        subgraph CabWin["Sunrise Win10 IoT side | medium-high trust"]
+            SunWin(Sunrise.OS Java app)
+        end
+        subgraph CabRT["Sunrise VxWorks RT side | safety-critical"]
+            SunRT(RT motion + safety)
+        end
+        SunWin -- "internal RPC bridge" --> SunRT
+    end
+    classDef tb fill:none,stroke:#888,stroke-dasharray: 5 5
+    class Cabinet,CabWin,CabRT tb
+```
+
+The outer subgraph is the controller as a unit (a physical box, an account, a device); the inner subgraphs are the privilege zones inside it. The arrow between inner zones is the bridge — usually the highest-leverage place to put STRIDE attention.
+
+**Don't nest gratuitously.** Two boxes inside the same trust zone running the same technology don't need a sub-zone — they're equivalent for STRIDE per Shostack's "combine equivalent elements" rule (§ Conventions below). Nest when there's a *real* privilege boundary between the inner zones, not just because they're labelled separately.
+
 ## Conventions to keep things readable
 
+- **Every element belongs to exactly one zone.** External entities, processes, data stores, smart pendants, e-stop chains, physical actors (patient, operator) — all of them. A floating element with no zone label is a missing trust boundary. Zones for "outside" elements (a patient in the workspace, an attacker on the internet, a vendor accessing remotely) get explicit `Untrusted` or `Unowned | <env-type> | untrusted` labels. *Floating = bug, not aesthetic choice.*
 - **Label every flow.** "DICOM C-STORE over TCP/11112 (PHI)" not "data". Concrete protocols make threats tractable: an attacker can craft DICOM PDUs against an open `11112` listener, but they can't attack a flow labeled "data".
 - **Direction matters.** Use `-->` for one-way and `<-->` only when the flow truly is symmetric request/response with the same content. For RPC-style flows, draw two arrows with their actual content labels.
 - **Group by trust zone, not by physical layout.** Trust zones are what STRIDE-Per-Element care about.
 - **Color sparingly.** Use `style` only to highlight the riskiest crossings or the highest-risk elements. Don't decorate. (Note: ~1 in 12 people have some form of color blindness, so don't rely on color alone — always pair color with text labels.)
-- **Stable element IDs.** Use short stable IDs (`P1`, `DS2`, `EE3`) so the threat table can reference them.
+- **Tag DFD elements with their §1 asset IDs.** Any element that represents a named asset from §1 (`AS1`, `AS2`, …) carries that ID inline in its label — `BeckIPC(("Beckhoff IPC<br/>application controller<br/>(AS3)"))` not just `BeckIPC(("Beckhoff IPC"))`. This makes the diagram self-checking against §1: a reviewer can scan the picture, count `AS#` tags, and confirm against the §1 asset list without flipping back and forth. Elements that aren't assets (the JVM as such, a transient process, an external entity) stay untagged. When one element carries multiple assets (a DB holding both PHI and signing keys), tag both: `(AS8, AS9)`. Trust boundaries themselves don't get asset IDs — boundaries are properties of the diagram, not assets.
+- **Stable element IDs.** Use short stable IDs (`P1`, `DS2`, `EE3`) for the Mermaid node IDs so the threat table can reference them. Note these are different from the §1 asset IDs above; the Mermaid ID identifies the *box*, the `AS#` identifies the *thing the box stands for*.
 
 ## Shostack's diagramming rules of thumb
 
