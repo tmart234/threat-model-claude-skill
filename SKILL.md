@@ -225,77 +225,45 @@ Read on demand:
 - `manifesto.md` — Threat Modeling Manifesto values, principles, patterns, anti-patterns (paraphrased).
 - `risk-rating.md` — Qualitative L/M/H, OWASP-RR pointer, safety-bump rule, why DREAD is discouraged.
 - `stpa-safesec.md` — Safety+security joint hazard analysis for control-loop systems. Two modes (swap or supplement). Use when the worst case is physical harm and the system is a control loop.
-- `examples.md` — Worked end-to-end examples for non-medical system types: a multi-tenant SaaS web app and an LLM chatbot with tools. Loads §1 → DFD → §2.1 STRIDE + supplement → §2.2 operational → §3 mitigations + requirements → §4 self-check. The medical / DICOM end-to-end example lives in `data-centric.md` § "Worked example" + `dfd-mermaid.md` § "Worked example: small clinical PACS".
+- `examples.md` — Pointer to the OWASP Threat Model Library (https://github.com/OWASP/www-project-threat-model-library) as the source for end-to-end worked examples by system type (web-applications, ai-ml-systems, infrastructure, third-party-integrations). The library's JSON schema also defines the structured-sidecar contract — see § "Machine-readable sidecar" above. The medical / DICOM end-to-end example is the exception, kept inline at `data-centric.md` § "Worked example" + `dfd-mermaid.md` § "Worked example: small clinical PACS".
 
 Blank template: `assets/threat-model-template.md`.
 
 ## Machine-readable sidecar (for tracker import)
 
-The default output is a markdown document. When the user is going to import findings into Polarion, Jira, GitHub Issues, ServiceNow, or any other tracker, also emit a YAML sidecar alongside the markdown — one item per row across §1 (assets), §2 (threats / vectors / privacy findings), §3 (mitigations / requirements). Markdown headings and tables are the document's contract for humans; the YAML sidecar is the contract for tooling. Don't produce only the YAML — the markdown remains the canonical artifact and the sidecar is a derived view.
+The default output is a markdown document. When the user is going to import findings into Polarion, Jira, GitHub Issues, ServiceNow, or any other tracker — or when they ask for a structured artifact for tooling — also emit a JSON sidecar alongside the markdown. **Use the OWASP Threat Model Library schema** (`threat-model.schema.json` from https://github.com/OWASP/www-project-threat-model-library, MIT-licensed; aligns with the pending CycloneDX TM-BOM specification). Don't invent a YAML schema — the upstream JSON schema is the contract downstream tools already implement against.
 
-When the user asks for tracker import, asks "can I export this to Jira/GitHub/Polarion", or names a downstream tool, emit the sidecar by default. Otherwise mention it once and offer it.
+When the user asks for tracker import, asks "can I export this to Jira/GitHub/Polarion", or names a downstream tool, emit the sidecar by default. Otherwise mention it once and offer it. Validate the JSON output against the upstream schema before handing it over (e.g. `check-jsonschema --schemafile threat-model.schema.json <output>.json`).
 
-Schema (stable contract — keep field names exactly as below so downstream importers don't need regex archaeology):
+The markdown remains the canonical artifact; the JSON sidecar is the derived view. Don't produce only the JSON.
 
-```yaml
-threat_model:
-  system: "<system name>"
-  version: "0.1"
-  date: "YYYY-MM-DD"
-  status: "Draft / Reviewed / Approved"
-  next_review_trigger: "<text>"
+**Mapping from this skill's IDs to OWASP TML schema fields** (the schema's symbolic-name fields take this skill's IDs verbatim — `AS1`, `T1`, `V1`, `PR1`, `SR-001`, `TB1` — so cross-references stay readable):
 
-assets:
-  - id: AS1
-    name: "<asset name>"
-    description: "<what it is>"
-    why_it_matters: "<one sentence>"
+| This skill | OWASP TML field |
+|---|---|
+| §1 system description, scope, business criticality | `scope` |
+| §1 assumptions (`ASM#`) | `assumptions` |
+| §1 actors / external entities | `actors` |
+| §1 processes + data stores (DFD nodes) | `components`, `data_stores` |
+| §1 data classes (data-centric pass) | `data_sets` |
+| §1 trust zones (DFD subgraphs) | `trust_zones` |
+| §1 trust boundaries table | `trust_boundaries` |
+| §1 DFD (Mermaid) | `diagrams` (Mermaid source inline) |
+| §2 threats (`T#` / `V#` / `PR#`) | `threats` (CWE / CAPEC IDs in their own fields per the schema) |
+| §2.2 STRIDE category, ATT&CK, kill chain | `threats[].extensions` (vendor-namespaced — see schema's `extensions` rules; recommended namespace `tmskill.threat-modeler/`) |
+| §3 controls / mitigations | `controls` |
+| §3 derived requirements (`SR-###`) | `controls` (with `requirement` extension) or `risks` cross-ref |
+| §1 / §2 risk ratings (L/M/H, optional Critical) | `risks` |
 
-assumptions:
-  - id: ASM1
-    text: "<falsifiable assumption>"
+Where the upstream schema doesn't carry a field this skill produces (STRIDE category labels, the Stratum tag, the Stellios path-product score), use `extensions` with reverse-domain naming (e.g. `tmskill.threat-modeler/stride`, `tmskill.threat-modeler/stratum`, `tmskill.threat-modeler/path-score`) — never invent top-level fields.
 
-threats:
-  - id: T1
-    stratum: contextual          # contextual | operational | strategic
-    pass: flow-centric           # flow-centric | data-centric | asset-centric | user-needs-centric | process-centric | code-centric | linddun | ai-ml | stpa-safesec
-    element: "<DFD element ID and label>"
-    stride: S                    # S | T | R | I | D | E | "" (non-STRIDE pass)
-    threat: "<concrete attack scenario, not just the category>"
-    likelihood: M                # L | M | H
-    impact: H                    # L | M | H
-    risk: High                   # Low | Medium | High  (or Critical only if §1 promotes High+High; see references/risk-rating.md)
-    capec: ["CAPEC-151"]         # may be empty
-    capec_forced_abstraction: false  # true only if no Detailed exists for the domain protocol
-    cwe: ["CWE-287", "CWE-290"]
-    attack: ["T1078"]            # ATT&CK technique IDs
-    cross_refs: []               # ["V3", "PR1"] — IDs of cross-stratum equivalents
-    response: Mitigate           # Mitigate | Eliminate | Transfer | Accept
-    controls: ["<concrete control or control class>"]
-    owner: "<team or named role>"
-    requirements: ["SR-001"]
-
-requirements:
-  - id: SR-001
-    text: "The system SHALL <testable requirement>."
-    mitigates: ["T1", "T3"]
-    closes_cwe: ["CWE-287"]
-
-trust_boundaries:
-  - id: TB1
-    left_owner: "<owner>"
-    right_owner: "<owner>"
-    crosses: "<what crosses>"
-    mediating_control: "<control>"
-```
-
-A finding from a supplementary pass (`V#`) uses `id: V1`, sets `pass:` to the pass type, and leaves `stride:` empty when not STRIDE-categorized. A LINDDUN/AI-ML finding uses `id: PR1` and sets `pass: linddun` or `pass: ai-ml`. The schema is intentionally narrow — extend a downstream-importable field only when the import target requires it.
+Worked example threat models in the OWASP TML JSON shape live in https://github.com/OWASP/www-project-threat-model-library/tree/main/threat-models, organized by system type: `ai-ml-systems/`, `web-applications/`, `infrastructure/`, `third-party-integrations/`. Reference one of those when producing a structured sidecar so the output matches what downstream consumers expect.
 
 ## Citations
 
 Concepts in this skill paraphrase from:
 
-- **OWASP** — Threat Modeling community page, Threat Modeling Process, Threat Modeling Cheat Sheet, Security Culture v1.0 §6, Threat Modeling Playbook (Toreon).
+- **OWASP** — Threat Modeling community page, Threat Modeling Process, Threat Modeling Cheat Sheet, Security Culture v1.0 §6, Threat Modeling Playbook (Toreon), **Threat Model Library** (https://github.com/OWASP/www-project-threat-model-library, MIT-licensed; structured-sidecar JSON schema and the curated example-models repository the skill defers to for worked examples).
 - **Threat Modeling Manifesto** — values, principles, patterns, anti-patterns (CC-BY 4.0).
 - **Adam Shostack**, *Threat Modeling: Designing for Security* (Wiley, 2014) — Four Question Framework, STRIDE-Per-Element, diagramming and validation checklists, iteration tactics, bug-filing as exit point.
 - **NIST SP 800-154** (Draft, Souppaya & Scarfone, 2016) — data-centric methodology.
