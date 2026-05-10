@@ -59,8 +59,13 @@ Drop these into the threat-model document itself with check-marks. The Diagrammi
 - [ ] We can tell a story about how the system works without changing the diagram.
 - [ ] We can tell that story without using the words "sometimes" or "also" — anywhere those came up, we broke the case into separate flows or added detail.
 - [ ] We can look at the diagram and see exactly where the software will make a security decision.
+- [ ] Every element is inside exactly one zone subgraph — no floating elements (SKILL.md DFD rule #1).
+- [ ] Every trust boundary is rendered as a dashed-border subgraph (`dfd-mermaid.md` § "Rendering trust boundaries as dashed subgraphs").
+- [ ] Sub-trust-boundaries are nested subgraphs where they exist — controller dual-OS, account/VPC/subnet, host/VM/container, device/secure-element (`dfd-mermaid.md` § "Nested subgraphs for sub-trust boundaries").
+- [ ] Every `AS#` from §1 appears in the DFD as a tagged element label, and every §1 trust boundary is drawn (SKILL.md DFD rule #3).
+- [ ] Methodology framing (Purdue, AD Tier, cloud account/VPC, mobile sandbox) is named in §1 prose, not repeated on every subgraph label.
 - [ ] The diagram shows all trust boundaries: every UID/account boundary, every application role, every network interface, every place different principals interact.
-- [ ] Every subgraph is labeled `<owner> | <env-type> | <trust>` per `dfd-mermaid.md` § "Subgraph labeling convention" — owner is named (or marked Unknown with an assumption), environment type is from the fixed taxonomy, trust level is on the model-wide scale.
+- [ ] Every subgraph is labeled `<owner> | <env-type> | <trust>` per `dfd-mermaid.md` § "Subgraph labeling convention" — env-type without redundant prefixes (`Purdue L2`, not `OT/ICS (Purdue L2)`); compression-rule key applied where owner/env-type repeats.
 - [ ] The per-environment trust-boundary patterns from `references/environments.md` have been checked for every environment type in scope (cloud / on-prem enterprise / embedded / OT/ICS / mobile) — boundaries that apply but aren't drawn are explicitly justified.
 - [ ] Every data flow is labeled with the actual protocol and authentication (e.g. "DICOM C-STORE over TCP/11112", "HTTPS + mTLS", "Modbus/TCP", "BLE GATT") — generic labels like "data" mean threats will be missed.
 - [ ] The diagram reflects the current or planned reality — not an aspirational version.
