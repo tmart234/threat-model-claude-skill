@@ -25,6 +25,12 @@ is data-typed (HIPAA / GDPR / PCI / FDA)?
   → Use data-centric (NIST SP 800-154) as the entry point — see centric-methods.md.
     STRIDE still works as the per-location lens.
 
+Worst case is physical (patient harm, operator injury, equipment destruction)
+and the system is a control loop (controllers + sensors + actuators)?
+  → Consider STPA-SafeSec as the contextual core, replacing flow-centric DFD + STRIDE
+    for the control-loop portion. STRIDE may still layer in for non-control flows
+    (telemetry, OTA, audit). Deep dive: stpa-safesec.md.
+
 Privacy is the dominant concern (PII/PHI/GDPR-heavy)?
   → Use LINDDUN alongside STRIDE. Often combine with data-centric entry point.
 
@@ -109,6 +115,24 @@ flowchart TD
     C --> C2[Algorithm confusion]
 ```
 
+## STPA-SafeSec — safety + security for control-loop systems
+
+A full-methodology alternative to flow-centric + STRIDE for safety-critical control-loop systems. **STPA-Sec** (Young & Leveson, 2014) extends STPA hazard analysis to security; **STPA-SafeSec** (Friedberg et al., 2017) integrates safety and security into one workflow and adds the component-layer mapping that closes the abstraction gap. Use STPA-SafeSec, not plain STPA-Sec — the component layer is what makes the analysis actionable.
+
+This is one of the few cases in this skill where the contextual core is *swapped*, not supplemented. STPA-SafeSec replaces both the DFD and STRIDE-Per-Element for the control-loop portion of the system. STRIDE may still layer in for non-control flows that appear at the component layer (telemetry uploads, OTA updates, audit log paths) where confidentiality and repudiation matter — the integrity/availability causal-factor tables don't cover those.
+
+When to use:
+- Worst case is physical (patient harm, operator injury, equipment destruction).
+- System is shaped as a control loop (controllers + sensors + actuators).
+- Safety analysis is regulatorily required (FDA premarket cybersecurity, IEC 62304, IEC 81001-5-1, IEC 61508, ISO 26262) and producing one artifact is better than two.
+- You need to prioritize where to spend deep security analysis effort (pen testing, fuzzing, deep code review).
+
+When **not** to use: worst case is a data breach or unauthorized access (use STRIDE — STPA-SafeSec under-weights confidentiality and audit threats); no controlled physical process.
+
+Output shape: Losses → Hazards → Constraints → Control layer → Component layer → UCAs → System flaws → Hazard-scenario trees → Mitigations at control or component layer + requirements traced to constraints.
+
+Deep dive — workflow, ID conventions, two-layer system model, integrity/availability causal-factor tables, mitigation strategy effectiveness, Q4 additions: `stpa-safesec.md`.
+
 ## MITRE ATT&CK + Cyber Kill Chain
 
 ATT&CK and the Lockheed Martin Cyber Kill Chain are **output characterization layers**, not generative methods — they organize threats you've already generated, they don't enumerate them. For the full framing of characterization layers vs generation methods (and the rest of the catalog: CAPEC, CWE, CVSS, STRIDE-as-characterization), see `centric-methods.md` § "Output characterization layers (these are not entry points)" — that's the canonical place. The ATT&CK / kill-chain specifics:
@@ -177,10 +201,10 @@ This is a cheat sheet, not a straitjacket. Always include the "always" cells. Ad
 | System type | Contextual core (always) | Contextual supplement (always pick at least one) | Operational (always) | Strategic (always) | Often add | Sometimes |
 |---|---|---|---|---|---|---|
 | Generic web app | flow-centric DFD + STRIDE | user-needs-centric (business logic) | ATT&CK on top threats | OWASP Top 10 framing; sector if regulated | LINDDUN (if PII); CWE on code findings | Process-centric (if ops-heavy); attack tree (one high-value flow) |
-| **Medical device / PACS / DICOM** | flow-centric DFD + STRIDE | **data-centric (PHI / device data)** + LINDDUN | ATT&CK; **CAPEC + CWE chain** (use the medical-device subset in `capec.md`; cite Standard-level patterns by default — DICOM-/HL7-specific Detailed patterns don't exist, see `capec.md` § "Honest about CAPEC coverage"); CISA medical advisories | **H-ISAC; FDA premarket cybersecurity; IEC 62443; IEC 81001-5-1; HIPAA; safety-bump rule from `risk-rating.md`** | asset-centric (signing keys); attack tree on safety-critical path | Code-centric on parser/protocol code; named adversary if applicable |
+| **Medical device / PACS / DICOM** | flow-centric DFD + STRIDE — **swap to STPA-SafeSec for safety-critical control loops** (infusion pumps, ventilators, robotic surgery, dialysis); see `stpa-safesec.md` | **data-centric (PHI / device data)** + LINDDUN | ATT&CK; **CAPEC + CWE chain** (use the medical-device subset in `capec.md`; cite Standard-level patterns by default — DICOM-/HL7-specific Detailed patterns don't exist, see `capec.md` § "Honest about CAPEC coverage"); CISA medical advisories | **H-ISAC; FDA premarket cybersecurity; IEC 62443; IEC 81001-5-1; HIPAA; safety-bump rule from `risk-rating.md`** | asset-centric (signing keys); attack tree on safety-critical path; **STPA-SafeSec on safety-critical control loops** | Code-centric on parser/protocol code; named adversary if applicable |
 | Cloud-native multi-tenant SaaS | flow-centric DFD + STRIDE | user-needs-centric (tenancy + RBAC); process-centric (deploy / on-call) | ATT&CK; CSP shared-responsibility map | Sector regulator; SOC 2 / ISO 27001 framing | LINDDUN (if PII); asset-centric (signing keys, KMS roots) | Attack tree on tenant-isolation breach |
-| ICS / SCADA / OT | flow-centric DFD + STRIDE | asset-centric (control loop, HMI, PLC) + process-centric | ATT&CK for ICS; kill chain | **E-ISAC; CISA ICS-CERT advisories; IEC 62443; named-adversary context (sector is targeted)** | Attack tree (one safety-critical path) | LINDDUN if operator PII; data-centric on setpoint integrity |
-| Embedded / IoT | flow-centric DFD + STRIDE | data-centric (firmware image; device keys); asset-centric | ATT&CK | Sector regulator; supply-chain framing (SBOM, signed firmware) | Code-centric on bootloader / parser; attack tree on firmware-signing bypass | LINDDUN if device collects PII |
+| ICS / SCADA / OT | flow-centric DFD + STRIDE — **swap to STPA-SafeSec when the control loop's worst case is physical** (process upset, equipment damage, operator injury); see `stpa-safesec.md` | asset-centric (control loop, HMI, PLC) + process-centric | ATT&CK for ICS; kill chain | **E-ISAC; CISA ICS-CERT advisories; IEC 62443; named-adversary context (sector is targeted)** | Attack tree (one safety-critical path); **STPA-SafeSec on safety-critical control loops** | LINDDUN if operator PII; data-centric on setpoint integrity |
+| Embedded / IoT | flow-centric DFD + STRIDE | data-centric (firmware image; device keys); asset-centric | ATT&CK | Sector regulator; supply-chain framing (SBOM, signed firmware) | Code-centric on bootloader / parser; attack tree on firmware-signing bypass | LINDDUN if device collects PII; **STPA-SafeSec for control-loop devices** (automotive ECUs, robotics, drones) |
 | AI / ML system | flow-centric DFD + STRIDE | **data-centric (training data; model weights)** + AI/ML-specific threat list (prompt injection, model extraction, training-data poisoning, etc.) | ATT&CK; OWASP LLM Top 10; OWASP ML Security Top 10 | Sector framing; AI-specific regulator (EU AI Act, NIST AI RMF) | LINDDUN (if PII in training data); attack tree on model extraction | Code-centric on inference pipeline |
 | Greenfield internal tool, low stakes | flow-centric DFD + STRIDE | asset-centric (single-pass, light) | ATT&CK on top 3 threats | One paragraph: sector + regulator | — | (keep light) |
 

@@ -1,6 +1,6 @@
 # Centric methods — choosing the entry point
 
-> **Related**: ← `SKILL.md` • `methodologies.md` (categorization-lens choices: STRIDE / LINDDUN / PASTA …) • `data-centric.md` (data-centric workflow deep-dive) • `stride-prompts.md` (STRIDE-as-generation prompts).
+> **Related**: ← `SKILL.md` • `methodologies.md` (categorization-lens choices: STRIDE / LINDDUN / PASTA / **STPA-SafeSec** …) • `data-centric.md` (data-centric workflow deep-dive) • `stpa-safesec.md` (full-methodology swap, replaces both entry point and lens) • `stride-prompts.md` (STRIDE-as-generation prompts).
 
 This file is the **canonical home** for the entry-point taxonomy and the generation-vs-characterization distinction. SKILL.md and `methodologies.md` reference this; don't duplicate.
 
@@ -21,6 +21,8 @@ code-centric                               CVSS
 ```
 
 For example, "STRIDE-Per-Element" is really *flow-centric generation + STRIDE characterization*. STRIDE is doing the prompt work; the DFD is doing the coverage work. Confusing the two leads people to think STRIDE alone is a complete approach. It isn't — STRIDE is a categorization lens that needs an entry point to be applied against.
+
+> **Note on STPA-SafeSec.** STPA-SafeSec is *not* an entry point in this taxonomy — it's a full-methodology swap that replaces both the entry point (DFD) and the lens (STRIDE) for the contextual core. It belongs with the categorization-lens swaps in `methodologies.md`, not here. Use it for safety-critical control-loop systems where physical harm is the worst case (medical infusion pumps, ventilators, ICS, automotive, robotics). See `stpa-safesec.md`.
 
 ### Mapping to Shostack's three approaches
 
