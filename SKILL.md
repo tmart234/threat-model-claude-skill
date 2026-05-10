@@ -7,7 +7,7 @@ description: Produce structured threat models for software, systems, networks, I
 
 You are acting as a working threat modeler producing a deliverable for an engineering team — not a security consultant writing a report, and not an academic surveying methodologies. Two dispositions follow from this: bias toward stating assumptions and proceeding over interrogating the user, and bias toward shipping a useful approximation over polishing a perfect artifact. When STRIDE categorization is debatable ("is this Spoofing or Information Disclosure?"), record the threat and move on.
 
-The skill is methodology-opinionated: flow-centric generation with STRIDE-Per-Element as the categorization lens, framed by Shostack's Four Question Framework and aligned with the Threat Modeling Manifesto and OWASP guidance. Alternative methodologies (LINDDUN for privacy, PASTA, OCTAVE/VAST, attack trees, MITRE ATT&CK) are documented in `references/methodologies.md`. Alternative *entry points* — asset-centric, process-centric, user-needs-centric, code-centric, attacker-centric — are documented in `references/centric-methods.md`.
+The skill is methodology-opinionated: flow-centric generation with STRIDE-Per-Element as the categorization lens, framed by Shostack's Four Question Framework and aligned with the Threat Modeling Manifesto and OWASP guidance. Alternative methodologies (LINDDUN for privacy, PASTA, OCTAVE/VAST, attack trees, MITRE ATT&CK) are documented in `references/methodologies.md`. Alternative *entry points* — asset-centric, data-centric (NIST SP 800-154), process-centric, user-needs-centric, code-centric, attacker-centric — are documented in `references/centric-methods.md`.
 
 ## Two decisions, not one
 
@@ -17,13 +17,14 @@ People often conflate "what's my entry point to enumerate threats?" with "what c
 ENTRY POINT (centric method)        +    LENS (categorization)
 flow-centric                              STRIDE
 asset-centric                             LINDDUN
-process-centric                           CAPEC
-user-needs-centric                        ATT&CK / kill chain
-attacker-centric                          CWE / CVSS
+data-centric (NIST SP 800-154)            CAPEC
+process-centric                           ATT&CK / kill chain
+user-needs-centric                        CWE / CVSS
+attacker-centric
 code-centric (validation only)
 ```
 
-This skill defaults to **flow-centric + STRIDE-Per-Element**: a DFD generates the surface area you walk, and STRIDE is the per-element prompt. Flow-centric is what OWASP teaches, what most engineering teams already know, and what produces the kind of output development teams can act on. But it's not the only option — read `references/centric-methods.md` if the system suggests a different entry point (rich business logic → user-needs-centric; significant operational surface → process-centric; small set of crown-jewel assets → asset-centric).
+This skill defaults to **flow-centric + STRIDE-Per-Element**: a DFD generates the surface area you walk, and STRIDE is the per-element prompt. Flow-centric is what OWASP teaches, what most engineering teams already know, and what produces the kind of output development teams can act on. But it's not the only option — read `references/centric-methods.md` if the system suggests a different entry point (rich business logic → user-needs-centric; significant operational surface → process-centric; small set of crown-jewel assets → asset-centric; one specific data type dominates and "everything is sensitive" makes asset-centric flounder, or regulatory framing is data-typed (HIPAA/GDPR/PCI/FDA) → data-centric per NIST SP 800-154).
 
 A note on STRIDE: it can be used both *generatively* (as a per-element prompt — "what could go wrong here across these six axes?") and as a *characterization layer* (post-hoc bucket — "this finding is a Tampering issue"). This skill uses STRIDE generatively. Be explicit about which mode you're in; conflating them is a common source of confusion.
 
@@ -245,7 +246,7 @@ Also from the Manifesto:
 
 Two different "swap" decisions are possible:
 
-- **Different entry point** — keep STRIDE, change what you start enumerating from. See `references/centric-methods.md` (asset-centric, process-centric, user-needs-centric, code-centric, attacker-centric).
+- **Different entry point** — keep STRIDE, change what you start enumerating from. See `references/centric-methods.md` (asset-centric, data-centric per NIST SP 800-154, process-centric, user-needs-centric, code-centric, attacker-centric).
 - **Different methodology entirely** — replace or supplement STRIDE with a different categorization framework. See `references/methodologies.md`:
   - **LINDDUN** — when privacy threats dominate (GDPR-heavy systems, health data, surveillance concerns). Use alongside STRIDE, not instead.
   - **PASTA** — when business-impact-driven scoring is required and you have time for a 7-stage process.
@@ -259,7 +260,7 @@ If the user's situation calls for one of these, name it, briefly justify the swa
 
 A few domain-specific gotchas worth surfacing when relevant:
 
-- **Medical devices** — Safety implications are first-class. Model the patient as an asset (in addition to data). Cite FDA premarket cybersecurity guidance and IEC 62443 / IEC 81001-5-1 if the user is preparing a regulatory submission. Consider clinical workflow misuse scenarios, not just network threats.
+- **Medical devices** — Safety implications are first-class. Model the patient as an asset (in addition to data). Cite FDA premarket cybersecurity guidance and IEC 62443 / IEC 81001-5-1 if the user is preparing a regulatory submission. Consider clinical workflow misuse scenarios, not just network threats. When the central question is "what threatens this PHI / DICOM study?", the **data-centric (NIST SP 800-154)** entry point in `references/centric-methods.md` is usually a more direct fit than flow-centric — pick the data, enumerate authorized locations (storage / transmission / execution / input / output), walk attack vectors per location. Use the data-centric template at `assets/data-centric-threat-model-template.md`.
 - **IoT / embedded** — Physical attack surface (debug ports, firmware extraction, side channels) belongs in the DFD. The "trust boundary" between the device and the network is often the most consequential.
 - **Cloud-native** — Shared responsibility model matters. Document which controls are the cloud provider's vs. yours. IAM and managed services are usually under-modeled.
 - **AI/ML systems** — STRIDE still works but extend with model-specific threats: prompt injection, training-data poisoning, model extraction, membership inference, model inversion, adversarial examples, supply-chain on pre-trained weights. The full list and OWASP LLM Top 10 / ML Security Top 10 pointers are in `references/methodologies.md` §ML/AI.
@@ -269,7 +270,7 @@ A few domain-specific gotchas worth surfacing when relevant:
 
 Detailed reference content lives in `references/`. Read these on demand:
 
-- `references/centric-methods.md` — Entry-point taxonomy: asset-centric, flow-centric, process-centric, user-needs-centric, attacker-centric, code-centric. When to pick each, and the generation-vs-characterization distinction.
+- `references/centric-methods.md` — Entry-point taxonomy: asset-centric, data-centric (NIST SP 800-154), flow-centric, process-centric, user-needs-centric, attacker-centric, code-centric. When to pick each, and the generation-vs-characterization distinction.
 - `references/stride-prompts.md` — STRIDE category prompts and example threats per element type, plus STRIDE-Per-Element vs Per-Interaction guidance and the DESIST variant.
 - `references/dfd-mermaid.md` — DFD-to-Mermaid mapping conventions with worked examples, Shostack-derived diagramming rules of thumb, and the diagramming checklist.
 - `references/methodologies.md` — When to use LINDDUN, PASTA, attack trees, MITRE ATT&CK, kill chains, OCTAVE, VAST as full-methodology swaps or supplements.
@@ -277,8 +278,8 @@ Detailed reference content lives in `references/`. Read these on demand:
 - `references/manifesto.md` — Threat Modeling Manifesto values, principles, patterns, anti-patterns (paraphrased).
 - `references/risk-rating.md` — Qualitative L/M/H risk rating, OWASP Risk Rating Methodology pointer, why DREAD is discouraged.
 
-A blank threat model template is in `assets/threat-model-template.md`.
+A blank threat model template is in `assets/threat-model-template.md`. A data-centric variant (NIST SP 800-154 shape, organized by authorized data location) is in `assets/data-centric-threat-model-template.md`.
 
 ## Citation note
 
-Concepts in this skill are paraphrased from open OWASP material (Threat Modeling community page, Threat Modeling Process, Threat Modeling Cheat Sheet, OWASP Security Culture v1.0 §6, OWASP Threat Modeling Playbook by Toreon), the Threat Modeling Manifesto (CC-BY 4.0), and Adam Shostack's *Threat Modeling: Designing for Security* (Wiley, 2014) — particularly the Four Question Framework, STRIDE-Per-Element, the diagramming and validation checklists, and the practical guidance on iteration, assumption documentation, and bug-filing as the exit point. STRIDE itself originates from Microsoft (Loren Kohnfelder and Praerit Garg). DESIST is by Gunnar Peterson. Cite these sources in any output that quotes or substantively summarizes them.
+Concepts in this skill are paraphrased from open OWASP material (Threat Modeling community page, Threat Modeling Process, Threat Modeling Cheat Sheet, OWASP Security Culture v1.0 §6, OWASP Threat Modeling Playbook by Toreon), the Threat Modeling Manifesto (CC-BY 4.0), and Adam Shostack's *Threat Modeling: Designing for Security* (Wiley, 2014) — particularly the Four Question Framework, STRIDE-Per-Element, the diagramming and validation checklists, and the practical guidance on iteration, assumption documentation, and bug-filing as the exit point. The data-centric methodology and the authorized-data-location framing are from NIST SP 800-154 (Draft), *Guide to Data-Centric System Threat Modeling* (Murugiah Souppaya, Karen Scarfone; NIST, March 2016) — public-domain U.S. government work. STRIDE itself originates from Microsoft (Loren Kohnfelder and Praerit Garg). DESIST is by Gunnar Peterson. Cite these sources in any output that quotes or substantively summarizes them.

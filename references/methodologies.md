@@ -16,8 +16,13 @@ First decide whether you have a *categorization* problem or an *entry point* pro
 Then, for the categorization decision:
 
 ```
+A specific data type dominates (PHI, signing key, token) — or regulatory framing
+is data-typed (HIPAA / GDPR / PCI / FDA)?
+  → Use data-centric (NIST SP 800-154) as the entry point — see centric-methods.md.
+    STRIDE still works as the per-location lens.
+
 Privacy is the dominant concern (PII/PHI/GDPR-heavy)?
-  → Use LINDDUN alongside STRIDE.
+  → Use LINDDUN alongside STRIDE. Often combine with data-centric entry point.
 
 Need business-impact-driven scoring with executive buy-in?
   → Consider PASTA. Heavy process; budget for it.
