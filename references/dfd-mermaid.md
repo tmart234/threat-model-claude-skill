@@ -28,11 +28,11 @@ linkStyle 0 stroke:#d62728,stroke-width:2px
 ```mermaid
 flowchart LR
     subgraph Hospital["Hospital IT | on-prem (clinical VLAN) | moderate trust"]
-        Modality(CT Modality)
+        Modality("CT Modality (AS1)")
         Workstation[Clinician Workstation]
-        PACS(PACS Server)
-        ImageDB[(Image Database)]
-        AuditDB[(Audit Log)]
+        PACS("PACS Server (AS2)")
+        ImageDB[("Image Database (AS3)")]
+        AuditDB[("Audit Log (AS4)")]
     end
 
     subgraph Internet["Unowned | public internet | untrusted"]
@@ -40,8 +40,8 @@ flowchart LR
     end
 
     subgraph Cloud["Vendor | cloud (AWS prod account) | medium trust"]
-        Archive(Long-term Archive Service)
-        ArchiveStore[(Archive Object Store)]
+        Archive("Long-term Archive Service (AS5)")
+        ArchiveStore[("Archive Object Store (AS6)")]
     end
 
     Modality -- "DICOM C-STORE over TCP/11112 (PHI)" --> PACS
@@ -56,11 +56,12 @@ flowchart LR
     class Hospital,Internet,Cloud tb
 ```
 
-Note three things this example demonstrates:
+Note four things this example demonstrates:
 
 - **Every element is inside exactly one zone.** Vendor isn't floating; it's in an explicit `Untrusted` subgraph for the public internet.
 - **Boundaries are dashed.** The `classDef tb` + `class … tb` pattern applies the dashed border to all three zone subgraphs at once.
 - **The flow from `untrusted` is dashed too.** `Vendor -. "..." .-> PACS` uses Mermaid's dashed-arrow syntax to mark the highest-attention crossing; the in-zone flows stay solid.
+- **Data-bearing elements carry inline `(AS#)` tags** — `(AS1)`..`(AS6)` — that reconcile against the §1 asset list of the threat model containing this DFD. External entities (Workstation, Vendor) aren't assets, so they have no tag.
 
 Trust boundaries (the dashed subgraph borders above):
 
@@ -99,12 +100,12 @@ Owners: Hospital biomed unless noted. Environment: OT/ICS Purdue levels.
 
 subgraph L0["L0 (field) | safety-critical"]
 subgraph L1_PLC["L1 PLC (interlocks) | very high trust"]
-subgraph L1_RT["KUKA OEM | L1 (real-time motion) | very high trust"]
+subgraph L1_RT["Vendor OEM | L1 (real-time control) | very high trust"]
 subgraph L2_App["L2 (application) | medium-high trust"]
-subgraph L2_Sup["KUKA OEM | L2 (supervisory) | high trust"]
+subgraph L2_Sup["Vendor OEM | L2 (supervisory) | high trust"]
 ```
 
-Compression preserves all three pieces of information without making each label a 60-character sentence. Never compress a field that *isn't* repeated — owners that differ between zones (KUKA OEM vs Hospital biomed) are exactly the boundaries that matter; show them.
+Compression preserves all three pieces of information without making each label a 60-character sentence. Never compress a field that *isn't* repeated — owners that differ between zones (Vendor OEM vs Hospital biomed) are exactly the boundaries that matter; show them.
 
 Examples (uncompressed, when the diagram has heterogeneous owners and environments):
 
@@ -122,7 +123,7 @@ When a system spans multiple environments (almost always the case), every subgra
 
 **Methodology framing belongs in §1 prose, not on labels.** A label is for identification (`Purdue L1 (PLC)`); the prose that explains *why* the diagram uses Purdue levels at all — "this cell is OT-shaped, so we segment per the Purdue Enterprise Reference Architecture" — belongs in the §1 system-description or environment paragraph. Same pattern for any other environment skeleton: AD Tier model on enterprise systems, Purdue on OT/ICS, the cloud account/VPC/subnet hierarchy on cloud, the iOS/Android sandbox model on mobile. Name the skeleton once in §1; let the labels carry just the level. Without this split, label space fills with redundant context (`OT/ICS (Purdue L2 — supervisory)` thrice) and the diagram gets noisier without telling the reader anything new.
 
-A small follow-on: when two zones legitimately sit at the same Purdue level but are owned by different parties (e.g. a vendor's L1 real-time motion controller alongside the hospital biomed's L1 safety PLC), the diagram is *correct* — both are L1, that's the whole point — but readers used to a clean Purdue stack may second-guess it. A one-line note in §1 ("two L1 zones, distinguished by owner: KUKA OEM RT motion vs. hospital biomed PLC") prevents the misread.
+A small follow-on: when two zones legitimately sit at the same Purdue level but are owned by different parties (e.g. a vendor's L1 real-time control system alongside the hospital biomed's L1 safety PLC), the diagram is *correct* — both are L1, that's the whole point — but readers used to a clean Purdue stack may second-guess it. A one-line note in §1 ("two L1 zones, distinguished by owner: Vendor OEM real-time control vs. hospital biomed PLC") prevents the misread.
 
 ## Rendering trust boundaries as dashed subgraphs
 
@@ -161,7 +162,7 @@ Real systems have trust boundaries inside trust boundaries. Mermaid supports nes
 
 When to nest:
 
-- A controller that runs two operating systems with a documented privilege boundary (KUKA Sunrise's Windows-10-IoT side ↔ VxWorks RT side; Android's normal world ↔ TrustZone secure world; an iOS app sandbox ↔ Secure Enclave).
+- A device that runs two operating systems with a documented privilege boundary (a smart infusion pump's Linux comms / HMI side ↔ RTOS pump-control side; Android's normal world ↔ TrustZone secure world; an iOS app sandbox ↔ Secure Enclave).
 - Cloud zones at multiple depths (account → VPC → subnet → security group; or account → VPC → cluster namespace).
 - A Windows host that hosts a hypervisor (host OS ↔ guest VM ↔ container).
 - An embedded device with a secure element distinct from the application processor.
@@ -170,26 +171,25 @@ Pattern:
 
 ```mermaid
 flowchart LR
-    subgraph Cabinet["KUKA OEM | OT (Sunrise Cabinet) | high trust"]
-        subgraph CabWin["Sunrise Win10 IoT side | medium-high trust"]
-            SunWin(Sunrise.OS Java app)
+    subgraph Pump["Vendor | embedded (smart infusion pump) | high trust"]
+        subgraph PumpComms["Linux comms / HMI side | medium-high trust"]
+            CommsApp("EHR + drug-library client (AS3)")
         end
-        subgraph CabRT["Sunrise VxWorks RT side | safety-critical"]
-            SunRT(RT motion + safety)
+        subgraph PumpRT["RTOS pump-control side | safety-critical"]
+            CtrlApp("motor control + dose-rate interlocks (AS4)")
         end
-        SunWin -- "internal RPC bridge" --> SunRT
+        CommsApp -- "internal UART (drug library, alarms)" --> CtrlApp
     end
     classDef tb fill:none,stroke:#888,stroke-dasharray: 5 5
-    class Cabinet,CabWin,CabRT tb
+    class Pump,PumpComms,PumpRT tb
 ```
 
-The outer subgraph is the controller as a unit (a physical box, an account, a device); the inner subgraphs are the privilege zones inside it. The arrow between inner zones is the bridge — usually the highest-leverage place to put STRIDE attention.
+The outer subgraph is the device as a unit (a physical box, an account); the inner subgraphs are the privilege zones inside it. The arrow between inner zones is the bridge — usually the highest-leverage place to put STRIDE attention.
 
 **Don't nest gratuitously.** Two boxes inside the same trust zone running the same technology don't need a sub-zone — they're equivalent for STRIDE per Shostack's "combine equivalent elements" rule (§ Conventions below). Nest when there's a *real* privilege boundary between the inner zones, not just because they're labelled separately.
 
 ## Conventions to keep things readable
 
-- **Every element belongs to exactly one zone.** External entities, processes, data stores, smart pendants, e-stop chains, physical actors (patient, operator) — all of them. A floating element with no zone label is a missing trust boundary. Zones for "outside" elements (a patient in the workspace, an attacker on the internet, a vendor accessing remotely) get explicit `Untrusted` or `Unowned | <env-type> | untrusted` labels. *Floating = bug, not aesthetic choice.*
 - **Label every flow.** "DICOM C-STORE over TCP/11112 (PHI)" not "data". Concrete protocols make threats tractable: an attacker can craft DICOM PDUs against an open `11112` listener, but they can't attack a flow labeled "data".
 - **Direction matters.** Use `-->` for one-way and `<-->` only when the flow truly is symmetric request/response with the same content. For RPC-style flows, draw two arrows with their actual content labels.
 - **Group by trust zone, not by physical layout.** Trust zones are what STRIDE-Per-Element care about.
