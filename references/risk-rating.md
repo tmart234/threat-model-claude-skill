@@ -1,7 +1,7 @@
 # Risk rating
 
 > **Last verified**: 2026-05. OWASP Risk Rating Methodology, CVSS specification, ISO 14971 (current edition 14971:2019), and AAMI TIR57 (current edition 2023) all update; re-confirm against owasp.org, first.org/cvss, the ISO store, and the AAMI catalog before citing factor lists or version numbers in a regulatory deliverable.
-> **Sources paraphrased**: OWASP Risk Rating Methodology (CC-BY 4.0); CVSS specification (FIRST.org, public); MITRE CVSS Rubric for Medical Devices (MITRE, public; mitre.github.io/md-cvss-rubric-tools/); Stellios, Kotzanikolaou & Grigoriadis (Computers & Security 107, 2021) — CVV / pruning math (paraphrase, see methodologies.md for full citation); FMEA conventions (public); Adam Shostack and OWASP critiques of DREAD (paraphrase); ISO 14971:2019 — *Medical devices — Application of risk management to medical devices* (proprietary ISO standard, paraphrase only — severity / probability decomposition referenced, no direct quote); AAMI TIR57:2023 — *Principles for medical device security — Risk management* (proprietary AAMI technical information report, paraphrase only — `P1 × P2` cyber-to-safety bridge referenced, no direct quote); US FDA *Cybersecurity in Medical Devices: Quality System Considerations and Content of Premarket Submissions* (2023, US government work — joint cyber/safety risk-model expectation cited).
+> **Sources paraphrased**: OWASP Risk Rating Methodology (CC-BY 4.0); CVSS specification (FIRST.org, public); MITRE CVSS Rubric for Medical Devices — methods only, applied to current-version CVSS (MITRE, public; github.com/mitre/md-cvss-rubric-tools); Stellios, Kotzanikolaou & Grigoriadis (Computers & Security 107, 2021) — CVV / pruning math (paraphrase, see methodologies.md for full citation); FMEA conventions (public); Adam Shostack and OWASP critiques of DREAD (paraphrase); ISO 14971:2019 — *Medical devices — Application of risk management to medical devices* (proprietary ISO standard, paraphrase only — severity / probability decomposition referenced, no direct quote); AAMI TIR57:2023 — *Principles for medical device security — Risk management* (proprietary AAMI technical information report, paraphrase only — `P1 × P2` cyber-to-safety bridge referenced, no direct quote); US FDA *Cybersecurity in Medical Devices: Quality System Considerations and Content of Premarket Submissions* (2023, US government work — joint cyber/safety risk-model expectation cited).
 
 > **Related**: ← `SKILL.md` • `methodologies.md` (the L/M/H scale spans all three strata in the hybrid) • `validation.md` (Q4 cross-stratum check: one risk-rating scale across the whole model).
 
@@ -98,32 +98,51 @@ Reference: https://owasp.org/www-community/OWASP_Risk_Rating_Methodology
 
 For medical device submissions specifically, FMEA-style scoring (severity × occurrence × detection) is often expected by quality / regulatory teams. If that's the constraint, mirror the FMEA scale rather than inventing a parallel scoring scheme.
 
-## MITRE CVSS Rubric for Medical Devices (medical-device CVSS)
+## Clinical-context CVSS scoring (rubric methods, current CVSS)
 
-For medical-device threat models that need to assign **CVSS** scores (FDA premarket cybersecurity, post-market vulnerability disclosures, CISA medical-device advisories), use the **MITRE CVSS Rubric for Medical Devices** rather than scoring CVSS metrics with a generic enterprise-IT lens. The rubric is a branching decision tree per CVSS metric — Attack Vector, Attack Complexity, Privileges Required, User Interaction, Scope, Confidentiality / Integrity / Availability impact — that walks the analyst through the clinical-context questions that change the score for a medical device.
+For medical-device CVSS scoring (premarket, post-market disclosure, CISA advisories, inter-vendor comparison), generic enterprise-IT scoring under-fits the clinical context. This skill adopts the methods of the MITRE *Rubric for Applying CVSS to Medical Devices* (github.com/mitre/md-cvss-rubric-tools) — its per-metric decision trees and clinical questions — and applies them at the CVSS version the team scores in (3.1 or 4.0). Calculators: NVD (`nvd.nist.gov/vuln-metrics/cvss/v3-calculator` or `/v4-calculator`) or FIRST (`first.org/cvss/calculator/3.1` or `/4.0`). Don't use the rubric's own calculator — it's locked to v3.0.
 
-The motivating problem: a "Network" Attack Vector reading on a hospital-internal management VLAN means something different from "Network" on the public internet, but generic CVSS scoring tends to score them the same. The rubric forces the analyst to consider the deployment context (clinical VLAN segmentation, physical access controls in the patient area, who's in the room when the attack would have to occur) and produces a more defensible score for FDA / CISA review. The Attack Vector branch is the worked example most users start with; Attack Complexity, Privileges Required, and User Interaction follow the same branching shape.
+**The rubric's clinical-context contributions, distilled** (version-agnostic — these are what survive across 3.1 and 4.0):
 
-When to use:
+| Metric | Rubric's clinical insight | Why generic CVSS misses it |
+|---|---|---|
+| **Attack Vector** | Wireless range ≈ 10 ft (BLE LE, NFC, Zigbee, inductive) → *Local*, not *Adjacent*; facility-wide Wi-Fi / Bluetooth Classic → *Adjacent* | Generic CVSS treats all wireless as *Adjacent*, conflating an attacker in the patient's room with one anywhere on campus |
+| **Attack Vector** | Hospital-internal management VLAN is still *Network* per CVSS — record VLAN segmentation under **Modified Attack Vector (MAV)** to downgrade to *Adjacent*; segmentation is not a base-score discount | Generic scoring either ignores segmentation (over-scores) or silently downgrades the base (under-scores and breaks comparability) |
+| **Attack Complexity** | Assume full attacker knowledge of proprietary protocols, hard-coded keys, service manuals — don't credit obscurity of DICOM PDU formats, vendor-specific BLE profiles, or undocumented service-port commands | Medical-device threat models routinely score *High* AC because "the protocol is proprietary"; the rubric rules that out as a base-score factor |
+| **Privileges Required** | One-role-fits-all devices (most legacy / embedded clinical hardware) score `PR:N` — there is no privilege to require | Generic CVSS lets analysts claim `PR:L` for "the device has a login screen," even when the login is shared and posted on the device |
+| **User Interaction** | A clinician confirmation dialog counts as `UI:R` only if it *meaningfully gates the attack* — a habituated click-through alert may not | Generic scoring credits any prompt as `UI:R`; the rubric forces the analyst to ask whether the prompt would actually stop the attack |
+| **Scope (3.1) / SC-SI-SA (4.0)** | Programmer/monitor that can reflash an on-body device → *Scope:Changed* (3.1) or non-zero `SC/SI/SA` (4.0); a read-only home monitor → *Scope:Unchanged* unless it shares reprogramming code with a clinician programmer | Generic scoring marks all device-to-device flows scope-changed or none; the rubric's "vulnerable vs impacted component, distinct authorities" test resolves it |
+| **CIA / VC-VI-VA** | Score against six clinical data categories (PHI/PII, diagnosis/monitoring, **therapy delivery**, clinical workflow, system/credential, other); worst category wins; *therapy delivery* High routinely means *Integrity:High* regardless of byte count | Generic CVSS asks "is data confidentiality affected" without distinguishing a tampered drug-library entry from a tampered log timestamp |
+| **Environmental: CR / IR / AR** | Set *High* whenever loss of CIA could cause delayed therapy, incorrect therapy, or PHI breach | Generic scoring leaves CR/IR/AR at default (*Medium*) for medical devices |
 
-- **FDA premarket cybersecurity submissions** — the rubric is what reviewers actually expect. Scoring CVSS without it makes the submission's threat ratings hard to defend.
-- **Post-market vulnerability disclosure** — CISA medical-device advisories (ICS-CERT–style) typically carry CVSS scores; using the rubric keeps the disclosed score consistent with what reviewers would derive themselves.
-- **Inter-vendor comparability** — when a hospital is comparing devices from multiple vendors, rubric-derived scores compare cleanly; ad-hoc CVSS scoring doesn't.
+The rubric's branch numbers are 3.0-specific; the *questions* are not. Walk the rubric document's decision trees, map to the metric names at your CVSS version, record the vector and a one-line rubric trace in §1 prose. Example: `"CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H — 8.3 (High); AV from short-range BLE; CIA Highs from therapy-delivery category."`
 
-When *not* to use:
+**CVSS 4.0-specific — what the rubric couldn't say in 3.0**:
 
-- **Non-medical-device systems** — the rubric is calibrated for the clinical environment; using it on a generic web app misapplies its branches. Use OWASP-RR or the L/M/H matrix above instead.
-- **Minimum-viable threat models** for low-stakes medical-adjacent systems (e.g. an internal hospital tool that isn't itself a regulated device) — the L/M/H matrix is enough.
+The rubric document flags v3.0 gaps that matter for medical devices: no direct expression of safety impact, no provider-urgency channel, no way to encode patient-population reach. CVSS 4.0's **Supplemental** group closes most of them — score these when using 4.0:
 
-How to record the score in the threat model:
+- **Safety (S)** — `Present` whenever the rubric's therapy-delivery, diagnosis, or monitoring I/A scored *High*. **MSI:S / MSA:S** carries the same signal for subsequent-system impact (programmer compromise reaching an on-body device).
+- **Automatable (AU)** — `Yes` for network-reachable, no-UI-required attacks (matches rubric's `UI:N + AV:N` branches).
+- **Recovery (R)** — `Irrecoverable` for firmware-bricking or implant-reprogramming; `User` for clinical re-provisioning; `Automatic` rarely applies.
+- **Provider Urgency (U)** — TLP-style flag (Red / Amber / Green / Clear); the rubric's official-fix question maps here.
 
-- Cite the rubric explicitly in §1 prose: *"CVSS scores in §2 / §3 derived per the MITRE CVSS Rubric for Medical Devices (mitre.github.io/md-cvss-rubric-tools/), version <X.Y>, scored <date> by <analyst>."*
-- Carry the full CVSS vector string alongside the numeric score so a reviewer can re-derive it: *"CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H — 8.0 (High)"*.
-- Compose with the safety case: the rubric scores cybersecurity severity, not patient-safety severity. Pair every rubric-scored threat with the `severity × P1 × P2` ISO 14971 / TIR57 mapping above so the regulator-facing safety-case view is also present. The rubric is the *cyber side* of the joint risk model — `severity × P1 × P2` is the *safety side*; both belong in §3 of a medical-device submission.
+Supplemental metrics don't change the numeric score but travel with the vector — record them in §1 prose.
 
-Calculator and rubric: https://mitre.github.io/md-cvss-rubric-tools/
+**Hybrid safety blend (STPA + TIR57 lens over the rubric's CIA questions)**:
 
-The medical-device rubric is the tool of choice when CVSS is required for medical devices; OWASP-RR remains the option when CVSS specifically isn't the asked-for output. The skill's L/M/H matrix is the default for any threat model where neither is mandated.
+The rubric scores *cybersecurity* severity. The patient-safety side belongs in the ISO 14971 / TIR57 mapping documented above (`severity × P1 × P2`) and, when the control loop is the analysis target, in the STPA losses → hazards → constraints chain (`references/stpa.md`). The three views compose:
+
+| View | What it answers | Drives |
+|---|---|---|
+| Clinical-context CVSS (rubric methods) | How severe is the *cyber* weakness in the clinical deployment? | Advisory disclosure, premarket cyber severity, inter-vendor comparison |
+| TIR57 `severity × P1 × P2` | If the attacker wins, does *harm* reach the patient? | ISO 14971 risk file, joint cyber/safety acceptability |
+| STPA hazards → constraints | What *control-loop* failures (cyber or otherwise) produce the hazard? | Safety requirements covering both attack and non-adversarial failure |
+
+For every safety-bumped threat: score CVSS with the rubric's methods, carry `severity × P1 × P2` alongside, link to the STPA UCA / scenario where the control loop is in scope. Any *High* on the rubric's therapy-delivery, diagnosis, or PHI I/A questions is the cue to run TIR57/STPA — not to stop at the CVSS number.
+
+**When *not* to use the rubric's methods**: non-medical-device systems (clinical questions misfire on a generic web app — use OWASP-RR or L/M/H); minimum-viable threat models for medical-adjacent systems that aren't themselves regulated.
+
+Rubric document (methods reference, v3.0-pinned, public): `github.com/mitre/md-cvss-rubric-tools`. CVSS calculators: NVD or FIRST.org at the version the team scores in.
 
 ## CVSS-based attack-path risk (cyber-physical IoT)
 
