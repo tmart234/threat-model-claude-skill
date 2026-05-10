@@ -146,6 +146,8 @@ STPA-SafeSec does not replace pen testing, vulnerability assessment, or fuzzing 
 
 STRIDE is not the default companion to STPA-SafeSec — the integrity/availability causal-factor tables are more specific to control-loop systems and cover the relevant adversarial cases. Layer STRIDE in only for non-control flows that appear at the component layer (telemetry uploads, OTA updates, audit log paths) where confidentiality and repudiation matter; the integrity/availability tables don’t cover those.
 
+For multi-device cyber-physical environments where compromise of a low-criticality peripheral can reach a high-criticality target across the room or plant floor (IoMT patient rooms, ICS plant floors with shared RF, robotics cells), the safety-critical components STPA-SafeSec produces are natural roots for the **risk-prioritized cyber-physical attack-path** construction in `methodologies.md` § "Risk-prioritized cyber-physical attack paths (Stellios et al., 2021)" — STPA-SafeSec answers "which target," and the Stellios construction answers "which paths to it are worth analyzing." Pair them when the system has both control-loop safety implications and a multi-device shared-physical-space attack surface.
+
 ## References
 
 - Young, W. & Leveson, N. (2014). *An Integrated Approach to Safety and Security Based on Systems Theory*. CACM 57(2).

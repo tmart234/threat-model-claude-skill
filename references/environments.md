@@ -120,6 +120,8 @@ subgraph Physical["End-user / Hospital | physical device custody | low trust"]
 
 **Common misses:** the secure-element boundary (people draw the device as one box); JTAG/UART as a boundary; the baseband as a separate trust zone; bootloader-mode as an alternative path; wireless interfaces drawn as flows but not as boundary crossings.
 
+**Multi-device shared-space note.** When several embedded devices coexist in one physical space (smart building, IoMT patient room, vehicle cabin, robotics cell), the most consequential boundary often isn't around any single device — it's the shared physical medium *between* them: shared 2.4 GHz ISM band (Wi-Fi / BLE / Zigbee co-channel interference), shared power rail, shared HVAC duct for acoustic side channels. Per-device boundary modeling will miss the cross-device hop. Classify each between-device surface as P1 (direct contact), P2 (proximity), or P3 (shared medium without proximity), and use the **risk-prioritized cyber-physical attack-path** construction in `methodologies.md` § "Risk-prioritized cyber-physical attack paths (Stellios et al., 2021)" rather than independent per-device passes.
+
 ### OT / ICS (PLC / RTU / HMI / historian / safety system)
 
 Use the **Purdue Enterprise Reference Architecture** as the boundary skeleton — it's the lingua franca for ICS network segmentation and what auditors expect to see.
@@ -151,6 +153,8 @@ subgraph VendorRA["Integrator | OT/ICS (vendor remote access) | low trust"]
 ```
 
 **Common misses:** the SIS as a separate zone; the engineering workstation as Tier 0–equivalent; vendor remote access; removable-media flows across air gaps; protocol-translation gateways collapsed into the destination.
+
+**Multi-device shared-space note.** Plant floors with several PLCs / IIoT gateways / sensors sharing wireless field networks (WirelessHART, ISA100, proprietary 2.4 GHz / 900 MHz) or co-located in one cabinet have the same cross-device composition risk as IoMT rooms. When per-Purdue-level analysis doesn't surface the path from a low-criticality field device to a safety-critical actuator, reach for the **risk-prioritized cyber-physical attack-path** construction in `methodologies.md` § "Risk-prioritized cyber-physical attack paths (Stellios et al., 2021)".
 
 ### Mobile (iOS / Android, app + OS + carrier)
 

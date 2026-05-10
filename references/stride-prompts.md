@@ -103,6 +103,7 @@ Common in medical / IoT / embedded:
 - Can the device be wedged remotely? Bricked? Battery-drained?
 - Can a DoS on a clinical system delay treatment? (this is a *safety* event, not just availability)
 - Are watchdogs and graceful degradation paths in place?
+- For wireless flows / processes: can a rogue device on a *shared physical medium* (e.g. the 2.4 GHz ISM band shared across Wi-Fi / BLE / Zigbee, the same RF channel, the same power rail) jam or DoS the flow without ever associating with the system? (P3 between-device surface — see `methodologies.md` § "Risk-prioritized cyber-physical attack paths".)
 
 ### Elevation of Privilege — violates Authorization
 
