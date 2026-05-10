@@ -117,10 +117,17 @@ The default shape is a single-document hybrid (all three strata in one file). Fo
             if ML components are present
    - 2.1.d  Threat tree(s) for the top 1–2 highest-value threats (optional)
 
-   ### 2.2 Operational / Tactical stratum (generic adversary techniques)
+   ### 2.2 Operational / Tactical stratum (generic adversary techniques + design-time chain)
+   - **STRIDE → CAPEC → CWE → mitigation chain on top threats (always — this is the design-time payoff)**.
+     Each row of the operational table cites: a CAPEC pattern (with abstraction level — Meta for early
+     architecture, Standard for design review, Detailed for component-level), the CWE(s) the pattern
+     exploits, and the resulting mitigation class. The CAPEC → CWE bridge is what makes the
+     derived requirements (`SR-###` in §3) traceable to a known weakness class rather than to free-text
+     threat sentences. Full mapping by STRIDE category, abstraction-level rule of thumb, and
+     medical-device subset: `references/capec.md`.
    - ATT&CK technique IDs on top threats (always — even if just the top 3)
    - Cyber Kill Chain mapping where it clarifies sequencing (optional)
-   - CAPEC / CWE / CVSS references where they fit (optional)
+   - CVSS for any threats that map to known CVEs (optional)
 
    ### 2.3 Strategic stratum (sector landscape)
    - Sector ISAC / threat-intel pointers (H-ISAC for medical, FS-ISAC for finance,
@@ -267,8 +274,10 @@ The minimum viable Q4 section in the output document includes the three checklis
 - [ ] AI/ML-specific threats considered if ML components are present?
 
 **Threats — operational stratum**
+- [ ] At least the top 3 threats carry the full **STRIDE → CAPEC → CWE → mitigation** chain (CAPEC pattern with explicit abstraction level, the CWE(s) it exploits, and the mitigation class)?
 - [ ] At least the top 3 threats mapped to ATT&CK technique IDs?
-- [ ] Kill-chain or CAPEC/CWE/CVSS references added where they aid handoff to SOC / IR / engineering?
+- [ ] Where no Detailed CAPEC pattern exists for a domain-specific protocol (DICOM, HL7, ICS protocols), the closest Standard or Meta pattern is cited *and the row says so explicitly* (per `capec.md` § "Honest about CAPEC coverage")?
+- [ ] Kill-chain / CVSS references added where they aid handoff to SOC / IR / engineering?
 
 **Threats — strategic stratum**
 - [ ] Sector ISAC / threat-intel context noted (or explicitly marked "not applicable")?
@@ -344,6 +353,7 @@ Detailed reference content lives in `references/`. Read these on demand:
 - `references/methodologies.md` — **Hybrid as default**: the three strata (Contextual / Operational / Strategic), the layer catalog populating each, the system-type applicability matrix, single-document vs linked-documents output shapes, pruning rules. Also: when to use LINDDUN, PASTA, attack trees, MITRE ATT&CK, kill chains, OCTAVE, VAST. **Read this first** — it tells you which layers the system in front of you needs.
 - `references/centric-methods.md` — Entry-point taxonomy: asset-centric, data-centric (NIST SP 800-154), flow-centric, process-centric, user-needs-centric, attacker-centric, code-centric. When to pick each, and the generation-vs-characterization distinction.
 - `references/data-centric.md` — Data-centric workflow deep-dive: the four NIST 800-154 steps, the three modes for acquiring the data scope (Mode A user-volunteers / Mode B skill-enumerates / Mode C skill-infers-from-artifact), the per-data-class scoping rule, the STRIDE-against-locations caveat, the hybrid bridge to flow-centric, and a worked DICOM example.
+- `references/capec.md` — CAPEC working reference for the operational stratum: the **STRIDE → CAPEC → CWE → mitigation chain** that makes derived requirements traceable, the three abstraction levels (Meta / Standard / Detailed) and an SDLC-stage rule of thumb, the two CAPEC views (Mechanisms-of-Attack CAPEC-1000 vs Domains-of-Attack CAPEC-3000), STRIDE-to-CAPEC mapping tables with CWE chains, the medical-device / DICOM / embedded subset, and an honest note on CAPEC's coverage gaps for medical and ICS protocols.
 - `references/stride-prompts.md` — STRIDE category prompts and example threats per element type, plus STRIDE-Per-Element vs Per-Interaction guidance and the DESIST variant.
 - `references/dfd-mermaid.md` — DFD-to-Mermaid mapping conventions with worked examples, Shostack-derived diagramming rules of thumb, and the diagramming checklist.
 - `references/validation.md` — Q4 deep dive: model/reality conformance, the three Shostack-style checklists, pen testing as complement (not substitute), validating threats in acquired/third-party code, document-assumptions-as-you-go.
@@ -354,4 +364,4 @@ A single blank threat model template — laid out as a hybrid with the three str
 
 ## Citation note
 
-Concepts in this skill are paraphrased from open OWASP material (Threat Modeling community page, Threat Modeling Process, Threat Modeling Cheat Sheet, OWASP Security Culture v1.0 §6, OWASP Threat Modeling Playbook by Toreon), the Threat Modeling Manifesto (CC-BY 4.0), and Adam Shostack's *Threat Modeling: Designing for Security* (Wiley, 2014) — particularly the Four Question Framework, STRIDE-Per-Element, the diagramming and validation checklists, and the practical guidance on iteration, assumption documentation, and bug-filing as the exit point. The data-centric methodology and the authorized-data-location framing are from NIST SP 800-154 (Draft), *Guide to Data-Centric System Threat Modeling* (Murugiah Souppaya, Karen Scarfone; NIST, March 2016) — public-domain U.S. government work. The three-stratum hybrid framing (Contextual / Operational / Strategic) and the "no single approach covers all permutations" rationale are from Tatam, Shanmugam, Azam & Kannoorpatti, *A review of threat modelling approaches for APT-style attacks*, Heliyon 7 (2021) — open-access, CC-BY 4.0. MITRE ATT&CK, CAPEC, and CWE are MITRE Corporation. The Cyber Kill Chain is Lockheed Martin. STRIDE itself originates from Microsoft (Loren Kohnfelder and Praerit Garg). DESIST is by Gunnar Peterson. Cite these sources in any output that quotes or substantively summarizes them.
+Concepts in this skill are paraphrased from open OWASP material (Threat Modeling community page, Threat Modeling Process, Threat Modeling Cheat Sheet, OWASP Security Culture v1.0 §6, OWASP Threat Modeling Playbook by Toreon), the Threat Modeling Manifesto (CC-BY 4.0), and Adam Shostack's *Threat Modeling: Designing for Security* (Wiley, 2014) — particularly the Four Question Framework, STRIDE-Per-Element, the diagramming and validation checklists, and the practical guidance on iteration, assumption documentation, and bug-filing as the exit point. The data-centric methodology and the authorized-data-location framing are from NIST SP 800-154 (Draft), *Guide to Data-Centric System Threat Modeling* (Murugiah Souppaya, Karen Scarfone; NIST, March 2016) — public-domain U.S. government work. The three-stratum hybrid framing (Contextual / Operational / Strategic) and the "no single approach covers all permutations" rationale are from Tatam, Shanmugam, Azam & Kannoorpatti, *A review of threat modelling approaches for APT-style attacks*, Heliyon 7 (2021) — open-access, CC-BY 4.0. MITRE ATT&CK, CAPEC, and CWE are MITRE Corporation; CAPEC's three-abstraction-level structure (Meta / Standard / Detailed) and the two top-level views (Mechanisms of Attack CAPEC-1000, Domains of Attack CAPEC-3000) are from CAPEC's published schema. The point that CAPEC's CAPEC → CWE chain is the design-time payoff CAPEC offers over ATT&CK is paraphrased from Tatam et al. (above). The Cyber Kill Chain is Lockheed Martin. STRIDE itself originates from Microsoft (Loren Kohnfelder and Praerit Garg). DESIST is by Gunnar Peterson. Cite these sources in any output that quotes or substantively summarizes them.

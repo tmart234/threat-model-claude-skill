@@ -120,14 +120,15 @@ flowchart TD
     G --> B[<sub-goal>]
 ```
 
-### 2.2 Operational / Tactical stratum (generic adversary techniques)
+### 2.2 Operational / Tactical stratum (generic adversary techniques + design-time chain)
 
-> Always include at least an ATT&CK mapping for the top threats (even if just the top 3). Add kill-chain sequencing where it clarifies handoff to SOC / IR.
+> Always include the **STRIDE → CAPEC → CWE → mitigation chain** for at least the top threats. CAPEC's payoff over ATT&CK at design time is the CAPEC → CWE bridge: each pattern names the weakness class, which gives the mitigation in §3 a traceable target. Pick CAPEC abstraction level by SDLC stage (Meta = early architecture, Standard = design review, Detailed = component-level — see `references/capec.md`). For domain-specific protocols where no Detailed pattern exists (DICOM, HL7, ICS protocols), cite the closest Standard or Meta pattern and **say so explicitly** in the row. Also include ATT&CK technique IDs on top threats; add kill-chain sequencing where it clarifies handoff to SOC / IR.
 
-| Threat ID | ATT&CK technique(s) | Kill chain stage | CAPEC / CWE / CVE references | Detection notes |
-|-----------|---------------------|------------------|------------------------------|-----------------|
-| T1 / V1   | T1078 (Valid Accounts) | Exploitation | CAPEC-560, CWE-287 |  |
-|           |                     |                  |                              |                 |
+| Threat ID | STRIDE | CAPEC (level) | CWE(s) | ATT&CK | Kill chain | CVE / CVSS | Detection / handoff notes |
+|-----------|--------|---------------|--------|--------|------------|------------|---------------------------|
+| T1 / V1 (example) | S | CAPEC-151 (Standard) — Identity Spoofing; child CAPEC-21 | CWE-287, CWE-290 | T1078 (Valid Accounts) | Exploitation | — | mTLS + AE-Title-pinned cert; SOC: alert on AE Title cert mismatch |
+| (example, no Detailed) | T | CAPEC-272 (Meta) — Protocol Manipulation; *no DICOM-specific Detailed pattern exists; closest abstract match* | CWE-345 | T1565 (Data Manipulation) | Action on Objectives | — | Wire-level integrity check; pcap-based detection |
+|           |        |               |        |        |            |            |                           |
 
 ### 2.3 Strategic stratum (sector landscape)
 
@@ -144,17 +145,19 @@ flowchart TD
 
 ### Mitigation table — single prioritized list across all strata
 
-| Threat ID(s) | Cross-refs | Risk | Response | Control / mitigation | Owner |
-|--------------|-----------|------|----------|----------------------|-------|
-| T1           | V3, ATT&CK T1078 | High | Mitigate |                      |       |
-| T2           |           | Medium | Accept   | (rationale)          |       |
+| Threat ID(s) | Cross-refs (CAPEC / CWE / ATT&CK / sector) | Risk | Response | Control / mitigation | Owner |
+|--------------|-------------------------------------------|------|----------|----------------------|-------|
+| T1           | CAPEC-151, CWE-287, ATT&CK T1078 | High | Mitigate |                      |       |
+| T2           |                                  | Medium | Accept | (rationale)          |       |
 
 ### Derived security requirements
 
+> Cite the CWE the requirement closes — that's what makes the requirement traceable to a known weakness class rather than to a free-text threat sentence. The CAPEC → CWE step in §2.2 supplies the CWE ID.
+
 - **SR-001**: The system SHALL <testable requirement>.
-  Mitigates: T1, T3, V2
+  Mitigates: T1, T3, V2 — closes CWE-287, CWE-290.
 - **SR-002**: The system SHALL <testable requirement>.
-  Mitigates: V1
+  Mitigates: V1 — closes CWE-89.
 
 ---
 
@@ -175,8 +178,10 @@ flowchart TD
 - [ ] AI/ML-specific threats considered if ML components are present
 
 **Operational stratum (§2.2)**
+- [ ] At least the top 3 threats carry the full **STRIDE → CAPEC → CWE → mitigation** chain (CAPEC pattern with explicit abstraction level, the CWE(s) it exploits, and the mitigation class)
 - [ ] At least the top 3 threats mapped to ATT&CK technique IDs
-- [ ] Kill-chain / CAPEC / CWE / CVSS added where they aid handoff
+- [ ] Where no Detailed CAPEC pattern exists for a domain-specific protocol (DICOM, HL7, ICS), the closest Standard or Meta pattern is cited *and the row says so explicitly*
+- [ ] Kill-chain / CVSS added where they aid handoff
 
 **Strategic stratum (§2.3)**
 - [ ] Sector ISAC / threat-intel context noted (or explicitly marked "not applicable: <reason>")
