@@ -3,7 +3,7 @@
 > **Last verified**: 2026-05. FDA premarket cybersecurity guidance, IEC 81001-5-1, IEC 62443, IEC 62304, MDR/IVDR, HIPAA, and the H-ISAC sector reference are all subject to revision; re-confirm against the FDA CDRH guidance index, IEC store, and the EU OJEU before relying on a specific edition. The 2023 FDA *Cybersecurity in Medical Devices* final guidance is the most-recently-updated load-bearing reference here. Re-verify on every model that goes near a regulatory submission.
 > **Sources paraphrased**: US FDA guidance (public domain, US government work); IEC 81001-5-1 / 62443 / 62304 (proprietary IEC standards — paraphrase only, do not quote); HIPAA Security Rule (US government work); DICOM Standard (NEMA, freely available); HL7 v2 / FHIR (HL7 International, freely available); H-ISAC (membership-restricted advisories). No substantive direct quotes from any of these in this file.
 
-> **Related**: ← `SKILL.md` § "Picking supplements" • `methodologies.md` § "Decision matrix" (medical-device row) • `data-centric.md` (worked DICOM example) • `stpa-safesec.md` (safety-critical control loops) • `environments.md` § "Multi-device shared-space modeling" (IoMT room composition) • `capec.md` § "Domain-specific subset" (medical CAPEC working set).
+> **Related**: ← `SKILL.md` § "Picking supplements" • `methodologies.md` § "Decision matrix" (medical-device row) • `data-centric.md` (worked DICOM example) • `stpa.md` (safety-critical control loops) • `environments.md` § "Multi-device shared-space modeling" (IoMT room composition) • `capec.md` § "Domain-specific subset" (medical CAPEC working set).
 
 Load this when the system is a medical device, a PACS / RIS / VNA, a DICOM- or HL7-adjacent service, or a clinical environment with multiple co-located devices (Internet of Medical Things — IoMT). The skill defaults stay the same; this file collects the medical-specific defaults, regulators, and gotchas in one place.
 
@@ -26,12 +26,12 @@ Medical-device threat models list the **patient** alongside data assets — not 
 
 For devices the patient is *connected to* (infusion pumps, ventilators, dialysis machines, implantables), the patient sits *inside* a trust zone with the device — the connection itself is the trust boundary.
 
-## Safety-critical control loops — STPA-SafeSec swap-vs-supplement
+## Safety-critical control loops — STPA swap-vs-supplement
 
-For medical devices with safety-critical control loops (infusion pumps, ventilators, robotic surgery, dialysis machines, ECMO, smart anesthesia), STPA-SafeSec belongs in the model. Two modes (full mode-selection guidance: `stpa-safesec.md` § "Two modes"):
+For medical devices with safety-critical control loops (infusion pumps, ventilators, robotic surgery, dialysis machines, ECMO, smart anesthesia), STPA belongs in the model. Two modes (full mode-selection guidance: `stpa.md` § "Two modes"):
 
-- **Swap mode** — STPA-SafeSec replaces the flow-centric DFD + STRIDE for the contextual core. Use when regulators require the joint safety+security artifact (FDA premarket cybersec, IEC 62304, IEC 81001-5-1, IEC 61508). One artifact, traced from losses through hazards through constraints to mitigations.
-- **Supplement mode** — STPA-SafeSec runs alongside flow-centric + STRIDE, adding hazard scenarios that cross-reference threats and capture non-adversarial safety failures STRIDE misses. Use when there's an existing STRIDE practice or substantial non-control attack surface (telemetry, OTA, audit, cloud connectivity).
+- **Swap mode** — STPA replaces the flow-centric DFD + STRIDE for the contextual core. Use when regulators require the joint safety+security artifact (FDA premarket cybersec, IEC 62304, IEC 81001-5-1, IEC 61508). One artifact, traced from losses through hazards through constraints to mitigations.
+- **Supplement mode** — STPA runs alongside flow-centric + STRIDE, adding hazard scenarios that cross-reference threats and capture non-adversarial safety failures STRIDE misses. Use when there's an existing STRIDE practice or substantial non-control attack surface (telemetry, OTA, audit, cloud connectivity).
 
 When in doubt for an FDA premarket submission with a control loop: swap mode. When in doubt for an existing product with a service review or feature update: supplement.
 
@@ -91,7 +91,7 @@ Cite at the strategic stratum (§2.3) when applicable:
 - **FDA premarket cybersecurity guidance** (US, "Content of Premarket Submissions for Management of Cybersecurity in Medical Devices" — 2014, 2018 draft, 2023 final). Includes SBOM, vulnerability handling, and threat-modeling expectations.
 - **IEC 81001-5-1** — health software security activities in the product lifecycle (the medical-device-specific layer over IEC 62443-4-1).
 - **IEC 62443** — industrial automation security (the foundation IEC 81001-5-1 builds on).
-- **IEC 62304** — medical-device software lifecycle (safety-classified). The joint STPA-SafeSec artifact is what aligns IEC 62304 with security work.
+- **IEC 62304** — medical-device software lifecycle (safety-classified). The joint STPA artifact is what aligns IEC 62304 with security work.
 - **HIPAA Security Rule** (US PHI custody).
 - **GDPR** (EU PHI / patient data outside the US).
 - **MDR / IVDR** (EU medical devices).
@@ -102,7 +102,7 @@ Cite at the strategic stratum (§2.3) when applicable:
 
 - DICOM data-centric worked example: `data-centric.md` § "Worked example".
 - DFD nested-subgraph pattern (e.g. dual-OS pump with Linux comms side and RTOS pump-control side): `dfd-mermaid.md` § "Nested subgraphs for sub-trust boundaries".
-- STPA-SafeSec workflow (losses → hazards → constraints → control/component layers → UCAs → system flaws → hazard scenarios): `stpa-safesec.md`.
+- STPA workflow (losses → hazards → constraints → control/component layers → UCAs → system flaws → hazard scenarios): `stpa.md`.
 - Cyber-physical attack-path construction (Stellios target-rooted walk, P1/P2/P3 surface taxonomy, CVV scoring): `methodologies.md` § "Risk-prioritized cyber-physical attack paths".
 - Safety-bump rule for impact ratings: `risk-rating.md` § "Safety bump".
 

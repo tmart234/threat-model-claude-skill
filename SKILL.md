@@ -1,6 +1,6 @@
 ---
 name: threat-modeler
-description: Use when the user asks the assistant to *produce* a threat model, security architecture review, attack-surface analysis, or "what can go wrong with this system" — typically against a paste of an architecture, design, spec, code, or component list — or when they explicitly name a methodology (STRIDE, LINDDUN, PASTA, STPA-SafeSec) and ask for design-time analysis of *their* system. Also use when the user mentions a regulatory threat-model deliverable (FDA premarket cybersecurity, IEC 81001-5-1, IEC 62443, ISO 26262 cyber). The trigger is the request to *produce an artifact*, not the mention of a term. Do **not** use for: educational queries ("what does S in STRIDE stand for?", "explain DFD trust boundaries", "summarize LINDDUN", "what is PASTA?"); definitions, glossary lookups, or methodology comparisons that don't reference a specific system; coursework / certification study help; pen-test planning; vulnerability scanning; incident response; SBOM generation; threat intelligence summaries; CVE / advisory triage; or passing references to STRIDE / DFD / "attack surface" that appear in unrelated discussions (resume review, blog post drafting, code review of an unrelated change). When in doubt, the question to ask is "is the user asking me to produce a §1 / §2 / §3 / §4 artifact about a system they've described?" — if yes, use the skill; if no, answer the question directly without invoking it.
+description: Use when the user asks the assistant to *produce* a threat model, security architecture review, attack-surface analysis, or "what can go wrong with this system" — typically against a paste of an architecture, design, spec, code, or component list — or when they explicitly name a methodology (STRIDE, LINDDUN, PASTA, STPA) and ask for design-time analysis of *their* system. Also use when the user mentions a regulatory threat-model deliverable (FDA premarket cybersecurity, IEC 81001-5-1, IEC 62443, ISO 26262 cyber). The trigger is the request to *produce an artifact*, not the mention of a term. Do **not** use for: educational queries ("what does S in STRIDE stand for?", "explain DFD trust boundaries", "summarize LINDDUN", "what is PASTA?"); definitions, glossary lookups, or methodology comparisons that don't reference a specific system; coursework / certification study help; pen-test planning; vulnerability scanning; incident response; SBOM generation; threat intelligence summaries; CVE / advisory triage; or passing references to STRIDE / DFD / "attack surface" that appear in unrelated discussions (resume review, blog post drafting, code review of an unrelated change). When in doubt, the question to ask is "is the user asking me to produce a §1 / §2 / §3 / §4 artifact about a system they've described?" — if yes, use the skill; if no, answer the question directly without invoking it.
 ---
 
 # Threat Modeler
@@ -179,7 +179,7 @@ Threat table format:
 Per-row additions (required for the TM-BOM; useful narrative even without it):
 - **Persona** — symbolic name of one of the personas captured in Round 2 (the OWASP TML schema's `threats[].threat_persona` field).
 - **Event** — short verb-phrase summary (≤6 words) of *what happens* in the threat scenario; populates the schema's `threats[].event` field. Example: *"session takeover"*, *"PHI exfiltration"*, *"unauthenticated firmware flash"*.
-- **Source** — one or more values from this fixed enum: `adversary / human_error / failure / events_beyond_org_control` (the schema's `threats[].sources` field). Most threats are `adversary`; STPA-SafeSec non-adversarial scenarios are `human_error` or `failure`.
+- **Source** — one or more values from this fixed enum: `adversary / human_error / failure / events_beyond_org_control` (the schema's `threats[].sources` field). Most threats are `adversary`; STPA non-adversarial scenarios are `human_error` or `failure`.
 
 Use qualitative L/M/H by default. For safety-critical systems, see `references/risk-rating.md` for the safety-bump rule before assigning ratings. Avoid DREAD. If quantitative scoring is required, use OWASP Risk Rating Methodology (see `references/risk-rating.md`).
 
@@ -223,7 +223,7 @@ The contextual core (flow-centric DFD + STRIDE) almost never gets swapped. Add s
 | Attack tree | Top 1–2 highest-value threats where adversarial reasoning adds value | `references/methodologies.md` § Attack trees |
 | AI/ML threat list | ML components in scope (prompt injection, training-data poisoning, model extraction) | `references/methodologies.md` § ML/AI; OWASP LLM Top 10 |
 | PASTA framing | Borrow the business-impact stage when executive sign-off is needed | `references/methodologies.md` § PASTA |
-| STPA-SafeSec **(opt-in only — do not load by default)** | Safety-critical control loops where worst case is physical harm (medical devices, ICS, automotive, aerospace, robotics); swap or supplement mode. Niche; ~14 KB of reference. Load `references/stpa-safesec.md` only when the system is a control loop *and* one of: regulator requires the joint safety+security artifact (FDA premarket cybersec for control-loop devices, IEC 62304/81001-5-1, IEC 61508, ISO 26262); team needs hazard scenarios alongside threats. Skip otherwise. | `references/stpa-safesec.md` |
+| STPA | Load whenever the system has **safety impact** — any plausible worst-case outcome involves physical harm to a person, equipment, or the environment (medical devices, ICS, automotive, aerospace, robotics, consumer IoT that controls something dangerous). Swap or supplement mode; default to supplement. | `references/stpa.md` |
 | OCTAVE / VAST | Org/portfolio-level only, not per-system | `references/methodologies.md` |
 
 Domain pointers: medical / PACS / DICOM / IoMT → also load `references/medical.md`. Embedded / IoT / OT / cloud-native / AI-ML / third-party code → `references/environments.md` § "Domain notes" has each domain's specifics.
@@ -243,7 +243,7 @@ Read on demand:
 - `validation.md` — Q4 deep dive: model/reality conformance, the three Shostack-style checklists, pen testing as complement, validating threats in third-party code.
 - `manifesto.md` — Threat Modeling Manifesto values, principles, patterns, anti-patterns (paraphrased).
 - `risk-rating.md` — Qualitative L/M/H, OWASP-RR pointer, safety-bump rule, why DREAD is discouraged.
-- `stpa-safesec.md` — Safety+security joint hazard analysis for control-loop systems. Two modes (swap or supplement). Use when the worst case is physical harm and the system is a control loop.
+- `stpa.md` — Safety + security joint hazard analysis. Umbrella term covering Leveson's STPA, Young & Leveson's STPA-Sec, and Friedberg et al.'s STPA-SafeSec; the workflow uses the integrated form with the component-layer mapping. Two modes (swap or supplement; default to supplement). Load whenever the system has safety impact — physical harm to people, equipment, or the environment is the trigger, not control-loop shape or regulator presence.
 - `examples.md` — Pointer to the OWASP Threat Model Library (https://github.com/OWASP/www-project-threat-model-library) as the source for end-to-end worked examples by system type (web-applications, ai-ml-systems, infrastructure, third-party-integrations). The library's JSON schema also defines the TM-BOM contract — see § "Producing the TM-BOM" above. The medical / DICOM end-to-end example is the exception, kept inline at `data-centric.md` § "Worked example" + `dfd-mermaid.md` § "Worked example: small clinical PACS".
 
 Blank template: `assets/threat-model-template.md`.
@@ -382,7 +382,7 @@ Concepts in this skill paraphrase from:
 - **MITRE** — ATT&CK, CAPEC, CWE.
 - **Lockheed Martin** — Cyber Kill Chain.
 - **STRIDE** — Loren Kohnfelder & Praerit Garg (Microsoft). **DESIST** — Gunnar Peterson.
-- **STPA-SafeSec** — Friedberg et al. (2017, CC-BY). **STPA-Sec** — Young & Leveson (2014). **STPA** — Leveson, *Engineering a Safer World* (MIT Press, 2011).
+- **STPA** (umbrella term in this skill; lineage: Leveson, *Engineering a Safer World*, MIT Press, 2011 → STPA-Sec, Young & Leveson, 2014 → STPA-SafeSec, Friedberg et al., 2017, CC-BY — the workflow draws from across the lineage; cite the specific paper when the distinction matters).
 - **Risk-prioritized cyber-physical attack paths** — Stellios, Kotzanikolaou & Grigoriadis (2021).
 
 Cite these in any output that quotes or substantively summarizes them.

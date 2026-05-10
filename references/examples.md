@@ -16,7 +16,7 @@ The OWASP TML repo's [`/threat-models`](https://github.com/OWASP/www-project-thr
 | Generic web app | `threat-models/web-applications/` |
 | Cloud-native multi-tenant SaaS | `threat-models/web-applications/` (and `infrastructure/` for the platform side) |
 | Embedded / IoT | (none; nearest are `infrastructure/` for the deployment surface) |
-| ICS / SCADA / OT | (none; build from `infrastructure/` plus this skill's STPA-SafeSec reference if a control loop is in scope) |
+| ICS / SCADA / OT | (none; build from `infrastructure/` plus this skill's STPA reference if a control loop is in scope) |
 | AI / ML system | `threat-models/ai-ml-systems/` (e.g. `husky-ai-threat-model.json`) |
 | Third-party-integrated systems | `threat-models/third-party-integrations/` |
 | Medical device / PACS / DICOM | (none in OWASP TML; use `data-centric.md` § "Worked example" + `dfd-mermaid.md` § "Worked example: small clinical PACS" inline) |

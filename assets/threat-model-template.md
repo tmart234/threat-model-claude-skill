@@ -152,7 +152,7 @@ flowchart LR
 - **Security objectives in scope**: C / I / A — justify each drop
 - **Authorized locations** (storage / transmission / execution / input / output): list with `L1`, `L2`, ... — reference the corresponding DFD elements where they exist; mark lifecycle-only locations explicitly
 
-> **For STPA-SafeSec analyses**, copy the Losses / Hazards / Constraints / Control-layer / Component-layer scaffolding from `references/stpa-safesec.md` § "Section template (copy when in scope)" into this section.
+> **For STPA analyses**, copy the Losses / Hazards / Constraints / Control-layer / Component-layer scaffolding from `references/stpa.md` § "Section template (copy when in scope)" into this section.
 
 ---
 
@@ -281,7 +281,7 @@ flowchart TD
 **Review**
 - [ ] At least one stakeholder beyond the threat modeler has reviewed (note who below)
 
-> **STPA-SafeSec users**: add the additional Q4 checks from `references/stpa-safesec.md` § "Q4 — Validation additions" (loss → hazard → constraint coverage; UCA → system-flaw traceability; hazard-scenario tree leaf-to-root mitigation).
+> **STPA users**: add the additional Q4 checks from `references/stpa.md` § "Q4 — Validation additions" (loss → hazard → constraint coverage; UCA → system-flaw traceability; hazard-scenario tree leaf-to-root mitigation).
 
 ### Reviewers
 

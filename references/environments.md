@@ -223,7 +223,7 @@ The skill's defaults are domain-neutral. These subsections collect domain-specif
 - **Firmware attack surface** — code-signing chain, OTA-update server, update manifest format, anti-rollback. Each is a control whose absence promotes Tampering threats (CAPEC-441, CWE-494).
 - **Supply chain** is a real and rarely-fixable surface — provenance (SBOM, signed releases, reproducible builds), manufacturing-stage compromise (CAPEC-438), distribution-stage tampering (CAPEC-439). When a supply-chain finding has no in-product mitigation, name it as Accept with explicit residual-risk language.
 - **Multi-device shared space** — see § "Multi-device shared-space modeling" above. Routine in IoMT, smart buildings, vehicle cabins, robotics cells, plant cabinets.
-- **Safety-critical control loops** — for control-loop devices (automotive ECUs, robotics, drones, industrial actuators), add STPA-SafeSec — swap or supplement, depending on whether ISO 26262 / IEC 61508 require the joint artifact. See `stpa-safesec.md` § "Two modes".
+- **Safety-critical control loops** — for control-loop devices (automotive ECUs, robotics, drones, industrial actuators), add STPA — swap or supplement, depending on whether ISO 26262 / IEC 61508 require the joint artifact. See `stpa.md` § "Two modes".
 
 ### Cloud-native — domain notes
 
