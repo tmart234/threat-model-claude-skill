@@ -30,7 +30,9 @@ This skill defaults to **qualitative L/M/H ratings** for likelihood and impact, 
 - Is there reputational, legal, or regulatory impact?
 - Can the attacker pivot to other systems?
 
-For safety-critical systems (medical devices, automotive, industrial control), bump the impact rating any time patient/operator/public safety is in play. Don't rate patient harm as "Medium impact"; that's almost always High.
+### Safety bump
+
+For safety-critical systems (medical devices, automotive, industrial control, aerospace, robotics), bump the impact rating any time patient / operator / public safety is in play. Don't rate physical-harm scenarios as "Medium impact"; that's almost always High. The bump applies whether the harm is intentional (adversarial) or non-adversarial (sensor failure cascading to harm) — the safety case doesn't care which.
 
 ## When to use OWASP Risk Rating Methodology instead
 
