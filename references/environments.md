@@ -100,7 +100,7 @@ subgraph DMZ["Customer IT | on-prem enterprise (DMZ) | low trust"]
 - **OTA update server ↔ device boundary** — signed firmware delivery; rollback protection.
 - **Sensor/actuator I/O boundary** — physical-world inputs (sensors, GPIO, ADC) and outputs (motors, relays). Attackers in physical proximity can spoof or tamper.
 - **Removable media / USB boundary** — SD card, USB host/device modes.
-- **Wireless boundary** — BLE, Wi-Fi, Zigbee, LoRa, Z-Wave, NFC, sub-GHz proprietary; each wireless interface is a boundary crossing reachable without physical access.
+- **Wireless boundary** — BLE, Wi-Fi, Zigbee, LoRa, Z-Wave, NFC, sub-GHz proprietary; each wireless interface is a boundary crossing reachable without physical access. The pairing/association mode is a property of the boundary, not an implementation detail: an unauthenticated "just works"-style pairing provides no MITM resistance, an authenticated or OOB-confirmed pairing does. Label it on the flow (`BLE GATT (unauthenticated pairing)`, not bare `BLE`) so the boundary's real strength is visible — applies to any pairing-based link (BLE, Zigbee, Z-Wave, NFC).
 - **Cellular / baseband boundary** — separate processor with its own firmware; treat as distinct trust zone.
 - **Device ↔ companion app boundary** (mobile or desktop pairing app).
 - **Device ↔ network gateway / hub boundary** (home hub, industrial gateway).
@@ -118,7 +118,7 @@ subgraph Modem["Carrier | embedded (cellular baseband) | unknown trust"]
 subgraph Physical["End-user / Hospital | physical device custody | low trust"]
 ```
 
-**Common misses:** the secure-element boundary (people draw the device as one box); JTAG/UART as a boundary; the baseband as a separate trust zone; bootloader-mode as an alternative path; wireless interfaces drawn as flows but not as boundary crossings.
+**Common misses:** the secure-element boundary (people draw the device as one box); JTAG/UART as a boundary; the baseband as a separate trust zone; bootloader-mode as an alternative path; wireless interfaces drawn as flows but not as boundary crossings; wireless flows drawn with a bare protocol label, hiding that the pairing mode provides no MITM resistance.
 
 **Multi-device shared-space note.** When several embedded devices coexist in one physical space (smart building, IoMT patient room, vehicle cabin, robotics cell), the most consequential boundary often isn't around any single device — it's the shared physical medium *between* them: shared 2.4 GHz ISM band (Wi-Fi / BLE / Zigbee co-channel interference), shared power rail, shared HVAC duct for acoustic side channels. Per-device boundary modeling will miss the cross-device hop. Classify each between-device surface as P1 (direct contact), P2 (proximity), or P3 (shared medium without proximity), and use the **risk-prioritized cyber-physical attack-path** construction in `methodologies.md` § "Risk-prioritized cyber-physical attack paths (Stellios et al., 2021)" rather than independent per-device passes.
 
