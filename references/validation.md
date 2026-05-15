@@ -114,6 +114,7 @@ The hybrid layout's three strata are scaffolding, not a coverage quota — only 
 - [ ] Named-adversary context included if the sector has one.
 
 **Cross-stratum**
+- [ ] Every threat cell is formatted `**Title**: description.` — a ≤6-word noun-phrase title, then a 1–2 sentence concrete description, so a developer / systems engineer / QE reviewer can triage the row at a glance (`SKILL.md` § "Threat enumeration"; `manifesto.md` § "Failure-mode catalog" → "Threat cell that isn't a title-plus-description").
 - [ ] Threats are *cross-referenced* across strata that are present, not duplicated.
 - [ ] All threats share one ID space and one risk-rating scale, so the §3 prioritized list is single-sorted.
 - [ ] No section that's present is empty or stubbed — populated, or omitted entirely.

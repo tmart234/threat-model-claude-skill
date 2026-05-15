@@ -180,6 +180,7 @@ flowchart LR
 | T1 |         |        |        |         |       |        |            |        |      |
 | T2 |         |        |        |         |       |        |            |        |      |
 
+> **Threat**: `**Title**: description.` — a ≤6-word noun-phrase title, then a 1–2 sentence concrete description. E.g. `**Session token replay**: An attacker captures a session token and replays it across the trust boundary to take over an authenticated session.` See `SKILL.md` § "Threat enumeration".
 > **Persona**: symbolic_name from the Threat personas table above (e.g. `external-anonymous`).
 > **Event**: short verb-phrase summary (e.g. *"session takeover"*, *"PHI exfiltration"*).
 > **Source**: one or more of `adversary / human_error / failure / events_beyond_org_control`.
@@ -195,6 +196,7 @@ flowchart LR
 | V1 |                                   |          |                 |         |       |        |            |        |      |
 | V2 |                                   |          |                 |         |       |        |            |        |      |
 
+> **Threat / Vector**: same `**Title**: description.` format as §2.1.a — ≤6-word title, then 1–2 sentences.
 > Cross-reference to flow-centric IDs where the same finding surfaced there: `V3 ↔ T7` (don't duplicate; cross-reference).
 
 #### 2.1.c Privacy / AI-specific pass (only if applicable)
@@ -204,6 +206,8 @@ flowchart LR
 | ID | Element / Data | Category | Threat | Persona | Event | Source | Likelihood | Impact | Risk |
 |----|----------------|----------|--------|---------|-------|--------|------------|--------|------|
 | PR1 |               |          |        |         |       |        |            |        |      |
+
+> **Threat**: same `**Title**: description.` format as §2.1.a — ≤6-word title, then 1–2 sentences.
 
 #### 2.1.d Threat tree(s) for top 1–2 highest-value threats (optional)
 
@@ -293,6 +297,7 @@ flowchart TD
 
 **Threats and responses**
 - [ ] Every applicable STRIDE category was walked at every applicable element
+- [ ] Every threat cell reads as `**Title**: description.` — a ≤6-word noun-phrase title, then a 1–2 sentence concrete description
 - [ ] Threats are cross-referenced across present strata, not duplicated
 - [ ] All threats share one ID space and one risk-rating scale
 - [ ] Every threat has a response (Mitigate / Eliminate / Transfer / Accept)

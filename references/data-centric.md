@@ -128,11 +128,11 @@ A single DICOM study (PHI). Custodian: hospital. Lifecycle: acquisition → tran
 
 | ID | Loc | Obj | Vector | L | I | Risk |
 |----|-----|-----|--------|---|---|------|
-| V1 | L2 | C   | Backup pulled from object store with overly-permissive bucket ACL | M | H | High |
-| V2 | L3 | C,I | Un-TLS'd DICOM segment; on-network attacker MITMs and modifies pixel data | M | H | High |
-| V3 | L5 | C   | Parser crash produces core dump containing decrypted PHI; core dumps shipped to centralized telemetry | L | H | Medium |
-| V4 | L6 | C   | DICOM tags (PatientName, PatientID) logged at parse-error level; logs forwarded to SIEM that auditors don't have a HIPAA BAA with | M | H | High |
-| V5 | L7 | C,I | Clinician exports study to USB; no DLP, no audit trail at the workstation | M | M | Medium |
+| V1 | L2 | C   | **Over-permissive backup bucket ACL**: An attacker pulls the nightly backup from the object store because the bucket ACL grants read access too broadly. | M | H | High |
+| V2 | L3 | C,I | **Un-TLS'd DICOM segment MITM**: An on-network attacker intercepts the cleartext DICOM segment and modifies pixel data in transit. | M | H | High |
+| V3 | L5 | C   | **PHI in core dumps**: A parser crash produces a core dump containing decrypted PHI, and core dumps are shipped to centralized telemetry. | L | H | Medium |
+| V4 | L6 | C   | **PHI in parse-error logs**: DICOM tags (PatientName, PatientID) are logged at parse-error level and forwarded to a SIEM the auditors hold no HIPAA BAA with. | M | H | High |
+| V5 | L7 | C,I | **Unaudited USB study export**: A clinician exports a study to USB with no DLP enforcement and no audit trail at the workstation. | M | M | Medium |
 
 ### What flow-centric alone would have caught
 

@@ -138,34 +138,34 @@ Common in medical / IoT / embedded:
 
 ## Per-element example threats
 
-These are illustrative, not exhaustive. Use them as seeds, not a checklist.
+These are illustrative, not exhaustive. Use them as seeds, not a checklist. Each is written in the threat-table cell format from `SKILL.md` § "Threat enumeration" — a ≤6-word title, a colon, then a 1–2 sentence concrete description.
 
 ### External entity (e.g. Clinician using PACS workstation)
 
-- **S**: Attacker phishes clinician credentials and authenticates as them.
-- **R**: Clinician performs unauthorized export of PHI, claims they didn't.
+- **S** — **Clinician credential phishing**: An attacker phishes a clinician's credentials and authenticates to the workstation as them.
+- **R** — **Denied PHI export**: A clinician performs an unauthorized PHI export and later credibly denies it because no attributable log exists.
 
 ### Process (e.g. PACS server)
 
-- **S**: Attacker spoofs DICOM AE Title to deliver malicious imagery.
-- **T**: Attacker exploits buffer overflow in DICOM parser to modify execution.
-- **R**: Attacker erases server-local audit logs after tampering with images.
-- **I**: Attacker reads PHI from temporary files written during DICOM processing.
-- **D**: Attacker sends crafted associations to exhaust connection pool.
-- **E**: Attacker exploits parser RCE to run as the PACS service account, then pivots to domain admin.
+- **S** — **DICOM AE Title spoofing**: An attacker spoofs a trusted AE Title to deliver malicious imagery to the PACS server.
+- **T** — **DICOM parser buffer overflow**: An attacker sends a crafted DICOM object that overflows a parser buffer and modifies process execution.
+- **R** — **Audit log erasure**: An attacker with operational access erases server-local audit logs after tampering with stored images.
+- **I** — **PHI leak via temp files**: An attacker reads PHI from temporary files the server writes during DICOM processing.
+- **D** — **Connection-pool exhaustion**: An attacker opens crafted associations until the connection pool is exhausted and legitimate modalities can't connect.
+- **E** — **Parser RCE to domain admin**: An attacker exploits a parser RCE to run as the PACS service account, then pivots to domain admin.
 
 ### Data flow (e.g. DICOM C-STORE between modality and PACS)
 
-- **T**: Attacker on the segment modifies pixel data in transit (no TLS, no integrity).
-- **I**: Attacker on the segment captures PHI in transit.
-- **D**: Attacker floods the segment to delay imaging during a procedure.
+- **T** — **Pixel data tampering in transit**: An attacker on the segment modifies pixel data in transit because the flow has no TLS and no integrity check.
+- **I** — **PHI capture in transit**: An attacker on the segment captures PHI from the unencrypted DICOM flow.
+- **D** — **Segment flooding during a procedure**: An attacker floods the network segment to delay imaging while a procedure is underway.
 
 ### Data store (e.g. PACS image database)
 
-- **T**: Attacker with DB-write access modifies historical studies.
-- **I**: Attacker with DB-read access exfiltrates the study catalog.
-- **D**: Attacker fills the underlying volume to halt new acquisitions.
-- **R** (audit log only): Attacker deletes audit rows covering their access window.
+- **T** — **Historical study modification**: An attacker with DB-write access modifies historical studies.
+- **I** — **Study catalog exfiltration**: An attacker with DB-read access exfiltrates the study catalog.
+- **D** — **Volume-fill halt**: An attacker fills the underlying storage volume so the database can't accept new acquisitions.
+- **R** (audit log only) — **Audit row deletion**: An attacker deletes audit rows covering their access window.
 
 ## STRIDE → security property → typical mitigations
 
