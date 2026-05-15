@@ -178,9 +178,49 @@ These are illustrative, not exhaustive. Use them as seeds, not a checklist. Each
 | Denial of Service | Availability | rate limiting, quotas, backpressure, redundancy, autoscaling, graceful degradation, watchdogs |
 | Elevation of Privilege | Authorization | least privilege, sandboxing, input validation, output encoding, RBAC/ABAC, separation of duties |
 
+## Choosing the right primitive
+
+Two rules layered on top of the typical-mitigations table:
+
+**Prefer built-ins over custom code.** Platform IAM, KMS / HSM, managed mTLS, K8s NetworkPolicy, browser CSP / SOP / SameSite, Subresource Integrity, framework CSRF tokens, ORM parameterization, OS sandboxing (SELinux / AppArmor / seccomp / capabilities), secure boot / TPM / TEE / secure element, memory-safe languages — these already carry the vendor's threat model and ship with the vendor's patches. A hand-rolled equivalent inherits the team's bandwidth and tends to drift. The decision to roll a custom control over an available built-in is itself worth recording as an `ASM#` with a residual-risk note.
+
+**When the control is cryptographic, name the suite — not the class.** *"Use encryption"* is the "Generic mitigations" anti-pattern. Default suites for new designs:
+
+- **Transport**: TLS 1.3 (or TLS 1.2 with AEAD ciphers only); mTLS for service-to-service.
+- **Symmetric / AEAD**: AES-256-GCM or ChaCha20-Poly1305 — never CBC + HMAC for new designs.
+- **Signatures**: Ed25519, ECDSA P-256 / P-384; RSA ≥ 3072 if asymmetric must be RSA.
+- **Key agreement**: X25519, ECDH P-256+.
+- **KDFs**: HKDF for context derivation; Argon2id (or scrypt) for password hashing — never bare SHA-256 over passwords.
+- **Hashes**: SHA-256 / SHA-384 / SHA-3 family.
+- **Random**: OS CSPRNG (`getrandom`, `/dev/urandom`, `BCryptGenRandom`) — never `rand()` / `Math.random()` for security.
+- **Module**: FIPS 140-3 validated when regulated (federal, healthcare, payment).
+
+Avoid: MD5, SHA-1, RC4, DES / 3DES, CBC-without-MAC, RSA < 3072 for new keys, ECB mode. Pointers: NIST SP 800-131A (algorithm transitions), NIST SP 800-175B (key management), IETF BCP-195 (TLS configuration), BSI TR-02102 (German baseline).
+
+## NIST SP 800-53 r5 control-family linkage (optional)
+
+Every Mitigate row **may** carry an SP 800-53 r5 control-family tag alongside its CSF function. The CSF function answers *what role the control plays*; the 800-53 family answers *which compliance baseline it threads through* — useful when FedRAMP / FISMA / CMMC / HITRUST mappers consume the model. Skip when no compliance baseline applies.
+
+Common families (full catalog: NIST SP 800-53 r5):
+
+| Family | Name | Typical mitigations |
+|---|---|---|
+| AC | Access Control | RBAC, ABAC, session management, separation of duties |
+| AU | Audit & Accountability | Signed audit logs, log forwarding, retention |
+| CM | Configuration Management | Immutable images, drift detection, baseline configs |
+| CP | Contingency Planning | Backup, restore, failover, DR runbook |
+| IA | Identification & Authentication | mTLS, MFA, machine identity, password policy |
+| IR | Incident Response | IR plan, on-call rotation, isolation playbook |
+| SC | System & Communications Protection | TLS, encryption at rest, segmentation, key management |
+| SI | System & Information Integrity | Input validation, code signing, secure boot, integrity monitoring |
+| SR | Supply Chain Risk Management | SBOM, dependency pinning, vendor risk reviews |
+| PE | Physical & Environmental Protection | Tamper-evident enclosure, facility access |
+
+Annotation format on a §3 row or SR: *"SR-001 (Protect, SC-8 / SC-12): TLS 1.3 + mTLS using X.509 certs from internal CA"*.
+
 ## NIST CSF function — Protect / Detect / Respond / Recover
 
-The STRIDE → property → control axis above answers *what kind of control*. There's a second axis FDA reviewers and the MITRE Threat Modeling Playbook §2.5.2 expect to see populated alongside it: **which NIST Cybersecurity Framework function** the control implements. Defense in depth is the goal; a mitigation table where every control is `Protect` and nothing is `Detect`, `Respond`, or `Recover` is itself a finding — it means the design assumes prevention will hold and has nothing to fall back on when it doesn't.
+The STRIDE → property → control axis above answers *what kind of control*. There's a second axis FDA reviewers and the MITRE Threat Modeling Playbook §2.5.2 expect to see populated alongside it: **which NIST Cybersecurity Framework function** the control implements. **Lead with Protect**: preventive controls are the primary class — most of the Mitigate stack on a typical threat should be Protect. Detect / Respond / Recover are compensating layers that catch the Protect failure when (not if) one fires silently, not four equal partners. A mitigation stack made entirely of Protect controls on a high-impact threat is still a finding — name at least one Detect path and one Respond / Recover path so the design has a fallback.
 
 | NIST CSF function | What the control does | Examples |
 |---|---|---|

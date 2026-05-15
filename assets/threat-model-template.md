@@ -246,11 +246,12 @@ flowchart TD
 ### Mitigation table — single prioritized list across present strata
 
 > Sort top-to-bottom by exposure (AV:N > A > L > P, then PR:N > L > H, then AC:L > H), then by Impact-set size (`{C,I,A}` > 2-hits > 1-hit), then by STPA-hazard linkage. CAPEC / CWE are in the §2.1 row — `Cross-refs` here is for ATT&CK / sector advisories not already in §2.1.
+> **Control cell takes a layered stack**, typically 2–6 controls per Mitigate row, ordered **Protect first** then Detect / Respond / Recover. Each control names the actual mechanism (built-in preferred over custom code), the cryptographic suite when applicable (not the class), and is tagged inline with its CSF function and — optionally — its NIST SP 800-53 r5 family. A single-control row on a high-impact threat is a finding. See `SKILL.md` § "Mitigations and Q4" and `references/stride-prompts.md` § "Choosing the right primitive".
 
-| Threat ID(s) | Cross-refs (ATT&CK / sector) | Response | Control / mitigation | Status | Priority | Owner |
-|--------------|------------------------------|----------|----------------------|--------|----------|-------|
-| T1           | ATT&CK T1078                 | Mitigate |                      | suggested | high     |       |
-| T2           |                              | Accept   | (rationale — no control row in TM-BOM) | — | — |       |
+| Threat ID(s) | Cross-refs (ATT&CK / D3FEND / sector) | Response | Control / mitigation | Status | Priority | Owner |
+|--------------|----------------------------------------|----------|----------------------|--------|----------|-------|
+| T1           | ATT&CK T1078; D3-MFA                   | Mitigate | • TLS 1.3 + mTLS with X.509 from internal CA (Protect, SC-8 / SC-12)<br>• Cert-pinning at the client (Protect, SC-17)<br>• Cert-mismatch alert to SIEM (Detect, AU-6 / SI-4)<br>• Auto-revoke + force re-auth on alert (Respond, IR-4) | suggested | high | |
+| T2           |                                        | Accept   | (rationale — no control row in TM-BOM) | — | — |       |
 
 > **Status** populates the TM-BOM's `controls[].status`: `assumed / active / suggested / under_review / approved / scheduled / retired / wont_do`. Default for new mitigations: `suggested`. Already deployed → `active`.
 > **Priority** populates `controls[].priority`: `none / low / medium / high / critical`. Derived from the §3 sort position + the row's `level` once translated (`references/risk-rating.md` § "Translation to TM-BOM enums"): `level: critical` → `critical`; `very_high` / `high` → `high`; `medium` → `medium`; `low` / `very_low` → `low` / `none`.
