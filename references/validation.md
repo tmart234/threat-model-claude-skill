@@ -115,8 +115,10 @@ The hybrid layout's three strata are scaffolding, not a coverage quota — only 
 
 **Cross-stratum**
 - [ ] Every threat cell is formatted `**Title**: description.` — a ≤6-word noun-phrase title, then a 1–2 sentence concrete description, so a developer / systems engineer / QE reviewer can triage the row at a glance (`SKILL.md` § "Threat enumeration"; `manifesto.md` § "Failure-mode catalog" → "Threat cell that isn't a title-plus-description").
+- [ ] Every threat row carries `CAPEC`, `CWE`, `AV`, `PR`, `AC`, and `Impact` (CIA subset) — no missing values; values come from the enums in `references/risk-rating.md` § "Default scheme".
+- [ ] `AV / PR / AC` reflect the actual reach to the element, not a default `AV:N / PR:N / AC:L` (see `manifesto.md` § "Failure-mode catalog" → "Exposure inflation").
 - [ ] Threats are *cross-referenced* across strata that are present, not duplicated.
-- [ ] All threats share one ID space and one risk-rating scale, so the §3 prioritized list is single-sorted.
+- [ ] All threats share one ID space; the §3 prioritized list sorts on the same enums.
 - [ ] No section that's present is empty or stubbed — populated, or omitted entirely.
 - [ ] **Empty STRIDE applicability cells carry an explicit rationale, not silent omission.** For every check-marked cell in the STRIDE applicability table that has no threat, the threat table records a no-threat row with rationale (`stride-prompts.md` § "Empty STRIDE cells require an explicit rationale"). Silent blanks are indistinguishable from "we forgot to walk this cell".
 

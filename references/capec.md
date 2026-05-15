@@ -203,11 +203,11 @@ Example threat-row note: *"CAPEC-272 (Protocol Manipulation, Meta) — no DICOM-
 
 In a hybrid threat model with §2 split into three strata (see `methodologies.md` § "Three strata as default scaffolding"):
 
-- **§2.1 Contextual stratum** — STRIDE/data-centric/etc. produce the threats. Don't add CAPEC IDs here yet; the contextual stratum is about what could go wrong, not its catalog ID.
-- **§2.2 Operational stratum** — this is where the CAPEC column lives, alongside ATT&CK, CWE, CVSS. Each row: threat ID → CAPEC pattern (with abstraction level) → CWE(s) → ATT&CK mapping → kill-chain stage → detection notes.
-- **§3 Mitigation table** — the CAPEC and CWE columns make the mitigation traceable. Derived security requirements (`SR-###`) cite both the threat ID and the CWE class so they're traceable to a known weakness.
+- **§2.1 Contextual stratum** — every threat row carries `CAPEC` and `CWE` columns (CAPEC → CWE is a 1:1 lookup; pick CAPEC by SDLC stage, the CWE follows). This is where the chain starts.
+- **§2.2 Operational stratum** — layers ATT&CK technique ID, kill-chain phase, CVE/CVSS, and detection / handoff notes onto threats already enumerated in §2.1. CAPEC and CWE are upstream — don't duplicate.
+- **§3 Mitigation table** — derived security requirements (`SR-###`) cite the CWE the requirement closes; the CWE comes from the §2.1 row's `CWE` column.
 
-Cross-stratum: a CAPEC pattern can be the bridge between a contextual threat (`T1`) and an operational ATT&CK technique. Don't duplicate — cross-reference: *"T1 (Spoofing of AE Title) ↔ CAPEC-151 ↔ CWE-287 ↔ ATT&CK T1078 (Valid Accounts)"*. One row in §3, four IDs across the chain.
+Cross-stratum: a CAPEC pattern (in §2.1) bridges a contextual threat to an operational ATT&CK technique (in §2.2). Reference: *"T1 (Spoofing of AE Title) — CAPEC-151 / CWE-287 in §2.1 — ATT&CK T1078 (Valid Accounts) in §2.2"*. One row per stratum, IDs chained across.
 
 ## Closing the loop with MITRE D3FEND on the defensive side
 

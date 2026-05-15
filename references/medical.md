@@ -53,7 +53,7 @@ For a medical device or PACS the default hybrid pulls in:
   - **Asset-centric** on signing / device keys, software-update trust roots, encrypted-channel keys.
   - **Attack tree** on the safety-critical path (one tree per top hazard) where one exists.
 - **Operational stratum**: ATT&CK technique IDs on top threats; the STRIDE → CAPEC → CWE → mitigation chain when §2.2 is produced (medical CAPEC working set: `capec.md` § "Domain-specific subset"). CISA medical-device advisories where applicable.
-- **Strategic stratum**: H-ISAC threat intel, FDA premarket cybersecurity, IEC 62443, IEC 81001-5-1, IEC 62304, HIPAA, the safety-bump rule from `risk-rating.md`.
+- **Strategic stratum**: H-ISAC threat intel, FDA premarket cybersecurity, IEC 62443, IEC 81001-5-1, IEC 62304, HIPAA, the ISO 14971 / AAMI TIR57 mapping from `risk-rating.md` (severity from STPA `H-#` + `P1 × P2` from the row's `AV / PR / AC`).
 
 ## Patient as an asset
 
@@ -133,7 +133,7 @@ Cite at the strategic stratum (§2.3) when applicable:
 - **GDPR** (EU PHI / patient data outside the US).
 - **MDR / IVDR** (EU medical devices).
 - **ISO 14971:2019** — application of risk management to medical devices (the safety-risk language regulators expect cybersecurity risk to be expressed in).
-- **AAMI TIR57:2023** — principles for medical-device security risk management; the `P1 × P2` bridge from cybersecurity threat to ISO 14971 hazardous-situation-leading-to-harm. Use the L/M/H ↔ ISO 14971 / TIR57 mapping in `references/risk-rating.md` § "ISO 14971 / AAMI TIR57 mapping for medical-device submissions" to translate skill-side ratings into the regulator-facing safety-case view. The Four Question ↔ TIR57 joint-workflow mapping (`medical.md` § "Four Questions ↔ TIR57 / ISO 14971 joint risk-management workflow") is the spine of any medical-device threat model — surface it in §1 prose so a reviewer can see the joint structure on the first page.
+- **AAMI TIR57:2023** — principles for medical-device security risk management; the `P1 × P2` bridge from cybersecurity threat to ISO 14971 hazardous-situation-leading-to-harm. Use the mapping in `references/risk-rating.md` § "ISO 14971 / AAMI TIR57 mapping for medical-device submissions" to translate the §2.1 row's `AV / PR / AC / Impact` plus the cross-referenced STPA hazard severity into the regulator-facing safety-case view. The Four Question ↔ TIR57 joint-workflow mapping (`medical.md` § "Four Questions ↔ TIR57 / ISO 14971 joint risk-management workflow") is the spine of any medical-device threat model — surface it in §1 prose so a reviewer can see the joint structure on the first page.
 - **H-ISAC** — Health-ISAC threat intel; advisories are a useful named-adversary source for sector strategic context.
 - **CISA medical-device advisories** — federal advisories for ICS-CERT-style disclosures of medical-device CVEs.
 
@@ -143,7 +143,7 @@ Cite at the strategic stratum (§2.3) when applicable:
 - DFD nested-subgraph pattern (e.g. dual-OS pump with Linux comms side and RTOS pump-control side): `dfd-mermaid.md` § "Nested subgraphs for sub-trust boundaries".
 - STPA workflow (losses → hazards → constraints → control/component layers → UCAs → system flaws → hazard scenarios): `stpa.md`.
 - Cyber-physical attack-path construction (Stellios target-rooted walk, P1/P2/P3 surface taxonomy, CVV scoring): `methodologies.md` § "Risk-prioritized cyber-physical attack paths".
-- Safety-bump rule for impact ratings: `risk-rating.md` § "Safety bump".
+- Safety severity → STPA hazards (`stpa.md`); cyber row composes with hazard severity per `risk-rating.md` § "ISO 14971 / AAMI TIR57 mapping for medical-device submissions".
 
 ## Citations
 
