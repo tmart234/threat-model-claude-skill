@@ -132,20 +132,13 @@ A single diagram with 5–15 elements is usually right; for larger systems produ
 
 The contextual core is **STRIDE-Per-Element on the DFD**. Use STRIDE generatively as a per-element prompt — don't argue about which cell a finding belongs in. Read `references/stride-prompts.md` before enumerating: it has the applicability table (which categories apply to External entity / Process / Data flow / Data store), the category prompts, the element-is-the-victim framing, and the Per-Element vs Per-Interaction choice.
 
-For each DFD element, walk the STRIDE categories that apply. Write at least one concrete threat per applicable cell. Threats follow data flow, not control flow, and cluster around trust boundaries *and* complex parsers (deserializers, image decoders, structured-document parsers).
-
-**Threat cell format — title, then description, separated by a colon.** The `Threat` column is what a developer, systems engineer, or QE reviewer actually reads to triage the row; format it so it can be taken in at a glance. Write `**Title**: description.`:
-
-- **Title** — a short noun phrase (≤6 words) naming the threat, so a reader scanning the column understands the row without reading the description. E.g. *Session token replay*, *DICOM AE Title spoofing*, *Unsigned firmware acceptance*. Not a bare STRIDE category ("Spoofing") — that's already in the STRIDE column.
-- **Description** — 1–2 sentences, no more. State the concrete attack: who does what, against which element, with what effect. Enough to act on; never a paragraph.
-
-Example: `**Session token replay**: An attacker captures a session token and replays it across the trust boundary, taking over an authenticated session without re-authenticating.` Reject bare categories, unstructured sentences with no title, and descriptions longer than two sentences. The same `**Title**: description.` format applies to the `Threat / Vector` column in §2.1.b and the `Threat` column in §2.1.c.
+For each DFD element, walk the STRIDE categories that apply. Threats follow data flow, not control flow, and cluster around trust boundaries *and* complex parsers (deserializers, image decoders, structured-document parsers). Write each threat cell as `**Title**: description.` — a ≤6-word noun-phrase title (e.g. *Session token replay*; not the bare STRIDE category, which is already in the STRIDE column), then 1–2 sentences naming who does what, against which element, with what effect. No paragraphs, no unstructured sentences with no title. Same format for §2.1.b's `Threat / Vector` and §2.1.c's `Threat`. Per-element seeds: `references/stride-prompts.md` § "Per-element example threats".
 
 Threat table format:
 
 | ID | Element | STRIDE | Threat | Persona | Event | Source | Likelihood | Impact | Risk |
 |----|---------|--------|--------|---------|-------|--------|------------|--------|------|
-| T1 | Auth Service (P1) | S | **Session token replay**: An attacker captures a session token and replays it across the trust boundary to take over an authenticated session without re-authenticating. | external-anonymous | session takeover | adversary | M | H | High |
+| T1 | Auth Service (P1) | S | **Session token replay**: An attacker replays a captured session token across the trust boundary to take over an authenticated session. | external-anonymous | session takeover | adversary | M | H | High |
 
 Per-row additions (required for the TM-BOM; useful narrative even without it):
 - **Persona** — symbolic name of one of the personas captured in Round 2 (the OWASP TML schema's `threats[].threat_persona` field).
