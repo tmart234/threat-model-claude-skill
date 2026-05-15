@@ -126,13 +126,13 @@ A single DICOM study (PHI). Custodian: hospital. Lifecycle: acquisition → tran
 
 ### Vectors
 
-| ID | Loc | Obj | Vector | L | I | Risk |
-|----|-----|-----|--------|---|---|------|
-| V1 | L2 | C   | **Over-permissive backup bucket ACL**: An attacker pulls the nightly backup from the object store because the bucket ACL grants read access too broadly. | M | H | High |
-| V2 | L3 | C,I | **Un-TLS'd DICOM segment MITM**: An on-network attacker intercepts the cleartext DICOM segment and modifies pixel data in transit. | M | H | High |
-| V3 | L5 | C   | **PHI in core dumps**: A parser crash produces a core dump containing decrypted PHI, and core dumps are shipped to centralized telemetry. | L | H | Medium |
-| V4 | L6 | C   | **PHI in parse-error logs**: DICOM tags (PatientName, PatientID) are logged at parse-error level and forwarded to a SIEM the auditors hold no HIPAA BAA with. | M | H | High |
-| V5 | L7 | C,I | **Unaudited USB study export**: A clinician exports a study to USB with no DLP enforcement and no audit trail at the workstation. | M | M | Medium |
+| ID | Loc | Vector | CAPEC | CWE | AV | PR | AC | Impact |
+|----|-----|--------|-------|-----|----|----|----|--------|
+| V1 | L2 | **Over-permissive backup bucket ACL**: An attacker pulls the nightly backup from the object store because the bucket ACL grants read access too broadly. | CAPEC-180 (Exploiting Incorrectly Configured Access Control Security Levels) | CWE-732 | N | N | L | C |
+| V2 | L3 | **Un-TLS'd DICOM segment MITM**: An on-network attacker intercepts the cleartext DICOM segment and modifies pixel data in transit. | CAPEC-94 (Adversary in the Middle) | CWE-319 | A | N | L | C, I |
+| V3 | L5 | **PHI in core dumps**: A parser crash produces a core dump containing decrypted PHI, and core dumps are shipped to centralized telemetry. | CAPEC-150 (Collect Data from Common Resource Locations) | CWE-528 | N | L | L | C |
+| V4 | L6 | **PHI in parse-error logs**: DICOM tags (PatientName, PatientID) are logged at parse-error level and forwarded to a SIEM the auditors hold no HIPAA BAA with. | CAPEC-150 (Collect Data from Common Resource Locations) | CWE-532 | N | L | L | C |
+| V5 | L7 | **Unaudited USB study export**: A clinician exports a study to USB with no DLP enforcement and no audit trail at the workstation. | CAPEC-545 (Pull Data from System Resources) | CWE-200 | P | L | L | C, I |
 
 ### What flow-centric alone would have caught
 

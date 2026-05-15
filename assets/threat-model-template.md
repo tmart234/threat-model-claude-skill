@@ -175,15 +175,18 @@ flowchart LR
 
 #### 2.1.a Flow-centric STRIDE-Per-Element
 
-| ID | Element | STRIDE | Threat | Persona | Event | Source | Likelihood | Impact | Risk |
-|----|---------|--------|--------|---------|-------|--------|------------|--------|------|
-| T1 |         |        |        |         |       |        |            |        |      |
-| T2 |         |        |        |         |       |        |            |        |      |
+| ID | Element | STRIDE | Threat | CAPEC | CWE | Persona | Event | Source | AV | PR | AC | Impact |
+|----|---------|--------|--------|-------|-----|---------|-------|--------|----|----|----|--------|
+| T1 |         |        |        |       |     |         |       |        |    |    |    |        |
+| T2 |         |        |        |       |     |         |       |        |    |    |    |        |
 
 > **Threat**: `**Title**: description.` — a ≤6-word noun-phrase title, then a 1–2 sentence concrete description. E.g. `**Session token replay**: An attacker captures a session token and replays it across the trust boundary to take over an authenticated session.` See `SKILL.md` § "Threat enumeration".
+> **CAPEC + CWE**: every row carries both. CAPEC → CWE is a 1:1 lookup; pick the CAPEC, the CWE follows. Abstraction level by SDLC stage (Meta / Standard / Detailed) — `references/capec.md`. When no Detailed pattern exists for a domain-specific protocol, cite the closest Standard or Meta and footnote `(closest pattern; no Detailed available)`.
 > **Persona**: symbolic_name from the Threat personas table above (e.g. `external-anonymous`).
 > **Event**: short verb-phrase summary (e.g. *"session takeover"*, *"PHI exfiltration"*).
 > **Source**: one or more of `adversary / human_error / failure / events_beyond_org_control`.
+> **AV / PR / AC**: CVSS 3.1 intrinsic exposure. AV `N/A/L/P`, PR `N/L/H`, AC `L/H`. Definitions: `references/risk-rating.md` § "Default scheme".
+> **Impact**: comma-separated subset of `C` / `I` / `A` (at least one). Safety hazards cross-referenced as `H-#` in the `Element` cell — physical-harm severity lives in the STPA section (`references/stpa.md`), not on the row.
 
 #### 2.1.b Supplementary entry-point pass (add when warranted)
 
@@ -191,23 +194,23 @@ flowchart LR
 
 **Pass type**: <data-centric / asset-centric / user-needs-centric / process-centric / code-centric>
 
-| ID | Location / Asset / Need / Process | Category | Threat / Vector | Persona | Event | Source | Likelihood | Impact | Risk |
-|----|-----------------------------------|----------|-----------------|---------|-------|--------|------------|--------|------|
-| V1 |                                   |          |                 |         |       |        |            |        |      |
-| V2 |                                   |          |                 |         |       |        |            |        |      |
+| ID | Location / Asset / Need / Process | Category | Threat / Vector | CAPEC | CWE | Persona | Event | Source | AV | PR | AC | Impact |
+|----|-----------------------------------|----------|-----------------|-------|-----|---------|-------|--------|----|----|----|--------|
+| V1 |                                   |          |                 |       |     |         |       |        |    |    |    |        |
+| V2 |                                   |          |                 |       |     |         |       |        |    |    |    |        |
 
-> **Threat / Vector**: same `**Title**: description.` format as §2.1.a — ≤6-word title, then 1–2 sentences.
+> Column conventions identical to §2.1.a; `Threat / Vector` uses the same `**Title**: description.` format.
 > Cross-reference to flow-centric IDs where the same finding surfaced there: `V3 ↔ T7` (don't duplicate; cross-reference).
 
 #### 2.1.c Privacy / AI-specific pass (only if applicable)
 
 > Add LINDDUN if PII/PHI is in scope (Linking / Identifying / Non-repudiation / Detecting / Data disclosure / Unawareness / Non-compliance). Add an AI/ML threat list if ML components are present (prompt injection, model extraction, training-data poisoning, adversarial examples — see OWASP LLM Top 10 / OWASP ML Security Top 10). Delete this subsection if neither applies. Use `PR` prefix to keep these IDs distinct from DFD process labels (`P1`, `P2` …).
 
-| ID | Element / Data | Category | Threat | Persona | Event | Source | Likelihood | Impact | Risk |
-|----|----------------|----------|--------|---------|-------|--------|------------|--------|------|
-| PR1 |               |          |        |         |       |        |            |        |      |
+| ID | Element / Data | Category | Threat | CAPEC | CWE | Persona | Event | Source | AV | PR | AC | Impact |
+|----|----------------|----------|--------|-------|-----|---------|-------|--------|----|----|----|--------|
+| PR1 |               |          |        |       |     |         |       |        |    |    |    |        |
 
-> **Threat**: same `**Title**: description.` format as §2.1.a — ≤6-word title, then 1–2 sentences.
+> Column conventions identical to §2.1.a.
 
 #### 2.1.d Threat tree(s) for top 1–2 highest-value threats (optional)
 
@@ -219,15 +222,13 @@ flowchart TD
 
 ### 2.2 Operational / Tactical stratum (only if produced)
 
-> Include this stratum when the team will use it (handoff to SOC, detection coverage, IR roadmap). If included, add CAPEC and CWE alongside ATT&CK so derived requirements (`SR-###`) are traceable to a known weakness class. The CAPEC ID itself is what users care about — **the modeler picks the abstraction level for them** by SDLC stage (Meta = early architecture, Standard = design review, Detailed = component-level — see `references/capec.md`); leave the level off the row unless the choice was forced (no Detailed pattern exists for a domain-specific protocol — e.g. DICOM, HL7, ICS), in which case footnote the row with `(closest pattern; no Detailed available)`. Delete this section if the team won't use it.
+> Include this stratum when the team will use it (handoff to SOC, detection coverage, IR roadmap). CAPEC and CWE are already in the §2.1 row — this table just layers ATT&CK / kill-chain / CVE / detection on top. Delete this section if the team won't use it.
 
-| Threat ID | STRIDE | CAPEC | CWE(s) | ATT&CK | Kill chain | CVE / CVSS | Detection / handoff notes |
-|-----------|--------|-------|--------|--------|------------|------------|---------------------------|
-| T1 (example) | S | CAPEC-151 — Identity Spoofing | CWE-287, CWE-290 | T1078 (Valid Accounts) | Exploitation | — | mTLS + cert pinning; SOC: alert on cert mismatch |
-| T2 (example, no Detailed)¹ | T | CAPEC-272 — Protocol Manipulation | CWE-345 | — | — | — | DICOM-specific; closest pattern (Meta) — no Detailed exists for DICOM PDU |
-|           |        |       |        |        |            |            |                           |
-
-¹ Include the "no Detailed available" footnote only when forced — most rows should not need it. See `references/capec.md` § "Honest about CAPEC coverage".
+| Threat ID | ATT&CK | Kill chain | CVE / CVSS | Detection / handoff notes |
+|-----------|--------|------------|------------|---------------------------|
+| T1 (example) | T1078 (Valid Accounts) | Exploitation | — | mTLS + cert pinning; SOC: alert on cert mismatch |
+| T2 (example) | — | — | — | DICOM-specific; CAPEC abstraction noted in §2.1 row |
+|           |        |            |            |                           |
 
 ### 2.3 Strategic stratum (only if it shapes decisions)
 
@@ -244,13 +245,15 @@ flowchart TD
 
 ### Mitigation table — single prioritized list across present strata
 
-| Threat ID(s) | Cross-refs (CAPEC / CWE / ATT&CK / sector) | Risk | Response | Control / mitigation | Status | Priority | Owner |
-|--------------|-------------------------------------------|------|----------|----------------------|--------|----------|-------|
-| T1           | CAPEC-151, CWE-287, ATT&CK T1078 | High | Mitigate |                      | suggested | high     |       |
-| T2           |                                  | Medium | Accept | (rationale — no control row in TM-BOM) | — | — |       |
+> Sort top-to-bottom by exposure (AV:N > A > L > P, then PR:N > L > H, then AC:L > H), then by Impact-set size (`{C,I,A}` > 2-hits > 1-hit), then by STPA-hazard linkage. CAPEC / CWE are in the §2.1 row — `Cross-refs` here is for ATT&CK / sector advisories not already in §2.1.
+
+| Threat ID(s) | Cross-refs (ATT&CK / sector) | Response | Control / mitigation | Status | Priority | Owner |
+|--------------|------------------------------|----------|----------------------|--------|----------|-------|
+| T1           | ATT&CK T1078                 | Mitigate |                      | suggested | high     |       |
+| T2           |                              | Accept   | (rationale — no control row in TM-BOM) | — | — |       |
 
 > **Status** populates the TM-BOM's `controls[].status`: `assumed / active / suggested / under_review / approved / scheduled / retired / wont_do`. Default for new mitigations: `suggested`. Already deployed → `active`.
-> **Priority** populates `controls[].priority`: `none / low / medium / high / critical`. Translate from Risk: Low→low, Medium→medium, High→high, Critical→critical.
+> **Priority** populates `controls[].priority`: `none / low / medium / high / critical`. Derived from the §3 sort position + the row's `level` once translated (`references/risk-rating.md` § "Translation to TM-BOM enums"): `level: critical` → `critical`; `very_high` / `high` → `high`; `medium` → `medium`; `low` / `very_low` → `low` / `none`.
 > The skill's response (`Mitigate / Eliminate / Transfer / Accept`) is captured in the TM-BOM via the top-level `extensions["threat-modeler.tmskill/response-by-control"]`; `Accept` rows don't get a `controls[]` entry — log them in the Accept register below.
 
 ### Accept register
@@ -259,11 +262,11 @@ flowchart TD
 
 | Threat | Rationale (why not mitigate / eliminate / transfer) | Decision-maker (name / role) | Decided | Residual risk |
 |---|---|---|---|---|
-| T2 | Mitigation cost exceeds expected loss; re-evaluated next review | A. Smith, Eng Director | 2026-05-10 | Medium — accepted |
+| T2 | Mitigation cost exceeds expected loss; re-evaluated next review | A. Smith, Eng Director | 2026-05-10 | `medium` (per §3 derivation) — accepted |
 
 ### Risk register (TM-BOM `risks[]`; one row per threat or per cluster of cross-referenced threats)
 
-> Populates the TM-BOM's required `risks[]` array. `score` = likelihood-index × impact-index where `rare/unlikely/possible/likely/certain = 1..5` and `negligible/minor/moderate/major/severe = 1..5` — see `references/risk-rating.md` § "L/M/H ↔ TM-BOM enums". `level` derived from §3 Risk: `Low → low`, `Medium → medium`, `High → high` (or `very_high` if both axes top out), `Critical → critical`.
+> Populates the TM-BOM's required `risks[]` array. Values are **derived** from the §2.1 row's `AV / PR / AC / Impact` — don't hand-pick them. Likelihood from `AV + PR + AC` points (`certain` = sum 9, `rare` = sum 3); Impact from CIA-hit count + `scope.tier` / STPA-hazard cross-ref; Score = `likelihood_index × impact_index` (each 1..5); Level from the combined band. Full derivation: `references/risk-rating.md` § "Translation to TM-BOM enums".
 
 | symbolic_name | Threats | Likelihood | Impact | Score | Level | Impact description |
 |---|---|---|---|---|---|---|
@@ -271,7 +274,7 @@ flowchart TD
 
 ### Derived security requirements
 
-> Cite the CWE the requirement closes — that's what makes the requirement traceable to a known weakness class rather than to a free-text threat sentence. The CAPEC → CWE step in §2.2 supplies the CWE ID where §2.2 is produced. **Every SR names a verification activity** — test ID, integration suite, audit step, manual checklist, or runbook drill. An SR with no verification is unverified.
+> Cite the CWE the requirement closes — that's what makes the requirement traceable to a known weakness class rather than to a free-text threat sentence. The CWE comes from the §2.1 row's `CWE` column (CAPEC → CWE lookup). **Every SR names a verification activity** — test ID, integration suite, audit step, manual checklist, or runbook drill. An SR with no verification is unverified.
 
 - **SR-001**: The system SHALL <testable requirement>.
   Mitigates: T1, T3, V2 — closes CWE-287, CWE-290.
@@ -299,7 +302,8 @@ flowchart TD
 - [ ] Every applicable STRIDE category was walked at every applicable element
 - [ ] Every threat cell reads as `**Title**: description.` — a ≤6-word noun-phrase title, then a 1–2 sentence concrete description
 - [ ] Threats are cross-referenced across present strata, not duplicated
-- [ ] All threats share one ID space and one risk-rating scale
+- [ ] Every threat row carries `CAPEC`, `CWE`, `AV`, `PR`, `AC`, and `Impact` (CIA subset) — no missing values
+- [ ] All threats share one ID space; `AV / PR / AC / Impact` values come from the enums in `references/risk-rating.md` § "Default scheme"
 - [ ] Every threat has a response (Mitigate / Eliminate / Transfer / Accept)
 - [ ] Every "Mitigate" decision has a concrete, testable control
 - [ ] Top risks have an owner identified

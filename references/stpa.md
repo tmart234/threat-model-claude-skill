@@ -3,7 +3,7 @@
 > **Last verified**: 2026-05. The methodology and the IEC 61508 / 62304 / 81001-5-1 / 62443 / ISO 26262 framings are stable; re-confirm regulator edition years on any submission deliverable.
 > **Sources paraphrased**: Leveson (2011), *Engineering a Safer World* (MIT Press) — original STPA; Young & Leveson (2014), *An Integrated Approach to Safety and Security Based on Systems Theory*, CACM 57(2) — STPA-Sec extension; Friedberg, McLaughlin, Smith, Laverty & Sezer (2017), *STPA-SafeSec*, Journal of Information Security and Applications 34 (CC-BY) — integrated workflow + component-layer mapping; Thomas (2013, MIT thesis) — UCA state-space approach; Khalil, Bahsi & Korõtko (2023). Substantive direct quotes need upstream attribution; paraphrasing here is permitted under each license.
 
-> **Related**: ← `SKILL.md` • `methodologies.md` (where this methodology is registered alongside LINDDUN / PASTA / attack trees) • `centric-methods.md` (entry-point taxonomy; STPA is not an entry point) • `risk-rating.md` (safety-bump rule) • `validation.md` (Q4 framing).
+> **Related**: ← `SKILL.md` • `methodologies.md` (where this methodology is registered alongside LINDDUN / PASTA / attack trees) • `centric-methods.md` (entry-point taxonomy; STPA is not an entry point) • `risk-rating.md` (ISO 14971 / AAMI TIR57 mapping — STPA hazard severity composed with the row's `AV / PR / AC`) • `validation.md` (Q4 framing).
 
 > **Naming.** "STPA" in this skill is the umbrella term for the loss-driven safety + security workflow this file describes. The lineage is **STPA** (Leveson 2011, original safety-only hazard analysis) → **STPA-Sec** (Young & Leveson 2014, security extension) → **STPA-SafeSec** (Friedberg et al. 2017, integrated workflow + component-layer mapping). The workflow below is closest to STPA-SafeSec because the component layer is what closes the abstraction gap and makes mitigations enforceable on real hardware — but we use "STPA" as the working name throughout. Cite the specific paper when the distinction matters (e.g. citing STPA-SafeSec's integrity/availability causal-factor tables).
 
@@ -127,7 +127,7 @@ A mitigation strategy is **effective** if it cuts every leaf-to-root path in the
 
 When **no mitigation is feasible** (legacy equipment that can’t be replaced, WAN links not under your control), use **loss prioritization** — explicitly accept a less-critical loss to prevent a more-critical one (e.g., accept temporary power supply interruption to prevent injury to humans).
 
-Risk rating inherits the skill default: qualitative L/M/H. Patient/operator harm is almost always High impact (see `risk-rating.md`).
+**Hazard severity lives here, not on the cyber threat row.** Each STPA hazard (`H-#`) carries severity at the hazard level — `S1` (Negligible) through `S5` (Catastrophic) using the ISO 14971 scale, or the team's domain-specific equivalent. Patient/operator harm is almost always `S4` (Critical) or `S5` (Catastrophic). Cyber threats that *trigger* a hazard cross-reference the `H-#` from their `Element` cell in §2.1; the §3 risk register composes the threat's `AV / PR / AC` exposure with the hazard's severity (see `risk-rating.md` § "ISO 14971 / AAMI TIR57 mapping for medical-device submissions").
 
 Derived requirements trace upward: requirement → mitigation → hazard scenario → UCA → constraint → hazard → loss.
 
