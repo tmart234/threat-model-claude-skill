@@ -160,9 +160,9 @@ Threats discovered in a sequence or state diagram live in the same §2 threat ta
 
 | ID | Element | STRIDE | Threat | … |
 |----|---------|--------|--------|---|
-| T7 | State `Dosing` (Figure 4 — pump state machine) | T | Forced transition from `SelfTest` → `Dosing` bypassing the verified-order gate | … |
-| T9 | State `ServiceMode` (Figure 4) | E | Service-mode auth is the elevation path; static / shared field-engineer credentials are the typical failure | … |
-| T3 | EHR → Pump message in step 5 (Figure 3 — medication-administration sequence) | T | Verify-flag injection / replay; forged "pharmacist verified" claim in the order pull | … |
+| T7 | State `Dosing` (Figure 4 — pump state machine) | T | **Forced transition into Dosing**: An attacker forces a `SelfTest` → `Dosing` transition that bypasses the verified-order gate, starting an infusion that was never confirmed. | … |
+| T9 | State `ServiceMode` (Figure 4) | E | **Service-mode credential abuse**: An attacker uses static or shared field-engineer credentials to enter service mode, the device's privilege-elevation path. | … |
+| T3 | EHR → Pump message in step 5 (Figure 3 — medication-administration sequence) | T | **Forged pharmacist-verified flag**: An attacker injects or replays the order-pull message to forge a "pharmacist verified" claim the pump trusts. | … |
 
 This is what the Manifesto's "Multiple representations" pattern looks like operationally: three diagrams, one threat table, one prioritized §3 list. The diagrams differ; the threats they surface live in one place.
 
