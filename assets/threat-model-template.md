@@ -175,18 +175,17 @@ flowchart LR
 
 #### 2.1.a Flow-centric STRIDE-Per-Element
 
-| ID | Element | STRIDE | Threat | CAPEC | CWE | Persona | Event | Source | AV | PR | AC | Impact |
-|----|---------|--------|--------|-------|-----|---------|-------|--------|----|----|----|--------|
-| T1 |         |        |        |       |     |         |       |        |    |    |    |        |
-| T2 |         |        |        |       |     |         |       |        |    |    |    |        |
+> **Pick the table shape by stakes** (see `SKILL.md` § "Threat enumeration"). The eight-column table below is the minimum-viable default. When a TM-BOM will be emitted, §2.2 is produced, or the system is regulated / safety-critical / multi-tenant / sector-targeted, switch to the escalation shape — insert `CAPEC | CWE | Persona | Event | Source` between `Threat` and `AV`. Use one shape consistently across §2.1.a / §2.1.b / §2.1.c.
+
+| ID | Element | STRIDE | Threat | AV | PR | AC | Impact |
+|----|---------|--------|--------|----|----|----|--------|
+| T1 |         |        |        |    |    |    |        |
+| T2 |         |        |        |    |    |    |        |
 
 > **Threat**: `**Title**: description.` — a ≤6-word noun-phrase title, then a 1–2 sentence concrete description. E.g. `**Session token replay**: An attacker captures a session token and replays it across the trust boundary to take over an authenticated session.` See `SKILL.md` § "Threat enumeration".
-> **CAPEC + CWE**: every row carries both. CAPEC → CWE is a 1:1 lookup; pick the CAPEC, the CWE follows. Abstraction level by SDLC stage (Meta / Standard / Detailed) — `references/capec.md`. When no Detailed pattern exists for a domain-specific protocol, cite the closest Standard or Meta and footnote `(closest pattern; no Detailed available)`.
-> **Persona**: symbolic_name from the Threat personas table above (e.g. `external-anonymous`).
-> **Event**: short verb-phrase summary (e.g. *"session takeover"*, *"PHI exfiltration"*).
-> **Source**: one or more of `adversary / human_error / failure / events_beyond_org_control`.
 > **AV / PR / AC**: CVSS 3.1 intrinsic exposure. AV `N/A/L/P`, PR `N/L/H`, AC `L/H`. Definitions: `references/risk-rating.md` § "Default scheme".
 > **Impact**: comma-separated subset of `C` / `I` / `A` (at least one). Safety hazards cross-referenced as `H-#` in the `Element` cell — physical-harm severity lives in the STPA section (`references/stpa.md`), not on the row.
+> **Escalation columns** (insert between `Threat` and `AV` when warranted): **CAPEC + CWE** — CAPEC → CWE is a 1:1 lookup; pick the CAPEC, the CWE follows; abstraction level by SDLC stage (Meta / Standard / Detailed) and the closest-pattern fallback for domain protocols in `references/capec.md`. **Persona** — symbolic_name from the Threat personas table above (e.g. `external-anonymous`). **Event** — short verb-phrase summary (e.g. *"session takeover"*). **Source** — one or more of `adversary / human_error / failure / events_beyond_org_control`.
 
 #### 2.1.b Supplementary entry-point pass (add when warranted)
 
@@ -194,23 +193,23 @@ flowchart LR
 
 **Pass type**: <data-centric / asset-centric / user-needs-centric / process-centric / code-centric>
 
-| ID | Location / Asset / Need / Process | Category | Threat / Vector | CAPEC | CWE | Persona | Event | Source | AV | PR | AC | Impact |
-|----|-----------------------------------|----------|-----------------|-------|-----|---------|-------|--------|----|----|----|--------|
-| V1 |                                   |          |                 |       |     |         |       |        |    |    |    |        |
-| V2 |                                   |          |                 |       |     |         |       |        |    |    |    |        |
+| ID | Location / Asset / Need / Process | Category | Threat / Vector | AV | PR | AC | Impact |
+|----|-----------------------------------|----------|-----------------|----|----|----|--------|
+| V1 |                                   |          |                 |    |    |    |        |
+| V2 |                                   |          |                 |    |    |    |        |
 
-> Column conventions identical to §2.1.a; `Threat / Vector` uses the same `**Title**: description.` format.
+> Use the same table shape as §2.1.a (escalation columns inserted between `Threat / Vector` and `AV` when warranted); `Threat / Vector` uses the same `**Title**: description.` format.
 > Cross-reference to flow-centric IDs where the same finding surfaced there: `V3 ↔ T7` (don't duplicate; cross-reference).
 
 #### 2.1.c Privacy / AI-specific pass (only if applicable)
 
 > Add LINDDUN if PII/PHI is in scope (Linking / Identifying / Non-repudiation / Detecting / Data disclosure / Unawareness / Non-compliance). Add an AI/ML threat list if ML components are present (prompt injection, model extraction, training-data poisoning, adversarial examples — see OWASP LLM Top 10 / OWASP ML Security Top 10). Delete this subsection if neither applies. Use `PR` prefix to keep these IDs distinct from DFD process labels (`P1`, `P2` …).
 
-| ID | Element / Data | Category | Threat | CAPEC | CWE | Persona | Event | Source | AV | PR | AC | Impact |
-|----|----------------|----------|--------|-------|-----|---------|-------|--------|----|----|----|--------|
-| PR1 |               |          |        |       |     |         |       |        |    |    |    |        |
+| ID | Element / Data | Category | Threat | AV | PR | AC | Impact |
+|----|----------------|----------|--------|----|----|----|--------|
+| PR1 |               |          |        |    |    |    |        |
 
-> Column conventions identical to §2.1.a.
+> Use the same table shape as §2.1.a (escalation columns inserted between `Threat` and `AV` when warranted).
 
 #### 2.1.d Threat tree(s) for top 1–2 highest-value threats (optional)
 
@@ -303,7 +302,7 @@ flowchart TD
 - [ ] Every applicable STRIDE category was walked at every applicable element
 - [ ] Every threat cell reads as `**Title**: description.` — a ≤6-word noun-phrase title, then a 1–2 sentence concrete description
 - [ ] Threats are cross-referenced across present strata, not duplicated
-- [ ] Every threat row carries `CAPEC`, `CWE`, `AV`, `PR`, `AC`, and `Impact` (CIA subset) — no missing values
+- [ ] Every threat row carries `AV`, `PR`, `AC`, and `Impact` (CIA subset) — no missing values; if the escalation table is in use, `CAPEC` / `CWE` / `Persona` / `Event` / `Source` are populated too
 - [ ] All threats share one ID space; `AV / PR / AC / Impact` values come from the enums in `references/risk-rating.md` § "Default scheme"
 - [ ] Every threat has a response (Mitigate / Eliminate / Transfer / Accept)
 - [ ] Every "Mitigate" decision has a concrete, testable control

@@ -124,12 +124,17 @@ Example Accept-rationale extension:
 - [ ] `risks[].score` is in `[0, 25]` and is consistent with `risks[].level`.
 - [ ] No per-object `extensions` (every object has `additionalProperties: false` — extensions only at top level).
 - [ ] Extension keys match the schema's regex (TLD must be letters-only — `threat-modeler.tmskill/<path>`, **not** `tmskill.threat-modeler/<path>`).
-- [ ] Schema validation exits 0. Run, against the v1.0.2 schema:
+- [ ] Schema validation exits 0. The v1.0.2 schema is bundled at `assets/threat-model.schema.json` — validate against it directly:
 
   ```
-  curl -sSf -o /tmp/threat-model.schema.json \
+  check-jsonschema --schemafile assets/threat-model.schema.json <your-tm-bom>.json
+  ```
+
+  To refresh the bundled copy when the OWASP TML schema version moves:
+
+  ```
+  curl -sSf -o assets/threat-model.schema.json \
     https://raw.githubusercontent.com/OWASP/www-project-threat-model-library/main/threat-model.schema.json
-  check-jsonschema --schemafile /tmp/threat-model.schema.json <your-tm-bom>.json
   ```
 
 Starters: `assets/tm-bom-example.json` (minimal, exercises every required field and the top-level `extensions` pattern, validates against v1.0.2 with `check-jsonschema` exit 0); the OWASP TML library at https://github.com/OWASP/www-project-threat-model-library/tree/main/threat-models for fuller worked examples (`ai-ml-systems/husky-ai-threat-model.json` is the most complete). Open the closest example before producing a TM-BOM; mirror its shape and depth.

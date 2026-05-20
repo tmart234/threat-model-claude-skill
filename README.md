@@ -2,7 +2,7 @@
 
 A Claude skill that produces structured hybrid threat models (contextual / operational / strategic) for software, systems, IoT/embedded, medical devices, and business processes.
 
-See `SKILL.md` for the full skill body, `references/` for on-demand methodology details, `assets/threat-model-template.md` for a blank template, and `assets/tm-bom-example.json` for a worked TM-BOM JSON example aligned to the OWASP Threat Model Library schema.
+See `SKILL.md` for the full skill body, `references/` for on-demand methodology details, `assets/threat-model-template.md` for a blank template, `assets/tm-bom-example.json` for a worked TM-BOM JSON example, and `assets/threat-model.schema.json` for the bundled OWASP Threat Model Library JSON schema (v1.0.2) used to validate emitted TM-BOMs.
 
 ## Intended use
 
@@ -36,6 +36,7 @@ threat-modeler/
 ├── SKILL.md                             # Skill body (frontmatter + instructions); entry point loaded by Claude
 ├── assets/
 │   ├── threat-model-template.md         # Blank threat model template
+│   ├── threat-model.schema.json         # OWASP TML JSON schema (v1.0.2) — bundled for TM-BOM validation
 │   └── tm-bom-example.json              # Worked TM-BOM JSON example (OWASP TML schema)
 └── references/
     ├── capec.md                         # CAPEC attack pattern catalog guidance
