@@ -156,7 +156,7 @@ What this diagram makes visible that the DFD doesn't:
 
 ## Cross-references and §2 integration
 
-Threats discovered in a sequence or state diagram live in the same §2 threat table as DFD-discovered threats — one ID space, same `AV / PR / AC + CIA` enums. The diagram of origin is recorded in the row's *Element* column or footnoted:
+Threats discovered in a sequence or state diagram live in the same §2 threat table as DFD-discovered threats — one ID space, same `AV / PR / AC + CIA` enums. The diagram of origin is recorded in the row's *Element* column or footnoted. The examples below use the escalation table shape (these are safety-critical medical devices); a low-stakes system uses the eight-column minimum-viable shape — see `SKILL.md` § "Threat enumeration":
 
 | ID | Element | STRIDE | Threat | CAPEC | CWE | … | AV | PR | AC | Impact |
 |----|---------|--------|--------|-------|-----|---|----|----|----|--------|

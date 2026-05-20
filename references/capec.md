@@ -203,7 +203,7 @@ Example threat-row note: *"CAPEC-272 (Protocol Manipulation, Meta) — no DICOM-
 
 In a hybrid threat model with §2 split into three strata (see `methodologies.md` § "Three strata as default scaffolding"):
 
-- **§2.1 Contextual stratum** — every threat row carries `CAPEC` and `CWE` columns (CAPEC → CWE is a 1:1 lookup; pick CAPEC by SDLC stage, the CWE follows). This is where the chain starts.
+- **§2.1 Contextual stratum** — when the escalation threat table is in use (see `SKILL.md` § "Threat enumeration"), every row carries `CAPEC` and `CWE` columns (CAPEC → CWE is a 1:1 lookup; pick CAPEC by SDLC stage, the CWE follows). This is where the chain starts. A minimum-viable model uses the eight-column table and omits `CAPEC` / `CWE` — they come in as an escalation when a TM-BOM is emitted, §2.2 is produced, or the system is regulated / safety-critical.
 - **§2.2 Operational stratum** — layers ATT&CK technique ID, kill-chain phase, CVE/CVSS, and detection / handoff notes onto threats already enumerated in §2.1. CAPEC and CWE are upstream — don't duplicate.
 - **§3 Mitigation table** — derived security requirements (`SR-###`) cite the CWE the requirement closes; the CWE comes from the §2.1 row's `CWE` column.
 
