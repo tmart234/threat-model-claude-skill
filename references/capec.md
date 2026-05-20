@@ -3,7 +3,7 @@
 > **Last verified**: 2026-05 against the live CAPEC catalog (capec.mitre.org). CAPEC IDs and CWE references in this file were spot-checked at that date; the catalog updates regularly, so re-confirm pattern numbers when citing. Re-verify quarterly or whenever a referenced pattern is added/retired.
 > **Sources paraphrased**: MITRE CAPEC (public domain) and MITRE CWE (public domain). Cite the upstream pattern ID directly in any output that references it — paraphrasing pattern names and CWE numbers in this file does not require attribution per upstream license, but the threat-model artifact this skill produces should still cite `MITRE CAPEC` and `MITRE CWE` once in its references section.
 
-> **Related**: ← `SKILL.md` • `stride-prompts.md` (STRIDE is the input to the CAPEC chain) • `centric-methods.md` (CAPEC is a characterization layer, not an entry point) • `methodologies.md` § "The hybrid layout" (CAPEC's place in the operational stratum).
+> **Related**: ← `SKILL.md` • `stride-prompts.md` (STRIDE is the input to the CAPEC chain) • `centric-methods.md` (CAPEC is a characterization layer, not an entry point) • `methodologies.md` § "The hybrid layout" (CAPEC's place in the operational stratum). Industry-specific CAPEC subsets (e.g. the medical-device / DICOM / HL7 working set) live in the relevant `industries/<industry>/` pack.
 
 This file is the working reference for CAPEC (Common Attack Pattern Enumeration and Classification, MITRE) inside this skill's hybrid output. CAPEC is one of the operational-stratum characterization layers (see `methodologies.md` § "The hybrid layout"). It is **not** an entry point — you don't enumerate threats from CAPEC; you map already-enumerated threats to CAPEC patterns to make them concrete and traceable.
 
@@ -25,15 +25,15 @@ Worked chain:
 
 | STRIDE | Threat | CAPEC | CWE(s) | Mitigation |
 |--------|--------|-------|--------|------------|
-| Spoofing | Attacker spoofs DICOM AE Title to deliver malicious imagery | CAPEC-151 (Identity Spoofing); child CAPEC-21 (Exploitation of Trusted Identifiers) | CWE-287 (Improper Authentication), CWE-290 (Authentication Bypass by Spoofing) | mTLS for DICOM associations; pin AE Title to certificate |
+| Spoofing | Attacker spoofs a trusted service identity to deliver malicious data | CAPEC-151 (Identity Spoofing); child CAPEC-21 (Exploitation of Trusted Identifiers) | CWE-287 (Improper Authentication), CWE-290 (Authentication Bypass by Spoofing) | mTLS; pin the service identity to a certificate |
 | Elevation | Attacker injects SQL via management interface to escalate | CAPEC-66 (SQL Injection) | CWE-89 (SQL Injection) | Parameterized queries; ORM with bound parameters; least-privilege DB role |
-| Tampering | Attacker overflows DICOM PDU parser to modify execution | CAPEC-100 (Overflow Buffers); CAPEC-46 (Overflow Variables and Tags) | CWE-119 (Improper Restriction of Operations within Bounds), CWE-787 (Out-of-bounds Write) | Bounds-checked parsing; memory-safe language for parser; fuzz-test the parser |
+| Tampering | Attacker overflows a protocol parser to modify execution | CAPEC-100 (Overflow Buffers); CAPEC-46 (Overflow Variables and Tags) | CWE-119 (Improper Restriction of Operations within Bounds), CWE-787 (Out-of-bounds Write) | Bounds-checked parsing; memory-safe language for parser; fuzz-test the parser |
 
 The columns to the right of each CAPEC ID come from CAPEC itself (each pattern lists its CWEs and typical mitigations). Don't reinvent them; cite them.
 
 ## Three CAPEC abstraction levels — which to cite when
 
-The abstraction level is **modeler bookkeeping**, not a column the user has to read. Pick the level using the SDLC-stage rule below and emit only the CAPEC ID in the threat row. The one exception: when no Detailed pattern exists for the domain-specific protocol (DICOM PDU, HL7 v2, Modbus/OPC), drop to the closest Standard or Meta pattern and footnote the row with `(closest pattern; no Detailed available)` so a downstream reviewer knows the choice was forced rather than lazy. Don't make users figure out Meta-vs-Standard-vs-Detailed themselves.
+The abstraction level is **modeler bookkeeping**, not a column the user has to read. Pick the level using the SDLC-stage rule below and emit only the CAPEC ID in the threat row. The one exception: when no Detailed pattern exists for a domain-specific protocol (Modbus, OPC, a proprietary device protocol), drop to the closest Standard or Meta pattern and footnote the row with `(closest pattern; no Detailed available)` so a downstream reviewer knows the choice was forced rather than lazy. Don't make users figure out Meta-vs-Standard-vs-Detailed themselves.
 
 CAPEC patterns come at three abstraction levels. Citing the wrong level is a common mistake: too abstract makes the citation decorative; too detailed claims more knowledge of the implementation than the threat model has.
 
@@ -57,9 +57,9 @@ If unsure, **cite the Standard pattern and link to the Detailed children**. That
 CAPEC organizes patterns under two top-level views. For threat modeling, enter from the right one for the question you're answering.
 
 - **CAPEC-1000: Mechanisms of Attack.** Groups patterns by *what the attacker does*. This is the entry point for STRIDE-driven threat modeling — the categories below map roughly to STRIDE (see the mapping in the next section).
-- **CAPEC-3000: Domains of Attack.** Groups patterns by *where the attack happens*: Software (CAPEC-513), Hardware (CAPEC-515), Communications (CAPEC-512), Supply Chain (CAPEC-437), Social Engineering (CAPEC-403), Physical Security (CAPEC-514). Useful for medical-device / embedded / ICS modeling that crosses multiple domains.
+- **CAPEC-3000: Domains of Attack.** Groups patterns by *where the attack happens*: Software (CAPEC-513), Hardware (CAPEC-515), Communications (CAPEC-512), Supply Chain (CAPEC-437), Social Engineering (CAPEC-403), Physical Security (CAPEC-514). Useful for embedded / ICS / hardware modeling that crosses multiple domains.
 
-Practical pattern: walk Mechanisms first (STRIDE-aligned, finds the bulk of patterns), then walk Domains for any domain not covered by the contextual core (almost always: Hardware, Supply Chain, Physical Security for embedded/medical/ICS).
+Practical pattern: walk Mechanisms first (STRIDE-aligned, finds the bulk of patterns), then walk Domains for any domain not covered by the contextual core (almost always: Hardware, Supply Chain, Physical Security for embedded/ICS).
 
 ## STRIDE → CAPEC mapping
 
@@ -71,9 +71,9 @@ Mechanisms-of-Attack root: **CAPEC-156 (Engage in Deceptive Interactions)**.
 
 | CAPEC | Level | Use for |
 |-------|-------|---------|
-| CAPEC-151 (Identity Spoofing) | Standard | Impersonating an external entity, AE Title spoofing, certificate forgery |
-| CAPEC-148 (Content Spoofing) | Meta | Tampering with content the user/process trusts (DICOM tag manipulation, manipulated images) |
-| CAPEC-21 (Exploitation of Trusted Identifiers) | Standard | Replayed session tokens, reused API keys, AE Title without TLS pinning |
+| CAPEC-151 (Identity Spoofing) | Standard | Impersonating an external entity, certificate forgery |
+| CAPEC-148 (Content Spoofing) | Meta | Tampering with content the user/process trusts (manipulated documents or images) |
+| CAPEC-21 (Exploitation of Trusted Identifiers) | Standard | Replayed session tokens, reused API keys, identifiers used without TLS pinning |
 | CAPEC-194 (Fake the Source of Data) | Standard | Forged sensor readings, spoofed telemetry, fake firmware-update server |
 | CAPEC-89 (Pharming) | Detailed | DNS / hosts manipulation to redirect to attacker server |
 
@@ -86,9 +86,9 @@ Mechanisms roots: **CAPEC-255 (Manipulate Data Structures)**, **CAPEC-262 (Manip
 | CAPEC | Level | Use for |
 |-------|-------|---------|
 | CAPEC-176 (Configuration/Environment Manipulation) | Standard | Device config tampering, env-var override, plist/registry tampering |
-| CAPEC-153 (Input Data Manipulation) | Standard | Modified DICOM pixel data in transit, HL7 field manipulation |
-| CAPEC-100 (Overflow Buffers) | Standard | Protocol parser overflow, image decoder overflow (DICOM, JPEG2000, NIfTI) |
-| CAPEC-46 (Overflow Variables and Tags) | Detailed | Specific tag/length overflow in TLV-style protocols (DICOM PDU) |
+| CAPEC-153 (Input Data Manipulation) | Standard | Modified data in transit, structured-field manipulation |
+| CAPEC-100 (Overflow Buffers) | Standard | Protocol parser overflow, image decoder overflow (JPEG2000, PNG, etc.) |
+| CAPEC-46 (Overflow Variables and Tags) | Detailed | Specific tag/length overflow in TLV-style protocols |
 | CAPEC-441 (Malicious Logic Insertion) | Standard | Firmware compromise, OTA-update payload tampering, signed binary substitution |
 | CAPEC-438 (Modification During Manufacture) | Standard | Supply-chain tampering of devices before delivery |
 | CAPEC-548 (Contaminate Resource) | Standard | Poisoning a shared store (training data, signed-package cache, DNS cache) |
@@ -115,8 +115,8 @@ Mechanisms root: **CAPEC-118 (Collect and Analyze Information)**.
 
 | CAPEC | Level | Use for |
 |-------|-------|---------|
-| CAPEC-117 (Interception) | Standard | Eavesdropping on DICOM C-STORE, sniffing un-TLS'd traffic, wireless capture |
-| CAPEC-150 (Collect Data from Common Resource Locations) | Standard | PHI in logs / cores / temp files / debug output / telemetry |
+| CAPEC-117 (Interception) | Standard | Eavesdropping on un-TLS'd protocol traffic, wireless capture |
+| CAPEC-150 (Collect Data from Common Resource Locations) | Standard | Sensitive data in logs / cores / temp files / debug output / telemetry |
 | CAPEC-189 (Black Box Reverse Engineering) | Standard | Side-channel inference (timing, power), ML model extraction |
 | CAPEC-188 (Reverse Engineering) | Meta | Firmware extraction from device, binary analysis to recover keys/secrets |
 | CAPEC-545 (Pull Data from System Resources) | Standard | API enumeration, sequential-ID harvesting (IDOR-adjacent) |
@@ -131,9 +131,9 @@ Mechanisms root: **CAPEC-262 (Manipulate System Resources)** for resource attack
 | CAPEC | Level | Use for |
 |-------|-------|---------|
 | CAPEC-119 (Resource Depletion) | Standard | Memory/handle/connection-pool exhaustion |
-| CAPEC-125 (Flooding) | Standard | Network-layer flooding, DICOM-association flooding, syslog flooding |
-| CAPEC-130 (Excessive Allocation) | Standard | Decompression bombs, billion laughs, large DICOM PDU |
-| CAPEC-227 (Sustained Client Engagement) | Standard | Slowloris-style attacks against PACS / web frontends |
+| CAPEC-125 (Flooding) | Standard | Network-layer flooding, protocol-association flooding, syslog flooding |
+| CAPEC-130 (Excessive Allocation) | Standard | Decompression bombs, billion laughs, oversized protocol payloads |
+| CAPEC-227 (Sustained Client Engagement) | Standard | Slowloris-style attacks against web frontends |
 | CAPEC-2 (Inducing Account Lockout) | Detailed | Triggering lockout policies to deny legitimate access |
 
 CWEs: CWE-400 (Uncontrolled Resource Consumption), CWE-770 (Allocation Without Limits), CWE-834 (Excessive Iteration), CWE-409 (Improper Handling of Highly Compressed Data).
@@ -156,30 +156,27 @@ Mechanisms root: **CAPEC-225 (Subvert Access Control)**, plus **CAPEC-152 (Injec
 
 CWEs: CWE-285 (Improper Authorization), CWE-269 (Improper Privilege Management), CWE-863 (Incorrect Authorization), CWE-732 (Incorrect Permission Assignment), CWE-22 (Path Traversal), CWE-94 (Improper Control of Generation of Code), CWE-89 (SQLi), CWE-78 (OS Command Injection).
 
-## Domain-specific subset for medical-device / DICOM / embedded / ICS
+## Domain-specific subset for embedded / ICS / hardware
 
-For medical-device, embedded, and ICS work the relevant CAPEC subset is small enough to keep in one place. This is the working set; cite from here first and reach for the broader catalog only when none fit.
+For embedded, ICS, and hardware work the relevant CAPEC subset is small enough to keep in one place. This is the working set; cite from here first and reach for the broader catalog only when none fit.
 
 | Threat scenario | CAPEC | Notes |
 |-----------------|-------|-------|
-| AE Title spoofing on DICOM association | CAPEC-151, CAPEC-21 | mTLS + AE-Title-pinned cert mitigates both |
-| DICOM tag manipulation (PatientName, PatientID swap) | CAPEC-148, CAPEC-153 | LINDDUN Linking applies too |
-| DICOM PDU / pixel-data parser overflow | CAPEC-100, CAPEC-46 | Map to CWE-119/-787; fuzz the parser |
-| DICOM / HL7 protocol manipulation (no Detailed pattern exists) | CAPEC-272 (Protocol Manipulation) | Closest available — see "coverage honesty" below |
-| HL7 field injection via management interface | CAPEC-153, CAPEC-66/-88 (depending on sink) | Treat as injection family |
 | Firmware modification (unsigned / weak-signed) | CAPEC-441, CAPEC-185 (Malicious Software Download) | CWE-494 chain |
 | Supply-chain compromise of device pre-delivery | CAPEC-438 (Modification During Manufacture), CAPEC-439 (Manipulation During Distribution) | Rarely fixable post-deployment — emphasize provenance / SBOM |
 | Management interface auth bypass | CAPEC-115, CAPEC-114 | Map to CWE-287/-285 |
 | Management interface SQLi | CAPEC-66 | CWE-89; parameterized queries |
 | Management interface command injection | CAPEC-88, CAPEC-242 | CWE-78/-94 |
 | Device config tampering (operator panel, exposed serial console) | CAPEC-176 | Often paired with physical-access threats |
-| PHI exfiltration via debug log / core dump / telemetry | CAPEC-150 | Maps to data-centric Output / Execution locations (`data-centric.md`) |
+| Sensitive data exfiltration via debug log / core dump / telemetry | CAPEC-150 | Maps to data-centric Output / Execution locations (`data-centric.md`) |
 | Side-channel on cryptographic ops | CAPEC-189, CAPEC-188 | Power/timing/EM; relevant for embedded HSM-less devices |
 | JTAG / debug-port exploitation | CAPEC-401 (Physically Hacking Hardware) | Domain: Hardware (CAPEC-515) |
 | Hardware fault injection (glitching) | CAPEC-624 (Hardware Fault Injection) | Domain: Hardware |
 | Wireless interception of telemetry / OTA traffic | CAPEC-117 | Often pair with CAPEC-194 (fake source) for active attacks |
-| Decompression bomb / oversized study | CAPEC-130 | Availability + safety implication if it wedges acquisition |
+| Decompression bomb / oversized payload | CAPEC-130 | Availability + safety implication if it wedges processing |
 | Operator credential phishing | CAPEC-98 (Phishing) | Domain: Social Engineering (CAPEC-403) |
+
+Industry-specific protocol subsets — e.g. the medical-device / DICOM / HL7 working set — live in the relevant `industries/<industry>/` pack.
 
 ## Honest about CAPEC coverage
 
@@ -190,14 +187,13 @@ CAPEC has thorough coverage of:
 - Supply-chain and physical-attack patterns at a generic level
 
 CAPEC has patchier or no coverage of:
-- **Medical-protocol-specific attacks** (DICOM, HL7, FHIR, IHE profiles). No Detailed pattern exists for "DICOM C-STORE PDU overflow"; the closest available is CAPEC-100 (Standard) or CAPEC-46 (Detailed but not DICOM-specific) plus CAPEC-272 (Protocol Manipulation, Meta).
-- **ICS / OT protocols** (Modbus, OPC, S7, DNP3, IEC 61850). Domain-of-attack view (CAPEC-3000) has Communications (CAPEC-512) but the specific ICS protocols don't have dedicated patterns.
+- **Domain-specific protocol attacks** — clinical protocols (DICOM, HL7, FHIR, IHE profiles), ICS / OT protocols (Modbus, OPC, S7, DNP3, IEC 61850), proprietary device protocols. Often no Detailed pattern exists; the closest available is a Standard pattern (CAPEC-100, CAPEC-46) plus CAPEC-272 (Protocol Manipulation, Meta). Domain-of-attack view (CAPEC-3000) has Communications (CAPEC-512) but the specific protocols don't have dedicated patterns.
 - **Embedded firmware specifics** beyond generic Hardware (CAPEC-515) coverage.
 - **AI/ML attack patterns** — partial; supplement with OWASP LLM Top 10 and OWASP ML Security Top 10 (see `methodologies.md` § ML/AI).
 
 **The honest framing for users**: when CAPEC has no Detailed pattern that matches your specific protocol or device class, **cite the closest Standard or Meta pattern and say so explicitly in the threat row**. That's still better than no CAPEC ID — the closest-fit pattern still points at the right CWE family and the right mitigation class. Don't waste time hunting for a pattern that doesn't exist.
 
-Example threat-row note: *"CAPEC-272 (Protocol Manipulation, Meta) — no DICOM-specific pattern exists; cited as closest abstract match. Detailed mitigation derived from CWE-345 (Insufficient Verification of Data Authenticity) and DICOM-specific knowledge."*
+Example threat-row note: *"CAPEC-272 (Protocol Manipulation, Meta) — no protocol-specific pattern exists; cited as closest abstract match. Detailed mitigation derived from CWE-345 (Insufficient Verification of Data Authenticity) and protocol-specific knowledge."*
 
 ## How CAPEC slots into the hybrid output
 
@@ -207,7 +203,7 @@ In a hybrid threat model with §2 split into three strata (see `methodologies.md
 - **§2.2 Operational stratum** — layers ATT&CK technique ID, kill-chain phase, CVE/CVSS, and detection / handoff notes onto threats already enumerated in §2.1. CAPEC and CWE are upstream — don't duplicate.
 - **§3 Mitigation table** — derived security requirements (`SR-###`) cite the CWE the requirement closes; the CWE comes from the §2.1 row's `CWE` column.
 
-Cross-stratum: a CAPEC pattern (in §2.1) bridges a contextual threat to an operational ATT&CK technique (in §2.2). Reference: *"T1 (Spoofing of AE Title) — CAPEC-151 / CWE-287 in §2.1 — ATT&CK T1078 (Valid Accounts) in §2.2"*. One row per stratum, IDs chained across.
+Cross-stratum: a CAPEC pattern (in §2.1) bridges a contextual threat to an operational ATT&CK technique (in §2.2). Reference: *"T1 (Spoofing of service identity) — CAPEC-151 / CWE-287 in §2.1 — ATT&CK T1078 (Valid Accounts) in §2.2"*. One row per stratum, IDs chained across.
 
 ## Closing the loop with MITRE D3FEND on the defensive side
 
@@ -224,14 +220,14 @@ Worked extension of the example above:
 
 | Threat | CAPEC | CWE | ATT&CK | D3FEND | Mitigation |
 |---|---|---|---|---|---|
-| T1 — Spoofing of AE Title via reused session token | CAPEC-151 (Identity Spoofing) | CWE-287 (Improper Authentication) | T1078 (Valid Accounts) | D3-MFA (Multi-factor Authentication), D3-CH (Credential Hardening) | SR-001: mTLS + AE-Title pinning to certificate |
-| T7 — Buffer overflow in DICOM PDU parser | CAPEC-100 (Overflow Buffers) | CWE-787 (Out-of-bounds Write) | T1203 (Exploitation for Client Execution) | D3-PSEP (Process Segment Execution Prevention), D3-EAL (Exception Handler Pointer Validation), D3-DLIC (Dynamic Library Loading Integrity Check) | SR-014: bounds-checked parser; fuzz suite `dicom_parser_fuzz_test`; DEP/ASLR enforced |
+| T1 — Spoofing of service identity via reused session token | CAPEC-151 (Identity Spoofing) | CWE-287 (Improper Authentication) | T1078 (Valid Accounts) | D3-MFA (Multi-factor Authentication), D3-CH (Credential Hardening) | SR-001: mTLS + identity pinning to certificate |
+| T7 — Buffer overflow in a protocol PDU parser | CAPEC-100 (Overflow Buffers) | CWE-787 (Out-of-bounds Write) | T1203 (Exploitation for Client Execution) | D3-PSEP (Process Segment Execution Prevention), D3-EAL (Exception Handler Pointer Validation), D3-DLIC (Dynamic Library Loading Integrity Check) | SR-014: bounds-checked parser; fuzz suite `protocol_parser_fuzz_test`; DEP/ASLR enforced |
 | T12 — Unsigned firmware accepted by update path | CAPEC-441 (Malicious Logic Insertion) | CWE-494 (Download of Code Without Integrity Check) | T1542.001 (Pre-OS Boot: System Firmware) | D3-FBV (File Content Rules), D3-EAL (Boot loader integrity) | SR-022: signed-firmware verification with hardware root of trust |
 
 **When to populate D3FEND.** The same SDLC rule as CAPEC applies: cite D3FEND when the operational stratum (§2.2) is being produced and the threat carries an ATT&CK technique ID. Don't add D3FEND IDs to threats that don't have ATT&CK IDs — D3FEND's value comes from the mapping, not from its own taxonomy. For a minimum-viable threat model with no §2.2, skip D3FEND entirely; the STRIDE → property → mitigation table in `stride-prompts.md` is sufficient.
 
-**Honest about D3FEND coverage.** D3FEND's mappings to ATT&CK are good for enterprise / network / endpoint techniques and patchier for ICS, mobile, and embedded-firmware techniques where ATT&CK itself has lighter coverage. For medical-device-specific techniques (DICOM-protocol attacks, OTA-update attacks on MCU-class devices), expect the closest-mapped D3FEND technique to be one or two abstraction levels up from the actual control. Cite the closest match and note the gap in the row, the same way CAPEC handles missing Detailed patterns (§ "Honest about CAPEC coverage").
+**Honest about D3FEND coverage.** D3FEND's mappings to ATT&CK are good for enterprise / network / endpoint techniques and patchier for ICS, mobile, and embedded-firmware techniques where ATT&CK itself has lighter coverage. For embedded / ICS / IoT-specific techniques (proprietary-protocol attacks, OTA-update attacks on MCU-class devices), expect the closest-mapped D3FEND technique to be one or two abstraction levels up from the actual control. Cite the closest match and note the gap in the row, the same way CAPEC handles missing Detailed patterns (§ "Honest about CAPEC coverage").
 
 D3FEND knowledge graph: https://d3fend.mitre.org/
 
-**Cross-reference with NIST CSF.** D3FEND techniques map roughly onto the NIST CSF Protect / Detect / Respond / Recover functions (`stride-prompts.md` § "NIST CSF function — Protect / Detect / Respond / Recover"). D3FEND has a "Harden / Detect / Isolate / Deceive / Evict / Restore" classification of its own which is finer-grained than CSF; for FDA-facing artifacts, lead with CSF (it's what reviewers cite) and use D3FEND IDs as the technical anchors below the CSF tag.
+**Cross-reference with NIST CSF.** D3FEND techniques map roughly onto the NIST CSF Protect / Detect / Respond / Recover functions (`stride-prompts.md` § "NIST CSF function — Protect / Detect / Respond / Recover"). D3FEND has a "Harden / Detect / Isolate / Deceive / Evict / Restore" classification of its own which is finer-grained than CSF; for regulator-facing artifacts, lead with CSF (it's what reviewers cite) and use D3FEND IDs as the technical anchors below the CSF tag.

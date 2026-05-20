@@ -3,7 +3,7 @@
 > **Last verified**: 2026-05. The STRIDE-Per-Element / Per-Interaction conventions are stable; re-confirm before citing if Microsoft updates its Threat Modeling Tool documentation.
 > **Sources paraphrased**: Adam Shostack, *Threat Modeling: Designing for Security* (Wiley, 2014) — STRIDE-Per-Element framing, applicability table, "victim not perpetrator" rule, exit-criterion guidance, enumeration tactics (paraphrase only); Loren Kohnfelder & Praerit Garg (Microsoft) — original STRIDE; Larry Osterman / Douglas MacIver (Microsoft) — STRIDE-Per-Interaction; Gunnar Peterson — DESIST. Substantive direct quotes from Shostack 2014 require Wiley/Shostack attribution.
 
-> **Related**: ← `SKILL.md` • `dfd-mermaid.md` (draw the DFD first) • `centric-methods.md` (STRIDE as generation vs characterization) • `methodologies.md` (when to swap or supplement STRIDE — LINDDUN, AI/ML, etc.) • `capec.md` (STRIDE → CAPEC → CWE chain) • `validation.md` (Q4 Threats checklist).
+> **Related**: ← `SKILL.md` • `dfd-mermaid.md` (draw the DFD first) • `centric-methods.md` (STRIDE as generation vs characterization) • `methodologies.md` (when to swap or supplement STRIDE — LINDDUN, AI/ML, etc.) • `capec.md` (STRIDE → CAPEC → CWE chain) • `validation.md` (Q4 Threats checklist). Industry-specific STRIDE seed prompts (e.g. medical / DICOM / HL7) live in the relevant `industries/<industry>/` pack.
 
 This file is the **canonical home** for the STRIDE-Per-Element applicability table and the STRIDE → security property → typical mitigations table. SKILL.md references both; don't duplicate.
 
@@ -41,7 +41,7 @@ Concrete rule for the threat table:
 
 - For every applicability cell marked `✓` in the table above (External entity S/R; Process S/T/R/I/D/E; Data flow T/I/D; audit-only Data store S/T/R/I/D), either record a concrete threat or record an explicit *no-threat row* with rationale. *"R / Process — no repudiation surface: this stateless validator emits no audit log because all actions are reflected in the downstream service's signed audit stream (T7's countermeasure)"* is a no-threat row. A blank cell is not.
 - Silent omission is indistinguishable from "we forgot to walk this cell" — the same anti-pattern as silent acceptance / silent transference (`manifesto.md` § "Anti-patterns" → "Silent risk transference / silent risk acceptance"). A reviewer reading the model can't tell the difference.
-- The "split a data store that holds both audit and non-audit data into two rows" rule above (line 19) is one instance of this rule — it makes R-applicability explicit per-row instead of letting it go silent.
+- The "split a data store that holds both audit and non-audit data into two rows" rule above is one instance of this rule — it makes R-applicability explicit per-row instead of letting it go silent.
 
 In TM-BOM emission, no-threat rows do not become `threats[]` entries (the schema requires `event` to be non-empty); record them in the markdown only, or in the top-level `extensions` block as a per-element rationale map if downstream tooling needs to consume them.
 
@@ -58,8 +58,7 @@ Prompts:
 - Is mutual authentication used at trust boundaries, or only one-way?
 - Are service accounts and machine identities as well-protected as user identities?
 
-Common in medical / IoT / embedded:
-- Could an attacker spoof a trusted DICOM AE Title?
+Common in IoT / embedded:
 - Could an attacker spoof a sensor reading or telemetry from a peripheral device?
 - Are firmware update servers authenticated to the device?
 
@@ -72,10 +71,9 @@ Prompts:
 - Can configuration / policy be modified? (file permissions, config drift)
 - Can code or firmware be modified? (unsigned binaries, missing secure boot)
 
-Common in medical / IoT / embedded:
+Common in IoT / embedded:
 - Can device firmware be flashed by an unauthenticated party?
-- Can DICOM image pixel data be modified in transit?
-- Can settings / dose calculations / control loops be tampered with?
+- Can settings / setpoints / control loops be tampered with?
 
 ### Repudiation — violates Non-repudiation / Accountability
 
@@ -86,9 +84,9 @@ Prompts:
 - Can logs be deleted or edited by someone with operational access?
 - For shared / service / break-glass accounts, can individual humans be tied back to actions?
 
-Common in medical / IoT / embedded:
-- Are clinical actions (dose changes, scan orders, override events) attributable to a specific user?
-- Are audit logs IEC 62443 / HIPAA-aligned?
+Common in IoT / embedded:
+- Are operational actions (config changes, override events) attributable to a specific user?
+- Are audit logs aligned to the applicable compliance regime (IEC 62443, etc.)?
 - Is there a chain-of-custody for evidence?
 
 ### Information Disclosure — violates Confidentiality
@@ -101,8 +99,7 @@ Prompts:
 - Are caches, swap, core dumps, or memory-mapped files protected?
 - Side channels: timing, power, EM, cache, microarchitectural?
 
-Common in medical / IoT / embedded:
-- Is PHI exposed in DICOM tags, log files, or debug output?
+Common in IoT / embedded:
 - Can over-the-air firmware leak via radio sniffing?
 - Are unique device identifiers leaked in ways that enable tracking?
 
@@ -116,9 +113,8 @@ Prompts:
 - Are dependencies (DNS, NTP, identity provider, key vault, license server) single points of failure?
 - For safety-critical systems: does the failure mode put a person / asset at risk?
 
-Common in medical / IoT / embedded:
+Common in IoT / embedded:
 - Can the device be wedged remotely? Bricked? Battery-drained?
-- Can a DoS on a clinical system delay treatment? (this is a *safety* event, not just availability)
 - Are watchdogs and graceful degradation paths in place?
 - For wireless flows / processes: can a rogue device on a *shared physical medium* (e.g. the 2.4 GHz ISM band shared across Wi-Fi / BLE / Zigbee, the same RF channel, the same power rail) jam or DoS the flow without ever associating with the system? (P3 between-device surface — see `methodologies.md` § "Risk-prioritized cyber-physical attack paths".)
 
@@ -131,41 +127,10 @@ Prompts:
 - Can horizontal privilege escalation happen between tenants / users at the same trust level?
 - Is there a path from "I have a shell" to "I have the keys to the kingdom"?
 
-Common in medical / IoT / embedded:
-- Can a network-side compromise reach the safety-critical control loop?
-- Can a low-privilege technician account access patient data?
+Common in IoT / embedded:
+- Can a network-side compromise reach a safety-critical control loop?
+- Can a low-privilege technician account access sensitive data?
 - Does any input path eventually feed into firmware update logic?
-
-## Per-element example threats
-
-These are illustrative, not exhaustive. Use them as seeds, not a checklist. Each is written in the threat-table cell format from `SKILL.md` § "Threat enumeration" — a ≤6-word title, a colon, then a 1–2 sentence concrete description.
-
-### External entity (e.g. Clinician using PACS workstation)
-
-- **S** — **Clinician credential phishing**: An attacker phishes a clinician's credentials and authenticates to the workstation as them.
-- **R** — **Denied PHI export**: A clinician performs an unauthorized PHI export and later credibly denies it because no attributable log exists.
-
-### Process (e.g. PACS server)
-
-- **S** — **DICOM AE Title spoofing**: An attacker spoofs a trusted AE Title to deliver malicious imagery to the PACS server.
-- **T** — **DICOM parser buffer overflow**: An attacker sends a crafted DICOM object that overflows a parser buffer and modifies process execution.
-- **R** — **Audit log erasure**: An attacker with operational access erases server-local audit logs after tampering with stored images.
-- **I** — **PHI leak via temp files**: An attacker reads PHI from temporary files the server writes during DICOM processing.
-- **D** — **Connection-pool exhaustion**: An attacker opens crafted associations until the connection pool is exhausted and legitimate modalities can't connect.
-- **E** — **Parser RCE to domain admin**: An attacker exploits a parser RCE to run as the PACS service account, then pivots to domain admin.
-
-### Data flow (e.g. DICOM C-STORE between modality and PACS)
-
-- **T** — **Pixel data tampering in transit**: An attacker on the segment modifies pixel data in transit because the flow has no TLS and no integrity check.
-- **I** — **PHI capture in transit**: An attacker on the segment captures PHI from the unencrypted DICOM flow.
-- **D** — **Segment flooding during a procedure**: An attacker floods the network segment to delay imaging while a procedure is underway.
-
-### Data store (e.g. PACS image database)
-
-- **T** — **Historical study modification**: An attacker with DB-write access modifies historical studies.
-- **I** — **Study catalog exfiltration**: An attacker with DB-read access exfiltrates the study catalog.
-- **D** — **Volume-fill halt**: An attacker fills the underlying storage volume so the database can't accept new acquisitions.
-- **R** (audit log only) — **Audit row deletion**: An attacker deletes audit rows covering their access window.
 
 ## STRIDE → security property → typical mitigations
 
@@ -220,14 +185,14 @@ Annotation format on a §3 row or SR: *"SR-001 (Protect, SC-8 / SC-12): TLS 1.3 
 
 ## NIST CSF function — Protect / Detect / Respond / Recover
 
-The STRIDE → property → control axis above answers *what kind of control*. There's a second axis FDA reviewers and the MITRE Threat Modeling Playbook §2.5.2 expect to see populated alongside it: **which NIST Cybersecurity Framework function** the control implements. **Lead with Protect**: preventive controls are the primary class — most of the Mitigate stack on a typical threat should be Protect. Detect / Respond / Recover are compensating layers that catch the Protect failure when (not if) one fires silently, not four equal partners. A mitigation stack made entirely of Protect controls on a high-impact threat is still a finding — name at least one Detect path and one Respond / Recover path so the design has a fallback.
+The STRIDE → property → control axis above answers *what kind of control*. There's a second axis regulator-facing reviewers and the MITRE Threat Modeling Playbook §2.5.2 expect to see populated alongside it: **which NIST Cybersecurity Framework function** the control implements. **Lead with Protect**: preventive controls are the primary class — most of the Mitigate stack on a typical threat should be Protect. Detect / Respond / Recover are compensating layers that catch the Protect failure when (not if) one fires silently, not four equal partners. A mitigation stack made entirely of Protect controls on a high-impact threat is still a finding — name at least one Detect path and one Respond / Recover path so the design has a fallback.
 
 | NIST CSF function | What the control does | Examples |
 |---|---|---|
 | **Protect** | Prevent the threat from succeeding in the first place | mTLS, signed firmware, RBAC, input validation, rate limiting (most of the controls in the table above) |
 | **Detect** | Notice the attack happening or that it has happened | Anomaly detection, audit-log forwarding to SIEM, integrity-check alerts on signed binaries, watchdogs on safety-critical loops, intrusion detection at trust boundaries |
 | **Respond** | Contain and act on a detected event | Incident-response runbooks, automated key rotation on suspected compromise, network isolation playbooks, alarm-acknowledgement procedures, the device's "fail-safe mode" trigger |
-| **Recover** | Restore service and integrity after a successful attack | Backup-restore procedures, firmware rollback, key re-issuance, post-incident state reconciliation, communications plan to clinicians/operators |
+| **Recover** | Restore service and integrity after a successful attack | Backup-restore procedures, firmware rollback, key re-issuance, post-incident state reconciliation, communications plan to operators |
 
 (`Identify` and `Govern` round out the CSF v2 model but live in the strategic stratum / governance program, not in per-threat mitigations — record them in §1 prose, not in §3 rows.)
 

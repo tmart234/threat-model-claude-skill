@@ -22,7 +22,7 @@ The schema requires every `symbolic_name` to be lowercase alphanumeric plus hyph
 | `TB1` | `tb-1` |
 | `ASM1` | `asm-1` |
 
-Trust-zone subgraph IDs from the DFD (e.g. `Hospital`, `Cloud`, `Internet`, `ProdAcct`) become trust_zone symbolic_names by lowercasing and replacing camelCase or spaces with hyphens (`hospital`, `cloud`, `internet`, `prod-acct`). Cross-references in the JSON (`threats[].threat_persona`, `controls[].threats`, `risks[].threats`, `data_sets[].placements[].data_store`, `trust_boundaries[].trust_zone_a/b`, `data_flows[].source/destination.object`) use the derived symbolic names — keep them consistent across the file.
+Trust-zone subgraph IDs from the DFD (e.g. `CorpNet`, `Cloud`, `Internet`, `ProdAcct`) become trust_zone symbolic_names by lowercasing and replacing camelCase or spaces with hyphens (`corp-net`, `cloud`, `internet`, `prod-acct`). Cross-references in the JSON (`threats[].threat_persona`, `controls[].threats`, `risks[].threats`, `data_sets[].placements[].data_store`, `trust_boundaries[].trust_zone_a/b`, `data_flows[].source/destination.object`) use the derived symbolic names — keep them consistent across the file.
 
 ## Field-by-field mapping
 

@@ -1,4 +1,4 @@
-# Data-centric threat modeling — workflow, caveats, worked example
+# Data-centric threat modeling — workflow and caveats
 
 > **Last verified**: 2026-05. NIST SP 800-154 has been a Draft since 2016 and may have been finalized, withdrawn, or superseded since this file was last reviewed; re-check csrc.nist.gov before citing the publication status. The four-step workflow itself has been stable since the 2016 draft.
 > **Sources paraphrased**: NIST SP 800-154 (Draft, Souppaya & Scarfone, 2016, US public domain). HIPAA / GDPR / PCI / FDA / ITAR/EAR framings (public regulatory text, paraphrase only).
@@ -22,7 +22,7 @@ The skill cannot model data it doesn't know about. There are three modes for acq
 
 ### Mode A — User volunteers the data class
 
-The user names the data: *"I want to model PHI in this DICOM workflow"*, *"the firmware signing key"*, *"refresh tokens"*. Direct path. Confirm:
+The user names the data: *"I want to model customer records in this pipeline"*, *"the firmware signing key"*, *"refresh tokens"*. Direct path. Confirm:
 
 - The data class and its custodian.
 - Lifecycle scope: greenfield (entire lifecycle) or scoped (one phase, e.g. only "in transit").
@@ -36,13 +36,13 @@ The user describes a system but hasn't named the data of interest. Walk these pr
 - **What's the most regulated data class here?** (HIPAA-PHI, GDPR-personal-data, PCI-CHD, ITAR/EAR-controlled, FDA-device-data.)
 - **What's the highest-impact loss-or-tampering target?** (Signing keys, root credentials, audit logs, control-loop setpoints, ML model weights.)
 - **What dataset, if exfiltrated, makes the news?** (Customer records, internal financials, design IP.)
-- **What dataset, if tampered with, hurts someone or something?** (Dose calculations, scan orders, billing records, inventory counts, crypto-key material.)
+- **What dataset, if tampered with, hurts someone or something?** (Pricing rules, order records, billing records, inventory counts, crypto-key material.)
 
 Present the candidates. The user picks one (or two — see callout). If the user can't pick, default to the most regulated class — it's the easiest to defend the choice for.
 
 ### Mode C — Skill infers from artifact
 
-The user pastes a spec, schema, OpenAPI doc, DFD, code, or component list. Extract data classes by scanning for nouns that describe data ("patient record", "DICOM study", "credential", "telemetry packet", "firmware image", "audit event"). Rank by sensitivity and regulatory weight. Then proceed as Mode B (present candidates, user picks).
+The user pastes a spec, schema, OpenAPI doc, DFD, code, or component list. Extract data classes by scanning for nouns that describe data ("customer record", "credential", "telemetry packet", "firmware image", "audit event"). Rank by sensitivity and regulatory weight. Then proceed as Mode B (present candidates, user picks).
 
 ## Per-data-class scoping (callout)
 
@@ -52,7 +52,7 @@ The user pastes a spec, schema, OpenAPI doc, DFD, code, or component list. Extra
 >
 > For multiple data classes: run multiple passes (one per class), or accept that you're really doing asset-centric in disguise and switch entry points.
 >
-> The one exception: if two data classes share a lifecycle so tightly that they always co-occur (PHI and the encryption keys protecting it; a JWT and its signing key), you can model them together — but say so explicitly and accept that the security-objective narrowing won't be as clean.
+> The one exception: if two data classes share a lifecycle so tightly that they always co-occur (a record and the encryption keys protecting it; a JWT and its signing key), you can model them together — but say so explicitly and accept that the security-objective narrowing won't be as clean.
 
 ## Narrowing security objectives
 
@@ -66,7 +66,7 @@ For each objective, decide in-scope or out-of-scope and *justify*:
 | Integrity | Dose, control, audit, financial, signed artifacts | Ephemeral telemetry; cached read-replica |
 | Availability | Safety-critical control loop; SLA-bound; revenue-bearing | Covered by the flow-centric pass; offline-tolerant |
 
-A typical narrow scope for PHI: **Confidentiality + Integrity in scope; Availability deferred to the flow-centric pass.** Don't double-cover availability across two layers — pick the layer that owns it and say so.
+A typical narrow scope for a regulated personal-data class: **Confidentiality + Integrity in scope; Availability deferred to the flow-centric pass.** Don't double-cover availability across two layers — pick the layer that owns it and say so.
 
 ## STRIDE applied to data locations (caveat)
 
@@ -85,8 +85,8 @@ In a hybrid output (the skill's default — see `methodologies.md`), the context
 
 - The **flow-centric DFD shows the system**. Elements are EE / Process / Data Flow / Data Store, identified `EE1`, `P1`, `DS1`, etc.
 - The **data-centric pass picks one data class and walks its lifecycle through that system**. Locations are `L1`, `L2`, etc.
-- Each data-centric location should reference the DFD element(s) it corresponds to. Convention: *"L1 (Storage — PACS image DB) ≈ DS2 on the DFD"*; *"L3 (Transmission — DICOM C-STORE from modality to PACS) ≈ flow EE1→P1"*.
-- Where data-centric finds a **lifecycle location the DFD doesn't render natively** — process memory, core dumps, debug logs, swap, the operator's clipboard — call it out: *"L6 (Output — DICOM tags in debug log) — not on the DFD; lifecycle location."* This is the value-add of layering data-centric on flow-centric. The flow-centric pass would have missed it.
+- Each data-centric location should reference the DFD element(s) it corresponds to. Convention: *"L1 (Storage — primary record DB) ≈ DS2 on the DFD"*; *"L3 (Transmission — API write from client to service) ≈ flow EE1→P1"*.
+- Where data-centric finds a **lifecycle location the DFD doesn't render natively** — process memory, core dumps, debug logs, swap, the operator's clipboard — call it out: *"L6 (Output — record fields in debug log) — not on the DFD; lifecycle location."* This is the value-add of layering data-centric on flow-centric. The flow-centric pass would have missed it.
 - **STRIDE coverage is broad in the flow-centric pass** (every applicable element × category). **STRIDE coverage is narrow in the data-centric pass** (one data class, only in-scope objectives) **but deep at locations the DFD doesn't show**.
 
 ID conventions to avoid collision:
@@ -94,61 +94,4 @@ ID conventions to avoid collision:
 - Data-centric pass produces vectors `V1`, `V2`, ...
 - A finding that surfaces in both gets a cross-reference (`V3 ↔ T7`) rather than two separate IDs.
 
-## Worked example: a DICOM study in a small PACS
-
-System sketch (see `dfd-mermaid.md` for the full DFD form): a CT modality acquires images and sends them via DICOM C-STORE to a PACS server, which stores studies in an image database, replicates nightly to an object-store backup, and serves them to clinician workstations on request.
-
-Flow-centric DFD elements: `EE1` (Modality), `EE2` (Clinician Workstation), `P1` (PACS Server), `DS1` (Image DB), `DS2` (Backup object store).
-
-### Data of interest
-
-A single DICOM study (PHI). Custodian: hospital. Lifecycle: acquisition → transit → storage → backup → render → optional export.
-
-### Security objectives in scope
-
-| Objective | In scope? | Rationale |
-|-----------|-----------|-----------|
-| Confidentiality | Yes | PHI under HIPAA |
-| Integrity | Yes | Tampered pixel data could mislead diagnosis |
-| Availability | No (deferred) | Owned by the flow-centric pass — DoS on PACS already covered there |
-
-### Authorized locations
-
-| ID | Location type | Concrete instance | DFD ref | Lifecycle-only? |
-|----|---------------|-------------------|---------|-----------------|
-| L1 | Storage     | PACS Image DB volume | DS1 | No |
-| L2 | Storage     | Nightly backup to object store | DS2 | No |
-| L3 | Transmission | DICOM C-STORE, Modality → PACS | EE1→P1 | No |
-| L4 | Transmission | Render fetch, PACS → Workstation | P1→EE2 | No |
-| L5 | Execution   | PACS process memory during render | (P1, runtime) | Yes — not on DFD |
-| L6 | Output      | Debug log written during DICOM parse error | (P1, runtime) | Yes — not on DFD |
-| L7 | Output      | Clinician export to USB | (EE2, runtime) | Yes — not on DFD |
-
-### Vectors
-
-| ID | Loc | Vector | CAPEC | CWE | AV | PR | AC | Impact |
-|----|-----|--------|-------|-----|----|----|----|--------|
-| V1 | L2 | **Over-permissive backup bucket ACL**: An attacker pulls the nightly backup from the object store because the bucket ACL grants read access too broadly. | CAPEC-180 (Exploiting Incorrectly Configured Access Control Security Levels) | CWE-732 | N | N | L | C |
-| V2 | L3 | **Un-TLS'd DICOM segment MITM**: An on-network attacker intercepts the cleartext DICOM segment and modifies pixel data in transit. | CAPEC-94 (Adversary in the Middle) | CWE-319 | A | N | L | C, I |
-| V3 | L5 | **PHI in core dumps**: A parser crash produces a core dump containing decrypted PHI, and core dumps are shipped to centralized telemetry. | CAPEC-150 (Collect Data from Common Resource Locations) | CWE-528 | N | L | L | C |
-| V4 | L6 | **PHI in parse-error logs**: DICOM tags (PatientName, PatientID) are logged at parse-error level and forwarded to a SIEM the auditors hold no HIPAA BAA with. | CAPEC-150 (Collect Data from Common Resource Locations) | CWE-532 | N | L | L | C |
-| V5 | L7 | **Unaudited USB study export**: A clinician exports a study to USB with no DLP enforcement and no audit trail at the workstation. | CAPEC-545 (Pull Data from System Resources) | CWE-200 | P | L | L | C, I |
-
-### What flow-centric alone would have caught
-
-V1 (DS2 information disclosure) and V2 (data flow tampering / information disclosure) are on the DFD and STRIDE-Per-Element would catch them. **V3, V4, V5 are not natural DFD elements** and would typically be missed by a flow-centric-only pass. That's the layering value.
-
-### Controls (sketched)
-
-- V1: enforce backup-bucket ACL via IaC; KMS-backed envelope encryption with separate key custodian; periodic restore-and-decrypt test.
-- V2: require mTLS for all DICOM associations; pin AE Title to certificate.
-- V3: disable core dumps in production; if required for support, redact via systemd-coredump filter; route to access-controlled debug bucket, not telemetry.
-- V4: log redaction filter for DICOM PHI tags before any forwarder; or forward to SIEM under existing BAA.
-- V5: workstation DLP policy; export requires re-authentication; export event logged to PACS audit store with chain-of-custody.
-
-### Coverage check
-
-- Every authorized location enumerated (storage / transmission / execution / input / output): yes (input is implicit at L3 for the modality side).
-- Cross-location vectors considered: V3 (L5→external telemetry) and V4 (L6→external SIEM) are both authorized-location → unauthorized-recipient leaks. ✓
-- Dropped objective (Availability) justified: yes — owned by flow-centric pass.
-- Hybrid bridge: V1↔T(flow-centric backup-store-disclosure if present), V2↔T(flow-centric DICOM-flow tampering). Cross-reference rather than duplicate.
+A worked end-to-end data-centric example — a regulated record walked through a small system, including the lifecycle-only locations a flow-centric pass misses — lives with each regulated industry's pack under `industries/<industry>/`.

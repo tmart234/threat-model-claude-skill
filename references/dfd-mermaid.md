@@ -7,7 +7,7 @@
 
 Mermaid renders well in GitHub, GitLab, Markdown editors, and Polarion (with the Mermaid plugin). It's the practical default for a text-first threat modeling workflow.
 
-Mermaid doesn't natively render trust boundaries the way a dedicated threat modeling tool does, but solid `subgraph` borders read visually as *containment* (UML-package-style "this is part of that"), not as a *boundary an attacker crosses*. The default is to render every trust-boundary subgraph with a **dashed border** via the `classDef tb fill:none,stroke:#888,stroke-dasharray: 5 5` declaration plus a `class <SubgraphID>,<SubgraphID>,... tb` line that lists every trust-zone subgraph. This is the canonical pattern across this skill — use it on every diagram, the worked example (`references/dfd-mermaid.md` § "Worked example"), and the blank template (`assets/threat-model-template.md`). The per-subgraph `style ID fill:none,stroke:#888,stroke-dasharray: 5 5` form is acceptable only when there's a single subgraph; for two or more, use `classDef`. Pattern, examples, and the rare per-subgraph alternative are in § "Rendering trust boundaries as dashed subgraphs" below. Apply it to every diagram — it is not optional.
+Mermaid doesn't natively render trust boundaries the way a dedicated threat modeling tool does, but solid `subgraph` borders read visually as *containment* (UML-package-style "this is part of that"), not as a *boundary an attacker crosses*. The default is to render every trust-boundary subgraph with a **dashed border** via the `classDef tb fill:none,stroke:#888,stroke-dasharray: 5 5` declaration plus a `class <SubgraphID>,<SubgraphID>,... tb` line that lists every trust-zone subgraph. This is the canonical pattern across this skill — use it on every diagram and the blank template (`assets/threat-model-template.md`). The per-subgraph `style ID fill:none,stroke:#888,stroke-dasharray: 5 5` form is acceptable only when there's a single subgraph; for two or more, use `classDef`. Pattern, examples, and the rare per-subgraph alternative are in § "Rendering trust boundaries as dashed subgraphs" below. Apply it to every diagram — it is not optional.
 
 ## Element mapping
 
@@ -26,81 +26,7 @@ Per-edge styling (optional, for emphasis on highest-risk flows):
 linkStyle 0 stroke:#d62728,stroke-width:2px
 ```
 
-## Worked example: small clinical PACS
-
-The same PACS, drawn at two levels of decomposition. Read them as a progression: Figure 1 (Level 0) is the context diagram a reviewer sees first; Figure 2 (Level 1) is the decomposition into the zones and components that STRIDE actually walks.
-
-### Figure 1 — Level 0 (context)
-
-```mermaid
-flowchart LR
-    Modality[CT Modality]
-    Workstation[Clinician Workstation]
-    Vendor[Vendor Remote Support]
-    CloudArchive[Cloud Archive Service]
-
-    subgraph Boundary["PACS System (in scope)"]
-        PACS("PACS — black box")
-    end
-
-    Modality -- "DICOM images (PHI)" --> PACS
-    Workstation -- "DICOM Q/R, view requests" --> PACS
-    Vendor -. "remote support session" .-> PACS
-    PACS -- "tiered archive (mTLS)" --> CloudArchive
-
-    classDef tb fill:none,stroke:#888,stroke-dasharray: 5 5
-    class Boundary tb
-```
-
-The Level 0 view says exactly four things and no more: what's in scope (one box), who talks to it (four external entities), what crosses (the labeled flows), and where the trust boundary sits (the dashed shape). The internal stores, the audit log, and the archive object store are *not* drawn at Level 0 — they're not visible from the outside. Level 0 is what a reviewer points at when asking "what is this system, and what touches it?"; everything else is decomposition.
-
-### Figure 2 — Level 1 (decomposed)
-
-```mermaid
-flowchart LR
-    subgraph Hospital["Hospital IT | on-prem (clinical VLAN) | moderate trust"]
-        Modality("CT Modality (AS1)")
-        Workstation[Clinician Workstation]
-        PACS("PACS Server (AS2)")
-        ImageDB[("Image Database (AS3)")]
-        AuditDB[("Audit Log (AS4)")]
-    end
-
-    subgraph Internet["Unowned | public internet | untrusted"]
-        Vendor[Vendor Remote Support]
-    end
-
-    subgraph Cloud["Vendor | cloud (AWS prod account) | medium trust"]
-        Archive("Long-term Archive Service (AS5)")
-        ArchiveStore[("Archive Object Store (AS6)")]
-    end
-
-    Modality -- "DICOM C-STORE over TCP/11112 (PHI)" --> PACS
-    Workstation -- "DICOM Q/R, view requests" --> PACS
-    PACS -- "store images" --> ImageDB
-    PACS -- "audit events" --> AuditDB
-    PACS -- "tiered archive (mTLS)" --> Archive
-    Archive -- "object PUT (SigV4)" --> ArchiveStore
-    Vendor -. "remote support session (VPN + MFA)" .-> PACS
-
-    classDef tb fill:none,stroke:#888,stroke-dasharray: 5 5
-    class Hospital,Internet,Cloud tb
-```
-
-Note four things this example demonstrates:
-
-- **Every element is inside exactly one zone.** Vendor isn't floating; it's in an explicit `Untrusted` subgraph for the public internet.
-- **Boundaries are dashed.** The `classDef tb` + `class … tb` pattern applies the dashed border to all three zone subgraphs at once.
-- **The flow from `untrusted` is dashed too.** `Vendor -. "..." .-> PACS` uses Mermaid's dashed-arrow syntax to mark the highest-attention crossing; the in-zone flows stay solid.
-- **Data-bearing elements carry inline `(AS#)` tags** — `(AS1)`..`(AS6)` — that reconcile against the §1 asset list of the threat model containing this DFD. External entities (Workstation, Vendor) aren't assets, so they have no tag.
-
-What changes between Figure 1 and Figure 2: the single in-scope `PACS` box opens into the PACS server plus its Image Database and Audit Log, and ownership-typed trust zones (Hospital IT / Internet / Cloud) replace the single in-scope shape. The four external flows are preserved across both levels — that's the consistency check between Level 0 and Level 1 (no flow appears at Level 1 that wasn't already implied at Level 0; if one does, it's a missing external entity at Level 0 or an in-scope process leaking outside its stated boundary).
-
-Trust boundaries (the dashed subgraph borders above):
-
-- `Hospital` ↔ `Internet` — vendor support is the riskiest crossing.
-- `Hospital` ↔ `Cloud` — egress over TLS to cloud archive.
-- Within `Hospital`, modality ↔ PACS may itself be a soft boundary if the imaging VLAN is separated; call this out in prose.
+A full end-to-end worked DFD (Level-0 context plus Level-1 decomposition, with the dashed-boundary and asset-tagging conventions applied) lives with each industry pack under `industries/<industry>/worked-examples.md`.
 
 ## Levels of decomposition
 
@@ -108,7 +34,7 @@ Don't pack everything into one diagram. Use a hierarchy:
 
 - **Level 0 (context)** — the system as a black box plus all external entities and external data flows. One page, ~5–8 elements.
 - **Level 1 (decomposed)** — the system's major internal processes and stores, with the same external entities. ~10–15 elements.
-- **Level 2+ (focused)** — drill into one component when it warrants its own model (e.g. the DICOM parser, or the auth service). Reference back to the Level 1 element this expands.
+- **Level 2+ (focused)** — drill into one component when it warrants its own model (e.g. a complex parser, or the auth service). Reference back to the Level 1 element this expands.
 
 If your diagram has more than ~15 elements or feels unreadable, you owe the reader a decomposition.
 
@@ -116,14 +42,14 @@ If your diagram has more than ~15 elements or feels unreadable, you owe the read
 
 The MITRE Threat Modeling Playbook §2.3.3 names six dataflow categories that consistently warrant their own decomposition — typically a Sequence / Swim Lane diagram (`non-dfd-models.md` § "Sequence / swim-lane diagrams") or a State diagram (`non-dfd-models.md` § "State diagrams"), not a fourth-tier DFD. When any of these are in scope, the system has earned a Level-2 view of that flow regardless of overall element count:
 
-- **Authentication protocols with external servers.** Multi-step token exchanges, mTLS handshakes, SSO redirects, OAuth/OIDC flows, SMART-on-FHIR. Sequence-diagram targets — the threat is in the *order and content of the messages*, not the boxes they pass through.
-- **Programming and configuration commands.** Any flow that changes device behavior in the field — config writes, calibration commands, mode changes, drug-library updates, parameter sets. State diagram if the device has named operational modes; sequence diagram if it's a multi-step programming workflow with pre-conditions.
+- **Authentication protocols with external servers.** Multi-step token exchanges, mTLS handshakes, SSO redirects, OAuth/OIDC flows. Sequence-diagram targets — the threat is in the *order and content of the messages*, not the boxes they pass through.
+- **Programming and configuration commands.** Any flow that changes device behavior in the field — config writes, calibration commands, mode changes, parameter sets. State diagram if the device has named operational modes; sequence diagram if it's a multi-step programming workflow with pre-conditions.
 - **Obtaining and validating software updates.** OTA firmware, package manifests, signed-payload validation, rollback paths. Sequence diagram — most update-path threats sit between "fetched" and "validated" or between "validated" and "applied". The SKATE-style worked example in the Playbook spends ten pages on just this flow because every transition is a threat surface.
-- **Sharing patient data with external servers.** PHI egress to cloud archives, vendor analytics, secondary-use research stores, HIE / TEFCA hand-offs. Sequence diagram with the data class on each arrow; data-centric supplement (`data-centric.md`) for the data lifecycle view.
-- **Transmitting and silencing of alarms.** Alarm generation, propagation across redundant paths, acknowledgment, escalation, silencing, latch-on / latch-off behavior. State diagram for the alarm state machine, plus a sequence diagram for the silence/escalate flow. Alarms are safety-critical — a missed alarm is a safety event, not just an availability event.
+- **Sharing sensitive data with external servers.** Sensitive-data egress to cloud archives, vendor analytics, secondary-use stores, partner hand-offs. Sequence diagram with the data class on each arrow; data-centric supplement (`data-centric.md`) for the data lifecycle view.
+- **Transmitting and silencing of alarms.** Alarm generation, propagation across redundant paths, acknowledgment, escalation, silencing, latch-on / latch-off behavior. State diagram for the alarm state machine, plus a sequence diagram for the silence/escalate flow. Alarms are often safety-critical — a missed alarm is a safety event, not just an availability event.
 - **Procedures to restore from backups.** Backup integrity, restore authorization, partial-restore paths, post-restore consistency. Sequence diagram; often the recovery path has weaker authentication than the steady-state path because "we're restoring service, just let it through" — that's the threat.
 
-When any of these flows is in scope, drawing it at Level-2 isn't optional decomposition — it's where most of the actionable threats live. The Level-1 DFD shows the boxes; the Level-2 sequence/state view shows the *order, the timing, and the pre-conditions* that STRIDE-Per-Element on a flat DFD systematically misses. For medical-device models specifically, expect to draw at least three of the six (auth, update path, alarm flow are the typical baseline; programming commands and PHI egress are common; backup restoration is the under-modeled one).
+When any of these flows is in scope, drawing it at Level-2 isn't optional decomposition — it's where most of the actionable threats live. The Level-1 DFD shows the boxes; the Level-2 sequence/state view shows the *order, the timing, and the pre-conditions* that STRIDE-Per-Element on a flat DFD systematically misses. For safety-critical systems, expect to draw at least three of the six (auth, update path, and alarm flow are the typical baseline).
 
 ## Subgraph labeling convention
 
@@ -139,10 +65,10 @@ Where:
 - **`<env-type>`** — the environment kind from a fixed taxonomy, **without redundant prefixes**: `cloud (<provider>)`, `on-prem (<sub-zone, e.g. AD Tier 0 / corp VLAN / DMZ>)`, `embedded (<sub-zone, e.g. application core / secure element / baseband>)`, `Purdue L<n> (<named zone>)` for OT/ICS (don't write `OT/ICS (Purdue L2 — supervisory)` — `Purdue L2` already says it's OT and `L2` already says supervisory; just `Purdue L2 (supervisory)` or even `Purdue L2` once the model has established the cell is OT), `mobile (<sub-zone>)`, or `public internet`. Use the per-environment patterns in `environments.md` for sub-zones; collapsing a whole environment into one box loses most of the boundaries that matter.
 - **`<trust>`** — qualitative trust level: `untrusted`, `low trust`, `medium trust`, `high trust`, `very high trust`, or domain-specific qualifiers like `safety-critical`, `out-of-scope owner`, `unknown`. Use the same scale across every diagram in one model so the prioritized §3 list is consistent.
 
-**Compression rule.** When the same `<owner>` or `<env-type>` repeats across most of the subgraphs in one diagram (e.g. five OT zones all owned by "Hospital biomed"), state the common value once in a one-line key above the diagram and shorten the labels to just the distinguishing fields. Example:
+**Compression rule.** When the same `<owner>` or `<env-type>` repeats across most of the subgraphs in one diagram (e.g. five OT zones all owned by "Plant operator"), state the common value once in a one-line key above the diagram and shorten the labels to just the distinguishing fields. Example:
 
 ```
-Owners: Hospital biomed unless noted. Environment: OT/ICS Purdue levels.
+Owners: Plant operator unless noted. Environment: OT/ICS Purdue levels.
 
 subgraph L0["L0 (field) | safety-critical"]
 subgraph L1_PLC["L1 PLC (interlocks) | very high trust"]
@@ -151,25 +77,25 @@ subgraph L2_App["L2 (application) | medium-high trust"]
 subgraph L2_Sup["Vendor OEM | L2 (supervisory) | high trust"]
 ```
 
-Compression preserves all three pieces of information without making each label a 60-character sentence. Never compress a field that *isn't* repeated — owners that differ between zones (Vendor OEM vs Hospital biomed) are exactly the boundaries that matter; show them.
+Compression preserves all three pieces of information without making each label a 60-character sentence. Never compress a field that *isn't* repeated — owners that differ between zones (Vendor OEM vs Plant operator) are exactly the boundaries that matter; show them.
 
 Examples (uncompressed, when the diagram has heterogeneous owners and environments):
 
 ```
-subgraph HospNet["Hospital IT | on-prem (clinical VLAN) | moderate trust"]
+subgraph CorpNet["Corp IT | on-prem (corp VLAN) | moderate trust"]
 subgraph DeviceSE["Vendor | embedded (secure element) | very high trust"]
 subgraph SIS["Plant Operator | Purdue (Safety Instrumented System) | safety-critical, isolated"]
 subgraph Keystore["OS Vendor (Apple/Google) | mobile (hardware-backed keystore) | very high trust"]
 subgraph CSPCtrl["AWS | cloud (provider control plane) | out-of-scope owner"]
 ```
 
-Why three fields and not one: a label like `Hospital network — moderate trust` (the older convention) tells the reader the trust level but hides the *owner* and the *environment kind* — both of which drive which mitigations are even possible. The three-field label makes responsibility-for-mitigation legible from the diagram, which is what §3 of the threat model needs to answer.
+Why three fields and not one: a label like `Corp network — moderate trust` (the older convention) tells the reader the trust level but hides the *owner* and the *environment kind* — both of which drive which mitigations are even possible. The three-field label makes responsibility-for-mitigation legible from the diagram, which is what §3 of the threat model needs to answer.
 
 When a system spans multiple environments (almost always the case), every subgraph gets its own owner / env-type / trust triplet. Don't share labels across environments.
 
 **Methodology framing belongs in §1 prose, not on labels.** A label is for identification (`Purdue L1 (PLC)`); the prose that explains *why* the diagram uses Purdue levels at all — "this cell is OT-shaped, so we segment per the Purdue Enterprise Reference Architecture" — belongs in the §1 system-description or environment paragraph. Same pattern for any other environment skeleton: AD Tier model on enterprise systems, Purdue on OT/ICS, the cloud account/VPC/subnet hierarchy on cloud, the iOS/Android sandbox model on mobile. Name the skeleton once in §1; let the labels carry just the level. Without this split, label space fills with redundant context (`OT/ICS (Purdue L2 — supervisory)` thrice) and the diagram gets noisier without telling the reader anything new.
 
-A small follow-on: when two zones legitimately sit at the same Purdue level but are owned by different parties (e.g. a vendor's L1 real-time control system alongside the hospital biomed's L1 safety PLC), the diagram is *correct* — both are L1, that's the whole point — but readers used to a clean Purdue stack may second-guess it. A one-line note in §1 ("two L1 zones, distinguished by owner: Vendor OEM real-time control vs. hospital biomed PLC") prevents the misread.
+A small follow-on: when two zones legitimately sit at the same Purdue level but are owned by different parties (e.g. a vendor's L1 real-time control system alongside the plant operator's L1 safety PLC), the diagram is *correct* — both are L1, that's the whole point — but readers used to a clean Purdue stack may second-guess it. A one-line note in §1 ("two L1 zones, distinguished by owner: Vendor OEM real-time control vs. plant operator PLC") prevents the misread.
 
 ## Rendering trust boundaries as dashed subgraphs
 
@@ -177,22 +103,22 @@ Mermaid renders `subgraph` borders as solid rectangles by default. Solid borders
 
 The MITRE Threat Modeling Playbook §2.3.1.1 makes the same rule explicit: a trust boundary should be drawn as a **complete shape, not a line or arc**. The skill's `subgraph` + dashed-`classDef` pattern below realizes both conventions directly — every zone is a closed shape with a dashed outline, every element sits inside exactly one zone, and a flow that crosses the dashed border is visibly a trust crossing. This is the strongest single signal a reviewer has that the model uses DFD3 conventions correctly; it's not optional.
 
-**Default to the `classDef` + `class` pattern below** for every diagram in this skill, including diagrams with only one subgraph (consistent with the worked example and the template). The per-subgraph `style` form is a fallback for tooling that doesn't render `classDef` correctly; mention it once if you fall back to it.
+**Default to the `classDef` + `class` pattern below** for every diagram in this skill, including diagrams with only one subgraph (consistent with the template). The per-subgraph `style` form is a fallback for tooling that doesn't render `classDef` correctly; mention it once if you fall back to it.
 
 **Canonical pattern: `classDef` with `class` assignment.** Place these two lines at the bottom of the Mermaid block, listing every trust-zone subgraph in the `class` line:
 
 ```
 classDef tb fill:none,stroke:#888,stroke-dasharray: 5 5
-class HospNet,Internet,Cloud tb
+class CorpNet,Internet,Cloud tb
 ```
 
 **Fallback only: per-subgraph `style`.** Use only if `classDef` doesn't render in your target environment. One line per subgraph:
 
 ```
-subgraph HospNet["Hospital IT | on-prem (clinical VLAN) | moderate trust"]
-    PACS(PACS Server)
+subgraph CorpNet["Corp IT | on-prem (corp VLAN) | moderate trust"]
+    App(App Server)
 end
-style HospNet fill:none,stroke:#888,stroke-dasharray: 5 5
+style CorpNet fill:none,stroke:#888,stroke-dasharray: 5 5
 ```
 
 `stroke-dasharray: 5 5` (5px dash, 5px gap) is the Shostack-DFD3-equivalent default. Other values (`3 3` for a tighter dash, `8 4` for a longer one) are fine — pick one per diagram. **`fill:none` matters**: without it, the subgraph fill obscures elements behind it when the renderer overlaps zones; `fill:none` makes the boundary a true outline.
@@ -210,7 +136,7 @@ Real systems have trust boundaries inside trust boundaries. Mermaid supports nes
 
 When to nest:
 
-- A device that runs two operating systems with a documented privilege boundary (a smart infusion pump's Linux comms / HMI side ↔ RTOS pump-control side; Android's normal world ↔ TrustZone secure world; an iOS app sandbox ↔ Secure Enclave).
+- A device that runs two operating systems with a documented privilege boundary (a controller's Linux comms side ↔ RTOS control side; Android's normal world ↔ TrustZone secure world; an iOS app sandbox ↔ Secure Enclave).
 - Cloud zones at multiple depths (account → VPC → subnet → security group; or account → VPC → cluster namespace).
 - A Windows host that hosts a hypervisor (host OS ↔ guest VM ↔ container).
 - An embedded device with a secure element distinct from the application processor.
@@ -219,17 +145,17 @@ Pattern:
 
 ```mermaid
 flowchart LR
-    subgraph Pump["Vendor | embedded (smart infusion pump) | high trust"]
-        subgraph PumpComms["Linux comms / HMI side | medium-high trust"]
-            CommsApp("EHR + drug-library client (AS3)")
+    subgraph Device["Vendor | embedded (IoT controller) | high trust"]
+        subgraph DeviceApp["application core | medium-high trust"]
+            CommsApp("network + control app (AS3)")
         end
-        subgraph PumpRT["RTOS pump-control side | safety-critical"]
-            CtrlApp("motor control + dose-rate interlocks (AS4)")
+        subgraph DeviceSE["secure element | very high trust"]
+            KeyStore("key storage + signing (AS4)")
         end
-        CommsApp -- "internal UART (drug library, alarms)" --> CtrlApp
+        CommsApp -- "internal SPI (sign / verify requests)" --> KeyStore
     end
     classDef tb fill:none,stroke:#888,stroke-dasharray: 5 5
-    class Pump,PumpComms,PumpRT tb
+    class Device,DeviceApp,DeviceSE tb
 ```
 
 The outer subgraph is the device as a unit (a physical box, an account); the inner subgraphs are the privilege zones inside it. The arrow between inner zones is the bridge — usually the highest-leverage place to put STRIDE attention.
@@ -238,13 +164,13 @@ The outer subgraph is the device as a unit (a physical box, an account); the inn
 
 ## Conventions to keep things readable
 
-- **Label every flow.** "DICOM C-STORE over TCP/11112 (PHI)" not "data". Concrete protocols make threats tractable: an attacker can craft DICOM PDUs against an open `11112` listener, but they can't attack a flow labeled "data".
+- **Label every flow.** "MQTT over TLS (telemetry)" not "data". Concrete protocols make threats tractable: an attacker can craft malformed frames against an open MQTT listener, but they can't attack a flow labeled "data".
 - **Direction matters.** Use `-->` for one-way and `<-->` only when the flow truly is symmetric request/response with the same content. For RPC-style flows, draw two arrows with their actual content labels.
 
   **Deviation from DFD3.** DFD3 (per the MITRE Threat Modeling Playbook §2.3.1.1, citing Shostack) defaults to a *double-headed* arrow because production traffic usually flows in both directions, with one filled / one open arrowhead reserved to signal which side initiates. **This skill deviates and defaults to one-way arrows** because the threats on each direction differ under STRIDE-Per-Element (a request flow and a response flow have different Spoofing / Tampering / Information-Disclosure surfaces), and collapsing them onto one bidirectional edge hides one of the two threat sets. Two one-way arrows with their actual content labels — request and response drawn separately — is what STRIDE-Per-Element wants. For genuinely symmetric flows (UDP heartbeats with identical content both ways, peer-to-peer gossip, mirrored replication), `<-->` is fine and matches DFD3. Document the deviation if you're claiming DFD3 conformance to a regulator; the choice is defensible but not silent.
 - **Group by trust zone, not by physical layout.** Trust zones are what STRIDE-Per-Element care about.
 - **Color sparingly.** Use `style` only to highlight the riskiest crossings or the highest-risk elements. Don't decorate. (Note: ~1 in 12 people have some form of color blindness, so don't rely on color alone — always pair color with text labels.)
-- **Tag DFD elements with their §1 asset IDs.** Any element that represents a named asset from §1 (`AS1`, `AS2`, …) carries that ID inline in its label — `BeckIPC(("Beckhoff IPC<br/>application controller<br/>(AS3)"))` not just `BeckIPC(("Beckhoff IPC"))`. This makes the diagram self-checking against §1: a reviewer can scan the picture, count `AS#` tags, and confirm against the §1 asset list without flipping back and forth. Elements that aren't assets (the JVM as such, a transient process, an external entity) stay untagged. When one element carries multiple assets (a DB holding both PHI and signing keys), tag both: `(AS8, AS9)`. Trust boundaries themselves don't get asset IDs — boundaries are properties of the diagram, not assets.
+- **Tag DFD elements with their §1 asset IDs.** Any element that represents a named asset from §1 (`AS1`, `AS2`, …) carries that ID inline in its label — `BeckIPC(("Beckhoff IPC<br/>application controller<br/>(AS3)"))` not just `BeckIPC(("Beckhoff IPC"))`. This makes the diagram self-checking against §1: a reviewer can scan the picture, count `AS#` tags, and confirm against the §1 asset list without flipping back and forth. Elements that aren't assets (the JVM as such, a transient process, an external entity) stay untagged. When one element carries multiple assets (a DB holding both records and signing keys), tag both: `(AS8, AS9)`. Trust boundaries themselves don't get asset IDs — boundaries are properties of the diagram, not assets.
 - **Stable element IDs.** Use short stable IDs (`P1`, `DS2`, `EE3`) for the Mermaid node IDs so the threat table can reference them. Note these are different from the §1 asset IDs above; the Mermaid ID identifies the *box*, the `AS#` identifies the *thing the box stands for*.
 
 ## Shostack's diagramming rules of thumb
@@ -253,7 +179,7 @@ These rules (paraphrased from *Threat Modeling: Designing for Security*, Ch. 1�
 
 - **Focus on data flow, not control flow.** Threats follow data; control-flow diagrams hide where attackers can reach.
 - **The "sometimes / also" test.** Anytime the team has to qualify a description with "sometimes we connect via TLS, but also fall back to HTTP" — that's two flows, not one. Draw both, and consider whether an attacker can force the fallback.
-- **No data sinks.** Every piece of data written somewhere has a reader; show who reads it. If you can't name the reader, either the flow shouldn't exist or you've missed a process. (Medical-device-specific violations to watch for: audit logs written but never read — PHI accumulating without lifecycle controls — and device-local telemetry stored on the device but never uploaded; both are PHI risks even though no exfiltration ever happens. See `medical.md` § "Clinical workflow misuse".)
+- **No data sinks.** Every piece of data written somewhere has a reader; show who reads it. If you can't name the reader, either the flow shouldn't exist or you've missed a process. (A consistently-overlooked form: audit logs that are written but never read — sensitive data accumulating without lifecycle controls — and device-local telemetry stored but never uploaded; both are confidentiality risks even though no exfiltration ever happens.)
 - **Data can't move itself between stores.** If the diagram shows a flow from one data store directly to another with no process in between, you've omitted the process that actually moves the data. Add it.
 - **Tell a story.** The diagram should support the team telling a story about how the system works, end-to-end, while pointing at it. If telling that story requires editing the diagram or adding caveats, the diagram isn't done.
 - **Don't draw an eye chart.** A diagram so dense you have to squint is no longer doing its job. Decompose.
@@ -285,7 +211,7 @@ A note on terminology: "trust boundary" and "attack surface" are closely related
 
 A common piece of advice is that "trust boundaries should only cross data flows." That's good advice for a fully-decomposed model. If a boundary appears to cross a data store, that often indicates the store has different tables/rows with different trust levels — break it into two stores or add a sub-diagram. If a boundary crosses a process, the process probably has internal privilege separation that should be drawn explicitly.
 
-Threats cluster around trust boundaries — but not *only* there. Complex parsing (DICOM PDU decoders, image format parsers, deserializers, regex engines on attacker input) is also threat-rich, even inside a single trust zone. Don't constrain enumeration to boundary crossings alone.
+Threats cluster around trust boundaries — but not *only* there. Complex parsing (protocol PDU decoders, image format parsers, deserializers, regex engines on attacker input) is also threat-rich, even inside a single trust zone. Don't constrain enumeration to boundary crossings alone.
 
 ## Trust boundary prose template
 
@@ -295,17 +221,17 @@ Example (table form):
 
 | Boundary | Owner (left) | Owner (right) | What crosses | Mediating control |
 |---|---|---|---|---|
-| Hospital ↔ Internet | Hospital IT | Unowned (public internet) | Vendor support sessions only | VPN concentrator + MFA |
-| Hospital ↔ Cloud | Hospital IT | Vendor (AWS prod account) | Tiered archive PUTs (outbound only) | mTLS + cert pinning; no inbound |
-| Imaging VLAN ↔ Clinical VLAN (within Hospital) | Hospital IT (imaging team) | Hospital IT (clinical team) | Modality → PACS only | L3 firewall ACLs; soft boundary |
+| Corp ↔ Internet | Corp IT | Unowned (public internet) | Inbound user traffic; vendor support sessions | WAF + reverse proxy; VPN + MFA for support |
+| Corp ↔ Cloud | Corp IT | Cloud provider (prod account) | Outbound telemetry + archive PUTs | mTLS + cert pinning; no inbound |
+| App VLAN ↔ DB VLAN (within Corp) | Corp IT (app team) | Corp IT (data team) | App service → database only | L3 firewall ACLs; soft boundary |
 
 Or in prose form:
 
 > **Trust boundaries**
 >
-> - **Hospital ↔ Internet** (owners: Hospital IT ↔ unowned). Only vendor support sessions cross this boundary. Mediated by VPN concentrator and require MFA. Mitigation responsibility: Hospital IT.
-> - **Hospital ↔ Cloud** (owners: Hospital IT ↔ Vendor on AWS). Outbound only, TLS 1.2+, mTLS via mutual cert pinning. No inbound from cloud to PACS. Mitigation responsibility split: Vendor for cloud-side controls, Hospital IT for egress firewall.
-> - **Imaging VLAN ↔ Clinical VLAN** (within Hospital, both Hospital IT-owned). Soft boundary. Modalities can reach PACS but not the audit DB. Enforced at L3 firewall.
+> - **Corp ↔ Internet** (owners: Corp IT ↔ unowned). Inbound user traffic and vendor support sessions cross this boundary. Mediated by a WAF and reverse proxy; support sessions require VPN + MFA. Mitigation responsibility: Corp IT.
+> - **Corp ↔ Cloud** (owners: Corp IT ↔ cloud provider). Outbound only, TLS 1.2+, mTLS via mutual cert pinning. No inbound from cloud. Mitigation responsibility split: cloud provider for provider-side controls, Corp IT for egress firewall.
+> - **App VLAN ↔ DB VLAN** (within Corp, both Corp IT-owned). Soft boundary. The app service can reach the database but not the audit store. Enforced at L3 firewall.
 
 This section is what a reviewer actually reads when assessing whether the model is right. The diagram alone isn't enough. The Owner columns are what make §3 of the threat model assignable — without ownership, "implement mTLS" has no addressee.
 

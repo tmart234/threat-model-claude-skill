@@ -49,7 +49,7 @@ Cluster questions; don't fire one at a time. Two or three turns of clustered que
 
 The §1 intake fields in `assets/threat-model-template.md` are the structured form of this — including the actor-type, storage-type, `data_sensitivity`, and scope-classification (`business_criticality` / `exposure` / `tier`) enums that the OWASP TML TM-BOM requires and that are useful for prioritization in any case. Fill them from the description; where the user doesn't volunteer a value, infer a plausible default and record it as a numbered assumption (`ASM#`). Enum definitions: `references/tm-bom.md` § "Field-by-field mapping".
 
-**Medical-device intake (conditional).** For a medical device, PACS / RIS / VNA, DICOM- or HL7-adjacent service, or anything heading for FDA premarket / IEC 81001-5-1 / IEC 62304 / MDR / IVDR review, also collect the structured intake from `references/medical.md` § "Medical-device §1 intake template". Skip for non-medical systems.
+**Medical-device intake (conditional).** For a medical device, PACS / RIS / VNA, DICOM- or HL7-adjacent service, or anything heading for FDA premarket / IEC 81001-5-1 / IEC 62304 / MDR / IVDR review, also collect the structured intake from `industries/medical/domain-notes.md` § "Medical-device §1 intake template" (part of the optional `industries/medical/` vertical pack). Skip for non-medical systems.
 
 **Round 1.5 — Technology, environment, and ownership (Q1, before the DFD).** This round turns a generic DFD into one that reflects this system in its environment; skipping it is how trust boundaries get missed. Fill the template's "Technology stack and environment" section — four things, none optional:
 
@@ -67,7 +67,7 @@ Per-environment boundary and protocol catalog: `references/environments.md`. Whe
 - **Regulatory constraints and sector** — the sector determines which ISAC and regulator framing apply (`references/methodologies.md`).
 - **Existing security controls** already assumed in place.
 
-If something's still missing after Round 2, ask one focused round — but err on stating assumptions and proceeding. After Round 2 you should have enough to draft the DFD and pick supplements from §"Picking supplements" below. Domain-specific guidance loads on demand: medical / PACS / DICOM → `references/medical.md`; embedded / IoT / OT / cloud-native / AI-ML / third-party code → `references/environments.md` § "Domain notes".
+If something's still missing after Round 2, ask one focused round — but err on stating assumptions and proceeding. After Round 2 you should have enough to draft the DFD and pick supplements from §"Picking supplements" below. Domain-specific guidance loads on demand: medical / PACS / DICOM → the `industries/medical/` vertical pack; embedded / IoT / OT / cloud-native / AI-ML / third-party code → `references/environments.md` § "Domain notes".
 
 ## Producing the threat model
 
@@ -114,7 +114,7 @@ A single diagram with 5–15 elements is usually right; for larger systems produ
 
 The contextual core is **STRIDE-Per-Element on the DFD**. Use STRIDE generatively as a per-element prompt — don't argue about which cell a finding belongs in. Read `references/stride-prompts.md` before enumerating: it has the applicability table (which categories apply to External entity / Process / Data flow / Data store), the category prompts, the element-is-the-victim framing, and the Per-Element vs Per-Interaction choice.
 
-For each DFD element, walk the STRIDE categories that apply. Threats follow data flow, not control flow, and cluster around trust boundaries *and* complex parsers (deserializers, image decoders, structured-document parsers). Write each threat cell as `**Title**: description.` — a ≤6-word noun-phrase title (e.g. *Session token replay*; not the bare STRIDE category, which is already in the STRIDE column), then 1–2 sentences naming who does what, against which element, with what effect. No paragraphs, no unstructured sentences with no title. Same format for §2.1.b's `Threat / Vector` and §2.1.c's `Threat`. Per-element seeds: `references/stride-prompts.md` § "Per-element example threats".
+For each DFD element, walk the STRIDE categories that apply. Threats follow data flow, not control flow, and cluster around trust boundaries *and* complex parsers (deserializers, image decoders, structured-document parsers). Write each threat cell as `**Title**: description.` — a ≤6-word noun-phrase title (e.g. *Session token replay*; not the bare STRIDE category, which is already in the STRIDE column), then 1–2 sentences naming who does what, against which element, with what effect. No paragraphs, no unstructured sentences with no title. Same format for §2.1.b's `Threat / Vector` and §2.1.c's `Threat`. Per-element category prompts: `references/stride-prompts.md` § "Category prompts".
 
 **Two table shapes — pick by stakes.** The threat table has a minimum-viable shape and an escalation shape. Use one shape consistently across §2.1.a / §2.1.b / §2.1.c — don't add columns the system doesn't need, don't drop columns it does.
 
@@ -192,7 +192,7 @@ The contextual core (flow-centric DFD + STRIDE) almost never gets swapped. Add s
 | STPA | Load whenever the system has **safety impact** — any plausible worst-case outcome involves physical harm to a person, equipment, or the environment (medical devices, ICS, automotive, aerospace, robotics, consumer IoT that controls something dangerous). Swap or supplement mode; default to supplement. | `references/stpa.md` |
 | OCTAVE / VAST | Org/portfolio-level only, not per-system | `references/methodologies.md` |
 
-Domain pointers: medical / PACS / DICOM / IoMT → also load `references/medical.md`. Embedded / IoT / OT / cloud-native / AI-ML / third-party code → `references/environments.md` § "Domain notes" has each domain's specifics.
+Domain pointers: medical / PACS / DICOM / IoMT → also load the `industries/medical/` vertical pack. Embedded / IoT / OT / cloud-native / AI-ML / third-party code → `references/environments.md` § "Domain notes" has each domain's specifics.
 
 ## References
 
@@ -200,7 +200,6 @@ Read on demand. Each file carries its own `Related:` cross-links and a "canonica
 
 - `methodologies.md` — hybrid three-stratum framing, system-type decision matrix, when to swap/supplement STRIDE (LINDDUN / PASTA / attack trees / ATT&CK / OCTAVE / VAST / AI-ML), cyber-physical attack-path construction, sector ISAC / regulator lists.
 - `environments.md` — per-environment trust-boundary patterns (cloud / on-prem / embedded-IoT / OT-ICS / mobile), ownership taxonomy, domain notes. Read when drawing the DFD.
-- `medical.md` — medical / PACS / DICOM / IoMT: layer mix, §1 intake template, patient-as-asset framing, regulatory list, DICOM/HL7 STRIDE specifics. Load only for medical systems.
 - `centric-methods.md` — entry-point taxonomy (asset / data / flow / process / user-needs / attacker / code) and the generation-vs-characterization distinction.
 - `data-centric.md` — NIST SP 800-154 data-centric workflow.
 - `capec.md` — STRIDE → CAPEC → CWE → ATT&CK → D3FEND → mitigation chain, the three abstraction levels, coverage gaps.
@@ -216,6 +215,8 @@ Read on demand. Each file carries its own `Related:` cross-links and a "canonica
 
 Assets: blank template `assets/threat-model-template.md`; TM-BOM starter `assets/tm-bom-example.json`; OWASP TML JSON schema (v1.0.2) for TM-BOM validation `assets/threat-model.schema.json`.
 
+**Industry packs.** Industry-specific depth lives in `industries/<industry>/` — an optional, self-contained vertical pack loaded on demand for systems in that domain. `industries/medical/` is the worked example: medical devices / PACS / DICOM / IoMT — §1 intake template, default layer mix, ISO 14971 / AAMI TIR57 mapping, clinical-context CVSS, DICOM/HL7 STRIDE specifics and CAPEC subset, patient-as-asset framing, regulators, and end-to-end worked examples. The core skill (`SKILL.md` + `references/` + `assets/`) is industry-agnostic and depends on nothing under `industries/`; deleting the folder leaves a fully-functional general-purpose threat modeler. Entry point and per-file index: `industries/medical/README.md`; to build another vertical, mirror that structure. The README at the repo root documents the adaptation workflow.
+
 ## Producing the TM-BOM (machine-readable artifact)
 
 The TM-BOM (Threat Model Bill of Materials) is a structured JSON companion to the markdown — the system, threats, controls, and risks in machine-readable form, emitted against the **OWASP Threat Model Library** JSON schema (v1.0.2, MIT-licensed), bundled at `assets/threat-model.schema.json`.
@@ -229,13 +230,14 @@ Full procedure — field-by-field schema mapping, symbolic-name derivation, the 
 Concepts in this skill paraphrase from the sources below; cite them in any output that quotes or substantively summarizes them. Fuller per-source detail (section numbers, licenses, what each contributes) lives in each reference file's "Sources paraphrased" header.
 
 - **OWASP** — Threat Modeling community page, Process, Cheat Sheet, Security Culture v1.0; **Threat Model Library** (https://github.com/OWASP/www-project-threat-model-library, MIT-licensed — the TM-BOM JSON schema and worked-example repository).
-- **MITRE Threat Modeling Playbook** (Toreon, OWASP) — DFD3 conformance, sequence / state diagrams, the assumptions register, the silent risk transference / acceptance anti-pattern, NIST CSF + D3FEND mapping, the CVSS Rubric for Medical Devices.
+- **MITRE Threat Modeling Playbook** (Toreon, OWASP) — DFD3 conformance, sequence / state diagrams, the assumptions register, the silent risk transference / acceptance anti-pattern, NIST CSF + D3FEND mapping.
 - **Threat Modeling Manifesto** — values, principles, patterns, anti-patterns (CC-BY 4.0).
 - **Adam Shostack**, *Threat Modeling: Designing for Security* (Wiley, 2014) — Four Question Framework, STRIDE-Per-Element, diagramming / validation checklists, iteration tactics, bug-filing as exit point.
 - **NIST** — SP 800-154 (data-centric methodology); SP 800-53 r5 (control families); Cybersecurity Framework v2.0 (Protect / Detect / Respond / Recover).
 - **Tatam, Shanmugam, Azam & Kannoorpatti**, *A review of threat modelling approaches for APT-style attacks*, Heliyon 7 (2021, CC-BY 4.0) — three-stratum hybrid framing; CAPEC → CWE design-time payoff.
-- **MITRE** — ATT&CK, CAPEC, CWE, D3FEND (https://d3fend.mitre.org/); CVSS Rubric for Medical Devices (github.com/mitre/md-cvss-rubric-tools).
+- **MITRE** — ATT&CK, CAPEC, CWE, D3FEND (https://d3fend.mitre.org/).
 - **STRIDE** — Kohnfelder & Garg (Microsoft); **DESIST** — Gunnar Peterson; **Cyber Kill Chain** — Lockheed Martin.
 - **STPA** — Leveson, *Engineering a Safer World* (MIT Press, 2011) → STPA-Sec, Young & Leveson (2014) → STPA-SafeSec, Friedberg et al. (2017, CC-BY); cite the specific paper when the distinction matters.
 - **Risk-prioritized cyber-physical attack paths** — Stellios, Kotzanikolaou & Grigoriadis (2021).
-- **ISO 14971:2019**, **AAMI TIR57:2023**, **US FDA** *Cybersecurity in Medical Devices* (2023 final guidance) — the joint cyber/safety risk model (severity × `P1 × P2`) expected for medical-device submissions.
+
+Industry packs under `industries/` carry their own `Citations` sections for domain-specific sources (e.g. ISO 14971, AAMI TIR57, FDA *Cybersecurity in Medical Devices*, the MITRE CVSS Rubric for Medical Devices, DICOM / HL7 specifications).
