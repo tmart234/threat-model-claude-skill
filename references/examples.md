@@ -3,7 +3,7 @@
 > **Last verified**: 2026-05.
 > **Sources**: OWASP Threat Model Library (https://github.com/OWASP/www-project-threat-model-library, MIT-licensed). The library's JSON schema (`threat-model.schema.json`) aligns with the pending CycloneDX TM-BOM specification.
 
-> **Related**: ← `SKILL.md` § "Producing the threat model" • `SKILL.md` § "Producing the TM-BOM" (the JSON schema this file's examples conform to) • `dfd-mermaid.md` § "Worked example: small clinical PACS" + `data-centric.md` § "Worked example" (the medical / DICOM end-to-end example, kept inline because it's also the data-centric workflow demo).
+> **Related**: ← `SKILL.md` § "Producing the threat model" • `tm-bom.md` (the JSON schema this file's examples conform to) • `dfd-mermaid.md` § "Worked example: small clinical PACS" + `data-centric.md` § "Worked example" (the medical / DICOM end-to-end example, kept inline because it's also the data-centric workflow demo).
 
 For end-to-end worked threat models, **defer to the OWASP Threat Model Library** (OWASP TML) rather than maintaining a parallel set in this skill. Their examples are peer-reviewed, schema-validated, and organized by system type — and they're the artifacts downstream tools already consume.
 
@@ -26,7 +26,7 @@ Use the closest match as a structural reference for the TM-BOM; the markdown nar
 ## How to use an OWASP TML example
 
 1. **Open the example matching the system type.** Read its `scope`, `trust_zones`, `components`, `data_flows`, `threats`, `controls`, `risks` fields end-to-end.
-2. **Mirror its shape in your TM-BOM.** When this skill emits a TM-BOM (per `SKILL.md` § "Producing the TM-BOM"), match the field structure of the closest example so downstream consumers see a familiar artifact.
+2. **Mirror its shape in your TM-BOM.** When this skill emits a TM-BOM (per `tm-bom.md`), match the field structure of the closest example so downstream consumers see a familiar artifact.
 3. **Validate before shipping.** Run `check-jsonschema --schemafile threat-model.schema.json <your-tm-bom>.json` (or any JSON-Schema validator) against the upstream schema. The skill's IDs (`AS1`, `T1`, `V1`, `PR1`, `SR-001`) populate the schema's symbolic-name fields directly.
 
 ## What this file deliberately does not include

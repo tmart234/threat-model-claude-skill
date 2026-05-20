@@ -51,6 +51,7 @@ threat-modeler/
     ├── risk-rating.md                   # Risk rating frameworks (DREAD, CVSS, OWASP RR)
     ├── stpa.md                          # STPA — safety + security joint hazard analysis (umbrella for STPA / STPA-Sec / STPA-SafeSec lineage)
     ├── stride-prompts.md                # STRIDE per-element prompts and checklists
+    ├── tm-bom.md                        # TM-BOM (OWASP TML JSON) emission procedure and schema mapping
     └── validation.md                    # Threat model validation and review guidance
 ```
 
