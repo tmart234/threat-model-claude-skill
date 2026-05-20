@@ -1,30 +1,33 @@
 # threat-modeler
 
-A Claude skill that produces a threat model — a data-flow diagram, an enumeration of what can go wrong, and concrete mitigations — for software, systems, IoT/embedded devices, and business processes.
+A Claude skill that produces structured hybrid threat models (contextual / operational / strategic) for software, systems, IoT/embedded, medical devices, and business processes.
 
-The skill is a thin, imperative entry point. `SKILL.md` walks the four-question framework and sizes the model to the system; the `references/` files carry methodology depth that Claude reads only when a given system needs it.
+See `SKILL.md` for the full skill body, `references/` for on-demand methodology details, and `assets/threat-model-template.md` for a blank template.
 
 ## File structure
 
 ```
 threat-modeler/
-├── LICENSE                          # Apache 2.0
-├── README.md                        # This file
-├── SKILL.md                         # Skill body — entry point loaded by Claude
+├── LICENSE                              # Apache 2.0 license
+├── README.md                            # This file
+├── SKILL.md                             # Skill body (frontmatter + instructions); entry point loaded by Claude
 ├── assets/
-│   └── threat-model-template.md     # Blank threat-model template
-└── references/                      # Read on demand, not up front
-    ├── dfd.md                       # Drawing the data-flow diagram in Mermaid
-    ├── stride.md                    # STRIDE per-element prompts and mitigation mapping
-    ├── methods.md                   # Going beyond STRIDE: LINDDUN, data-centric, attack
-    │                                #   trees, PASTA, ATT&CK/CAPEC/CWE, AI/ML
-    ├── environments.md              # Per-environment trust-boundary patterns; ownership
-    ├── risk-rating.md               # Qualitative L/M/H, OWASP Risk Rating
-    ├── validation.md                # Q4 validation; the Threat Modeling Manifesto
-    └── safety-critical.md           # STPA-SafeSec; cyber-physical attack paths
+│   └── threat-model-template.md         # Blank hybrid threat model template
+└── references/
+    ├── capec.md                         # CAPEC attack pattern catalog guidance
+    ├── centric-methods.md               # Attacker/asset/system-centric methodology selection
+    ├── data-centric.md                  # Data-centric threat modeling guidance
+    ├── dfd-mermaid.md                   # Data flow diagrams in Mermaid syntax
+    ├── environments.md                  # Environment-specific guidance (IoT, medical, cloud, etc.)
+    ├── manifesto.md                     # Threat Modeling Manifesto principles
+    ├── methodologies.md                 # STRIDE, PASTA, LINDDUN, OCTAVE, VAST, Trike, etc.
+    ├── risk-rating.md                   # Risk rating frameworks (DREAD, CVSS, OWASP RR)
+    ├── stpa-safesec.md                  # STPA-Sec / STPA-SafeSec for safety-critical systems
+    ├── stride-prompts.md                # STRIDE per-element prompts and checklists
+    └── validation.md                    # Threat model validation and review guidance
 ```
 
-`SKILL.md` references the `assets/` and `references/` files by relative path, so all files must stay at these paths.
+All files must be present at these paths for the skill to function correctly. `SKILL.md` references the `assets/` and `references/` files by relative path.
 
 ## Install
 
