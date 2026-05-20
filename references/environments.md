@@ -110,7 +110,7 @@ subgraph DMZ["Customer IT | on-prem enterprise (DMZ) | low trust"]
 - **Physical-tamper boundary** — case open, tamper switch, anti-tamper mesh.
 - **Side-channel boundary** — power, EM, timing. Usually only matters for crypto operations and high-value targets; document if in scope.
 
-**Ownership default:** vendor owns firmware, signing keys, OTA infrastructure; end-user (or hospital / plant) owns the physical device; carrier may own the SIM and baseband.
+**Ownership default:** vendor owns firmware, signing keys, OTA infrastructure; end-user (or the deploying organization) owns the physical device; carrier may own the SIM and baseband.
 
 **Subgraph examples:**
 
@@ -118,7 +118,7 @@ subgraph DMZ["Customer IT | on-prem enterprise (DMZ) | low trust"]
 subgraph DeviceApp["Vendor | embedded (application core) | medium trust"]
 subgraph DeviceSE["Vendor | embedded (secure element) | very high trust"]
 subgraph Modem["Carrier | embedded (cellular baseband) | unknown trust"]
-subgraph Physical["End-user / Hospital | physical device custody | low trust"]
+subgraph Physical["End-user / Operator | physical device custody | low trust"]
 ```
 
 **Common misses:** the secure-element boundary (people draw the device as one box); JTAG/UART as a boundary; the baseband as a separate trust zone; bootloader-mode as an alternative path; wireless interfaces drawn as flows but not as boundary crossings; wireless flows drawn with a bare protocol label, hiding that the pairing mode provides no MITM resistance.
@@ -213,7 +213,7 @@ Domains where this is regularly worth running: medical (IoMT — clinical rooms 
 
 ## Domain notes
 
-The skill's defaults are domain-neutral. These subsections collect domain-specific defaults, regulators, and gotchas that don't fit into the per-environment boundary catalog above. Load the relevant subsection when the system fits the domain. Medical-device specifics (PACS / DICOM / IoMT / FDA / IEC 81001-5-1 / HL7 / patient-as-asset / clinical workflow misuse) live in `medical.md` rather than here.
+The skill's defaults are domain-neutral. These subsections collect domain-specific defaults, regulators, and gotchas that don't fit into the per-environment boundary catalog above. Load the relevant subsection when the system fits the domain. Industry-specific depth — e.g. medical-device specifics (PACS / DICOM / IoMT / FDA / IEC 81001-5-1 / HL7 / patient-as-asset / clinical workflow misuse) — lives in the relevant `industries/<industry>/` pack rather than here.
 
 ### Embedded / IoT — domain notes
 
@@ -330,6 +330,6 @@ Components that ship with their own threat model and operational security guide 
 
 After Round 1.5 you know each environment type and owner. Pick the matching section(s), walk the boundary list as a checklist (in DFD, should be, or explicitly out — "ASM4: no MDM in scope, personal-device deployment only"), label subgraphs with the convention, and fill in the trust-boundary table (`dfd-mermaid.md` § "Trust boundary prose template") with owners on each side. Cross-check the system-type matrix in `methodologies.md` for matching contextual supplements (data-centric / asset-centric / etc.).
 
-If the system is medical / PACS / DICOM / IoMT, also load `medical.md` — domain-specific defaults (patient-as-asset, clinical workflow misuse, DICOM/HL7 STRIDE specifics, FDA / IEC 81001-5-1 framing) live there rather than in this file.
+If the system is medical / PACS / DICOM / IoMT, also load the `industries/medical/` pack — domain-specific defaults (patient-as-asset, clinical workflow misuse, DICOM/HL7 STRIDE specifics, FDA / IEC 81001-5-1 framing) live there rather than in this file.
 
 This is a checklist, not a straitjacket. Drop boundaries that genuinely don't apply, but say so explicitly — silent omission is the anti-pattern that this file is here to prevent.

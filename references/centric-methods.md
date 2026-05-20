@@ -63,13 +63,13 @@ This is why code-centric review is a validation layer, not a generation method (
 - Coverage is bounded by the asset inventory, and people are notoriously bad at asset inventory. Forgotten assets = forgotten threats.
 - Tends to under-weight assets that aren't crown jewels but are reachable stepping stones (the dev VM, the build server, the metrics endpoint).
 
-**Use when**: the system has a small number of obvious high-value assets (PHI database, signing key, patient safety control loop). Less useful when "everything is sensitive."
+**Use when**: the system has a small number of obvious high-value assets (regulated-data store, signing key, safety-critical control loop). Less useful when "everything is sensitive."
 
 **Shostack's critique** (Ch. 2): "There's no direct line from assets to threats, and no prescriptive set of steps. Essentially, effort put into enumerating assets is effort you're not spending finding or fixing threats." Asset enumeration tends to bog down in arguments about what *counts* as an asset (he distinguishes "things attackers want," "things you want to protect," and "stepping stones," which mostly overlap). The output of all that work is a list of things to look for in your software model — at which point you might as well have started with the software model. Asset thinking is most useful for *prioritizing* threats once you've found them, not for finding them in the first place.
 
 ### Data-centric (NIST SP 800-154)
 
-**Start by**: pick one piece of data (e.g. "a DICOM study", "a refresh token", "a firmware image"). Enumerate every **authorized location** the data can exist in across its lifecycle — **storage / transmission / execution / input / output** — then walk attack vectors per location. Defined in NIST SP 800-154 (Draft, *Guide to Data-Centric System Threat Modeling*, 2016).
+**Start by**: pick one piece of data (e.g. "a customer record", "a refresh token", "a firmware image"). Enumerate every **authorized location** the data can exist in across its lifecycle — **storage / transmission / execution / input / output** — then walk attack vectors per location. Defined in NIST SP 800-154 (Draft, *Guide to Data-Centric System Threat Modeling*, 2016).
 
 **One-line distinction**: flow-centric draws the system and walks elements; data-centric picks the data and walks its lifecycle.
 
@@ -77,7 +77,7 @@ This is why code-centric review is a validation layer, not a generation method (
 
 **Weaknesses**: bounded by chosen data scope (multi-class systems → multiple passes); misses system-level threats unrelated to the chosen data; one data class per pass — see `data-centric.md` for the misapplication callout.
 
-**Use when**: a specific data type dominates (PHI, signing keys, tokens); regulatory framing is data-typed; "everything is sensitive" makes asset-centric flounder. Often the *primary* contextual entry point for medical-device / DICOM work.
+**Use when**: a specific data type dominates (PHI, signing keys, tokens); regulatory framing is data-typed; "everything is sensitive" makes asset-centric flounder. Often the *primary* contextual entry point for regulated, data-typed work.
 
 **Distinction from asset-centric**: asset-centric enumerates broadly across kinds of things ("what crown jewels exist?"); data-centric drills the lifecycle of one thing ("for *this* data, where can it be?"). They overlap but the entry move is different.
 
@@ -117,7 +117,7 @@ This is why code-centric review is a validation layer, not a generation method (
 **Start by**: take a user story or a stated user need, then apply an inversion lens — for each "user can do X", ask "what if a different user / unauthorized user / malicious user does X?" and "what if this user does X to a target they shouldn't?". Generate threats from the abuse of intended functionality.
 
 **Strengths**:
-- Highly specific threat language ("a clinician can view another clinician's drafts" is more useful than "broken access control").
+- Highly specific threat language ("a user can view another user's drafts" is more useful than "broken access control").
 - Feature-complete — easier to avoid missing a feature, since every user story gets inverted.
 - Surfaces business-logic flaws that STRIDE-Per-Element will not catch.
 
@@ -156,7 +156,7 @@ This is why code-centric review is a validation layer, not a generation method (
 - Can reveal things nobody documented — undisclosed assets, unwritten processes, latent abuse cases.
 
 **Weaknesses**:
-- Bottom-up. Produces findings, not a coherent narrative. You'll know "function `parse_dicom_pdu()` doesn't validate length" but not "this is the worst threat to the system."
+- Bottom-up. Produces findings, not a coherent narrative. You'll know "function `parse_packet()` doesn't validate length" but not "this is the worst threat to the system."
 - Needs a model-layer lens (one of the methods above) to give findings their full context.
 
 **Use when**: validating an existing model, or when the model is suspiciously clean and you want to challenge it. Don't use code-centric *as* the threat model.
@@ -191,7 +191,7 @@ Default for this skill: **flow-centric, with STRIDE-Per-Element as the lens**. I
 
 Supplement with one or more of:
 
-- **Data-centric (NIST SP 800-154)** — when a specific data type dominates (PHI, signing keys, tokens) or when regulatory framing is data-typed (HIPAA / GDPR / PCI / FDA). Often the *primary* entry for medical-device / DICOM work where "what threatens this study?" is the real question.
+- **Data-centric (NIST SP 800-154)** — when a specific data type dominates (PHI, signing keys, tokens) or when regulatory framing is data-typed (HIPAA / GDPR / PCI / FDA). Often the *primary* entry for regulated, data-typed work where "what threatens this record?" is the real question.
 - **Asset-centric** — when you can name a small set of crown jewels. Quick to do alongside flow-centric.
 - **User-needs-centric** — when the system has rich business logic. Catches what STRIDE misses.
 - **Process-centric** — when operational surface is significant.

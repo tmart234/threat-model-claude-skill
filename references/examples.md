@@ -3,7 +3,7 @@
 > **Last verified**: 2026-05.
 > **Sources**: OWASP Threat Model Library (https://github.com/OWASP/www-project-threat-model-library, MIT-licensed). The library's JSON schema (`threat-model.schema.json`) aligns with the pending CycloneDX TM-BOM specification.
 
-> **Related**: ← `SKILL.md` § "Producing the threat model" • `tm-bom.md` (the JSON schema this file's examples conform to) • `dfd-mermaid.md` § "Worked example: small clinical PACS" + `data-centric.md` § "Worked example" (the medical / DICOM end-to-end example, kept inline because it's also the data-centric workflow demo).
+> **Related**: ← `SKILL.md` § "Producing the threat model" • `tm-bom.md` (the JSON schema this file's examples conform to) • `industries/<industry>/worked-examples.md` (end-to-end worked models for a given vertical — e.g. `industries/medical/worked-examples.md` for a DICOM PACS).
 
 For end-to-end worked threat models, **defer to the OWASP Threat Model Library** (OWASP TML) rather than maintaining a parallel set in this skill. Their examples are peer-reviewed, schema-validated, and organized by system type — and they're the artifacts downstream tools already consume.
 
@@ -19,7 +19,7 @@ The OWASP TML repo's [`/threat-models`](https://github.com/OWASP/www-project-thr
 | ICS / SCADA / OT | (none; build from `infrastructure/` plus this skill's STPA reference if a control loop is in scope) |
 | AI / ML system | `threat-models/ai-ml-systems/` (e.g. `husky-ai-threat-model.json`) |
 | Third-party-integrated systems | `threat-models/third-party-integrations/` |
-| Medical device / PACS / DICOM | (none in OWASP TML; use `data-centric.md` § "Worked example" + `dfd-mermaid.md` § "Worked example: small clinical PACS" inline) |
+| Medical device / PACS / DICOM | (none in OWASP TML; use `industries/medical/worked-examples.md`) |
 
 Use the closest match as a structural reference for the TM-BOM; the markdown narrative this skill produces is independent and follows the §1 / §2 / §3 / §4 layout from `SKILL.md` § "Producing the threat model".
 
@@ -37,4 +37,4 @@ This file used to host two custom worked examples (a multi-tenant SaaS web app a
 - The OWASP TML schema is what downstream tools consume; presenting custom markdown examples as the "canonical" output sidesteps that.
 - The skill's *job* is to produce a model, not to ship reference models — those belong to the library.
 
-If a system type isn't covered in OWASP TML, contribute upstream rather than copying into this file. The exception is the medical / DICOM end-to-end example, which is kept inline at `data-centric.md` § "Worked example" because it doubles as the data-centric workflow demo and the OWASP TML library doesn't currently host a medical example.
+If a system type isn't covered in OWASP TML, contribute upstream rather than copying into this file. Industry-specific worked examples — e.g. the medical / DICOM end-to-end example, which the OWASP TML library doesn't currently host — live with each vertical pack at `industries/<industry>/worked-examples.md`.

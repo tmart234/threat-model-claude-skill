@@ -226,7 +226,7 @@ flowchart TD
 | Threat ID | ATT&CK | Kill chain | CVE / CVSS | Detection / handoff notes |
 |-----------|--------|------------|------------|---------------------------|
 | T1 (example) | T1078 (Valid Accounts) | Exploitation | — | mTLS + cert pinning; SOC: alert on cert mismatch |
-| T2 (example) | — | — | — | DICOM-specific; CAPEC abstraction noted in §2.1 row |
+| T2 (example) | — | — | — | Proprietary-protocol attack; CAPEC abstraction noted in §2.1 row |
 |           |        |            |            |                           |
 
 ### 2.3 Strategic stratum (only if it shapes decisions)
