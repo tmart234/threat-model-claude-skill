@@ -5,7 +5,7 @@
 
 > **Related**: ← `SKILL.md` • `centric-methods.md` (entry points; canonical home for generation-vs-characterization) • `stride-prompts.md` (STRIDE-Per-Element / Per-Interaction) • `capec.md`, `risk-rating.md`, `validation.md` (operational/strategic-stratum supporting refs).
 
-This file is the **canonical home** for the hybrid-as-default framing (three strata, applicability matrix by system type, single-doc vs linked-doc shapes, pruning rules) and for the categorization-lens choices (LINDDUN, PASTA, attack trees, ATT&CK, kill chains, OCTAVE, VAST, AI/ML). SKILL.md references this; don't duplicate.
+This file is the **canonical home** for the hybrid-layout framing (three strata, applicability matrix by system type, single-doc vs linked-doc shapes, pruning rules) and for the categorization-lens choices (LINDDUN, PASTA, attack trees, ATT&CK, kill chains, OCTAVE, VAST, AI/ML). SKILL.md references this; don't duplicate.
 
 This file covers **full-methodology swaps or supplements** — replacing the STRIDE *categorization lens* with something different (LINDDUN, PASTA, etc.) or adding an output characterization layer (ATT&CK, kill chains).
 
@@ -203,9 +203,9 @@ For systems with ML/AI components, run STRIDE first, then a supplementary pass f
 
 OWASP has a Top 10 for LLM Applications and a Machine Learning Security Top 10 that map to these. Reference, don't reinvent.
 
-## Hybrid as default
+## The hybrid layout
 
-This skill's default is **not** a single STRIDE-Per-Element document. The default output is a **hybrid threat model** that draws from every applicable layer the skill knows about, organized into three strata.
+Flow-centric DFD + STRIDE-Per-Element is this skill's contextual core, and on its own it is a complete threat model — for a low-stakes system that *is* the deliverable (`SKILL.md` § "Minimum viable threat model"). The **hybrid layout** is scaffolding for models that need to grow: it organizes `§2 What can go wrong?` into three strata so operational and strategic content has a stable home when the system's stakes pull it in. A mature, high-stakes model draws from multiple layers — that is an escalation the system warrants, not a floor every model must clear.
 
 The framing is from Tatam et al. (*A review of threat modelling approaches for APT-style attacks*, Heliyon 7 (2021)): no single threat-modeling approach covers all permutations of system, adversary, and operational concern, so mature programs layer multiple methods. The Threat Modeling Manifesto's "Multiple representations" pattern says the same thing more loosely. This skill operationalizes both.
 

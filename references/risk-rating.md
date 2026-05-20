@@ -59,7 +59,7 @@ Ties beyond rule 5 are reviewer judgment — record the call in §3 prose so the
 
 ## Translation to TM-BOM enums
 
-The OWASP Threat Model Library schema (`SKILL.md` § "Producing the TM-BOM") requires `risks[].likelihood / impact / level` enums and an integer 0–25 `score`. These are derived at TM-BOM emission from the row's `AV / PR / AC / Impact` — no separate per-row judgment.
+The OWASP Threat Model Library schema (`tm-bom.md`) requires `risks[].likelihood / impact / level` enums and an integer 0–25 `score`. These are derived at TM-BOM emission from the row's `AV / PR / AC / Impact` — no separate per-row judgment.
 
 **Likelihood — from `AV + PR + AC` points**
 
