@@ -214,17 +214,17 @@ The framing is from Tatam et al. (*A review of threat modelling approaches for A
 
 Risk rating (qualitative L/M/H by default, or OWASP-RR / FMEA where the org requires it — see `risk-rating.md`) sits *across* the strata: every threat at every layer gets rated on the same scale so they can be merged into one prioritized list.
 
-### Why every output is hybrid (not just complex / regulated systems)
+### When to produce the full hybrid vs. scope down
 
-Earlier guidance treated hybrid as something you reach for when a system is "complex enough." That bar is the wrong one — it lets simple-looking systems ship with single-method models that miss whole categories. Even a small internal tool benefits from a contextual supplement (one extra entry point catches what STRIDE-on-DFD misses) and a strategic note (one paragraph: what sector, what regulator, what landscape). The amount of *content* per stratum scales with stakes; the *presence* of all three strata does not.
+The full three-stratum hybrid is the default for any system with real stakes — production systems, regulated systems, medical devices, anything handling sensitive data, anything with safety implications. For those systems, scale the *content* of each stratum to the stakes, but include all three. Even a modest production service benefits from a contextual supplement (one extra entry point catches what STRIDE-on-DFD misses) and a strategic note (what sector, what regulator, what landscape).
 
-Minimum viable hybrid for a small system: DFD + STRIDE table + one short supplementary entry-point pass + ATT&CK technique IDs on the top 3 threats + one paragraph of sector / regulatory context. That's still a hybrid. It's still better than a single-method model.
+For a **genuinely low-stakes system** — a solo dev's side project, a throwaway spike, an internal tool with one trust boundary and no sensitive data — scope down to the **contextual stratum only**: DFD + STRIDE + one supplementary entry-point pass + responses + Q4. Omit the operational and strategic sections entirely — no headers, no "not applicable" stubs — and state the contextual-only scoping once at the top of the document. Padding a trivial system with empty strata is the "checkbox compliance over a culture of finding and fixing" the Manifesto warns against; a focused one-stratum model that ships is the better artifact.
 
 ### Decision matrix — which layers, by system type
 
-This is a cheat sheet, not a straitjacket. Always include the "always" cells. Add "often" cells unless there's a clear reason not to. "Sometimes" cells are situational.
+This is a cheat sheet, not a straitjacket. For a substantial system, include the "always" cells; for a genuinely low-stakes system, see the dedicated bottom row and § "When to produce the full hybrid vs. scope down" above. Add "often" cells unless there's a clear reason not to. "Sometimes" cells are situational.
 
-| System type | Contextual core (always) | Contextual supplement (always pick at least one) | Operational (always) | Strategic (always) | Often add | Sometimes |
+| System type | Contextual core (always) | Contextual supplement (always pick at least one) | Operational | Strategic | Often add | Sometimes |
 |---|---|---|---|---|---|---|
 | Generic web app | flow-centric DFD + STRIDE | user-needs-centric (business logic) | ATT&CK on top threats | OWASP Top 10 framing; sector if regulated | LINDDUN (if PII); CWE on code findings | Process-centric (if ops-heavy); attack tree (one high-value flow) |
 | **Medical device / PACS / DICOM** | flow-centric DFD + STRIDE — **for safety-critical control loops (infusion pumps, ventilators, robotic surgery, dialysis), add STPA-SafeSec as swap (FDA / IEC 62304 / IEC 81001-5-1 joint artifact) or as supplement (alongside STRIDE)** — see `stpa-safesec.md` | **data-centric (PHI / device data)** + LINDDUN | ATT&CK; **CAPEC + CWE chain** (use the medical-device subset in `capec.md`; cite Standard-level patterns by default — DICOM-/HL7-specific Detailed patterns don't exist, see `capec.md` § "Honest about CAPEC coverage"); CISA medical advisories | **H-ISAC; FDA premarket cybersecurity; IEC 62443; IEC 81001-5-1; HIPAA; safety-bump rule from `risk-rating.md`** | asset-centric (signing keys); attack tree on safety-critical path; **STPA-SafeSec on safety-critical control loops** | Code-centric on parser/protocol code; named adversary if applicable; **risk-prioritized cyber-physical attack paths (Stellios) for IoMT patient rooms with multiple co-located devices** |
@@ -232,7 +232,7 @@ This is a cheat sheet, not a straitjacket. Always include the "always" cells. Ad
 | ICS / SCADA / OT | flow-centric DFD + STRIDE — **when the control loop's worst case is physical (process upset, equipment damage, operator injury), add STPA-SafeSec as swap (IEC 61508 / IEC 62443 joint artifact) or supplement** — see `stpa-safesec.md` | asset-centric (control loop, HMI, PLC) + process-centric | ATT&CK for ICS; kill chain | **E-ISAC; CISA ICS-CERT advisories; IEC 62443; named-adversary context (sector is targeted)** | Attack tree (one safety-critical path); **STPA-SafeSec on safety-critical control loops** | LINDDUN if operator PII; data-centric on setpoint integrity; **risk-prioritized cyber-physical attack paths (Stellios) when multiple devices share a physical space / RF medium and the cross-device path is the threat** |
 | Embedded / IoT | flow-centric DFD + STRIDE — **for control-loop devices (automotive ECUs, robotics, drones), add STPA-SafeSec as swap (ISO 26262 joint artifact) or supplement** | data-centric (firmware image; device keys); asset-centric | ATT&CK | Sector regulator; supply-chain framing (SBOM, signed firmware) | Code-centric on bootloader / parser; attack tree on firmware-signing bypass | LINDDUN if device collects PII; **STPA-SafeSec for control-loop devices**; **risk-prioritized cyber-physical attack paths (Stellios) when several devices share a physical space (smart building, IoMT room, vehicle cabin, robotics cell) and per-element STRIDE misses cross-device P2/P3 hops** |
 | AI / ML system | flow-centric DFD + STRIDE | **data-centric (training data; model weights)** + AI/ML-specific threat list (prompt injection, model extraction, training-data poisoning, etc.) | ATT&CK; OWASP LLM Top 10; OWASP ML Security Top 10 | Sector framing; AI-specific regulator (EU AI Act, NIST AI RMF) | LINDDUN (if PII in training data); attack tree on model extraction | Code-centric on inference pipeline |
-| Greenfield internal tool, low stakes | flow-centric DFD + STRIDE | asset-centric (single-pass, light) | ATT&CK on top 3 threats | One paragraph: sector + regulator | — | (keep light) |
+| Greenfield internal tool, low stakes | flow-centric DFD + STRIDE | asset-centric (single-pass, light) | omit — contextual stratum only | omit — contextual stratum only | — | (keep light) |
 
 ### How the strata nest in the output document
 
@@ -249,7 +249,7 @@ In either shape: cross-reference threats across strata by ID. *"V3 (data-centric
 Hybrid's failure mode is producing more documentation than the team will read. Two pruning rules:
 
 1. **Don't repeat threats across strata** — cross-reference instead. If the same finding shows up in flow-centric, data-centric, and ATT&CK mapping, it gets one ID, one row in the prioritized list, and pointers from the other strata.
-2. **Drop the stratum's section if there's genuinely nothing to add** — but say so explicitly ("Strategic: not applicable; this is a single-tenant internal tool with no sector adversary"). Silent omission is the anti-pattern; deliberate omission is fine.
+2. **For a genuinely low-stakes system, omit the operational and strategic sections entirely** — no headers, no "not applicable" stubs — and state the contextual-only scoping once at the top of the document (see § "When to produce the full hybrid vs. scope down"). Within a hybrid, never pad a stratum with filler to look thorough; scale its content to the stakes.
 
 ### Worked example
 

@@ -1,6 +1,6 @@
 ---
 name: threat-modeler
-description: Produce structured threat models for software, systems, networks, IoT/embedded devices, medical devices, or business processes. Walks Shostack's Four Question Framework, produces a Mermaid DFD with trust boundaries, runs STRIDE-Per-Element with prioritized mitigations and derived security requirements, and a Q4 self-assessment. Trigger on threat modeling, STRIDE, DFD / data flow diagram, attack surface, abuse / misuse cases, security architecture review, trust boundaries, "what can go wrong / what are the threats to X / how would someone attack X", or pasting architecture and asking about risks. Also trigger when the user names a methodology or asks for a regulatory threat-model deliverable. Greenfield and brownfield. Do NOT trigger for penetration testing planning, vulnerability scanning, or incident response.
+description: Produce a structured threat model for a system, feature, or architecture — a data-flow diagram with trust boundaries, an enumeration of what can go wrong, and prioritized mitigations — covering software, IoT/embedded, medical devices, OT/ICS, and business processes. Use when the user asks to threat model something, asks how a system could be attacked or what could go wrong with it, or shares a design or architecture and wants its security risks assessed.
 ---
 
 # Threat Modeler
@@ -9,7 +9,7 @@ You are a working threat modeler producing a deliverable for an engineering team
 
 ## The default output is a hybrid model
 
-The default — not the floor — is a hybrid with three strata. The three-stratum framing (Contextual / Operational / Strategic) is the editorial choice this skill makes; it's drawn from Tatam et al. (2021), one paper synthesizing the literature, not a practitioner consensus on the order of STRIDE or the Four Questions. Calling it out so it can be challenged.
+For any system with real stakes, the default output is a **hybrid threat model** organized into three strata. "Real stakes" is the overwhelming majority of what this skill is used for: production systems, regulated systems, medical devices, anything handling sensitive data, anything with safety implications.
 
 - **Contextual stratum** (system-specific): flow-centric DFD + STRIDE-Per-Element as the core, framed by Shostack's Four Question Framework and the Threat Modeling Manifesto. Layer in additional entry points (data-centric per NIST SP 800-154, asset-centric, user-needs-centric, process-centric, attacker-centric, code-centric) and supplemental lenses (LINDDUN for privacy, AI/ML threats) per the system-type matrix.
 - **Operational stratum**: STRIDE → CAPEC → CWE chain on top threats, ATT&CK technique IDs, optional kill-chain mapping and CVSS.
@@ -19,19 +19,7 @@ The default — not the floor — is a hybrid with three strata. The three-strat
 
 Default hybrid (most systems): flow-centric DFD + STRIDE table + one supplementary entry-point pass + ATT&CK technique IDs on the top three threats + one paragraph of sector / regulatory context.
 
-**Ship less when the system warrants it.** A solo dev's side project, a throwaway spike, an internal tool with one trust boundary — those don't need three strata, they need a DFD and a STRIDE pass. Per the Manifesto's "doing threat modeling over talking about it," a one-page model that ships beats a three-stratum model that doesn't. If you drop a stratum, say so on one line: *"Operational stratum: not applicable — single-tenant internal tool, no adversary context to map."* Don't ship a stratum stub.
-
-## Generate, don't categorize
-
-This skill uses STRIDE *generatively* (as a per-element prompt), not as a post-hoc bucket. Per Shostack, STRIDE is a tool to *guide* threat finding, "and it makes a lousy taxonomy, anyway." If someone asks whether a finding is "really" Spoofing or Information Disclosure: record it and move on.
-
-The applicability table (which categories apply to which element types) is used as a **coverage check, not a categorization mandate**: it tells you which prompts to *walk* for each element so none gets skipped. Once a threat is found, don't argue about which cell it belongs to — the cell did its job by surfacing it.
-
-The entry-point decision (what to walk first) and the categorization-lens decision (what to label findings with) are independent. **Flow-centric as the contextual core is a pragmatic choice, not a derived truth** — it's chosen because it interops cleanly with STRIDE and is the most teachable. For systems where the threat picture is genuinely asset-shaped (a signing key, a KMS root, a control-loop setpoint), the asset-centric pass is the substantive work and flow-centric becomes the connective tissue around it; weight the supplementary pass accordingly rather than treating it as a checkbox. Picking a *single* entry point is wrong; picking a *primary* entry point and layering supplements is correct. Full taxonomy: `references/centric-methods.md`.
-
-## What threat modeling produces
-
-The output of a threat model is **a set of hypothesized attack scenarios, not confirmed vulnerabilities**. A threat is something an attacker might attempt; a vulnerability is a confirmed weakness on this specific system; a risk is what materializes when a threat exploits a vulnerability. Threat models produce hypotheses that need validation — typically through code review, testing, red-teaming, or operations — to determine whether the corresponding vulnerability actually exists. This is also why threat models go stale: implementations drift, and the hypotheses need re-checking against reality.
+**For a genuinely low-stakes system, scope down to the contextual stratum.** A solo dev's side project, a throwaway spike, an internal tool with one trust boundary and no sensitive data does not need operational or strategic analysis. Produce Q1 + DFD + STRIDE + one supplementary entry-point pass + responses + Q4, and **omit sections 2.2 and 2.3 entirely** — no headers, no "not applicable" stubs. State the scoping once, in a single line near the top of the document: *"Scope: contextual stratum only — low-stakes internal tool, no sector adversary or regulatory regime."* Per the Manifesto's "doing threat modeling over talking about it" and "a culture of finding and fixing over checkbox compliance," a focused one-stratum model that ships beats a three-stratum model padded with empty sections. When in doubt — and always for anything regulated, safety-relevant, or handling real user data — produce the full hybrid.
 
 ## When to use which mode
 
@@ -102,64 +90,37 @@ When in doubt, ask the user once: *"Single doc, or split — who's reading the o
 # Threat Model: <System Name>
 
 ## 1. What are we working on?  (Contextual setup)
-   - System description (1–2 paragraphs)
-   - In-scope / out-of-scope (explicit list)
-   - Assets (the things worth protecting; don't pad — see anti-pattern note)
-   - Trust levels (who has what access)
-   - Assumptions (numbered, so they can be challenged)
-   - Data Flow Diagram (Mermaid, see §DFD conventions)
-   - Data of interest, if a data-centric supplement is in the contextual stratum
-     (the data class, security objectives in scope, authorized locations — see
-     `references/data-centric.md`)
+   System description · in-scope / out-of-scope · assets (don't pad) · trust
+   levels · numbered assumptions · Data Flow Diagram (Mermaid) · data of
+   interest if a data-centric pass is used.
 
-## 2. What can go wrong?  (Hybrid threat enumeration — three strata)
-
-   ### 2.1 Contextual stratum (system-specific)
-   - 2.1.a  Flow-centric STRIDE-Per-Element threat table (always — see §Threat enumeration)
-   - 2.1.b  Supplementary entry-point pass(es): pick from data-centric / asset-centric /
-            user-needs-centric / process-centric / code-centric per the system-type
-            matrix in `methodologies.md` (always at least one)
-   - 2.1.c  LINDDUN privacy table if PII/PHI is in scope; AI/ML-specific threat list
-            if ML components are present
-   - 2.1.d  Threat tree(s) for the top 1–2 highest-value threats (optional)
-
-   ### 2.2 Operational / Tactical stratum (generic adversary techniques + design-time chain)
-   - **STRIDE → CAPEC → CWE → mitigation chain on top threats (always — this is the design-time payoff)**.
-     Each row of the operational table cites: a CAPEC pattern (with abstraction level — Meta for early
-     architecture, Standard for design review, Detailed for component-level), the CWE(s) the pattern
-     exploits, and the resulting mitigation class. The CAPEC → CWE bridge is what makes the
-     derived requirements (`SR-###` in §3) traceable to a known weakness class rather than to free-text
-     threat sentences. Full mapping by STRIDE category, abstraction-level rule of thumb, and
-     medical-device subset: `references/capec.md`.
-   - ATT&CK technique IDs on top threats (always — even if just the top 3)
-   - Cyber Kill Chain mapping where it clarifies sequencing (optional)
-   - CVSS for any threats that map to known CVEs (optional)
-
-   ### 2.3 Strategic stratum (sector landscape)
-   - Sector ISAC / threat-intel pointers (H-ISAC for medical, FS-ISAC for finance,
-     E-ISAC for energy, MS-ISAC for state/local gov, ICS-CERT/CISA for ICS)
-   - Regulatory framing (FDA premarket cybersecurity, IEC 62443, IEC 81001-5-1,
-     HIPAA, GDPR, PCI, EU AI Act, NIST AI RMF — whatever applies)
-   - Named-adversary context where one applies; PASTA business-impact framing
-     if executive sign-off is needed
-   - One paragraph minimum, even for low-stakes systems. If genuinely nothing
-     to add, say so explicitly: "Strategic: not applicable; <reason>."
+## 2. What can go wrong?
+   ### 2.1 Contextual stratum — always
+      Flow-centric STRIDE-Per-Element table (2.1.a), plus at least one
+      supplementary entry-point pass (2.1.b: data-centric / asset-centric /
+      user-needs-centric / process-centric / code-centric), plus a LINDDUN or
+      AI/ML pass where applicable (2.1.c), plus optional threat tree(s) (2.1.d).
+   ### 2.2 Operational stratum — substantial systems
+      STRIDE → CAPEC → CWE → mitigation chain on top threats; ATT&CK technique
+      IDs; optional kill chain / CVSS.
+   ### 2.3 Strategic stratum — substantial systems
+      Sector ISAC / threat-intel; regulatory framing; named-adversary context;
+      PASTA business-impact framing if executive sign-off is needed.
+   For a genuinely low-stakes system, omit 2.2 and 2.3 entirely (no stubs) —
+   see § "The default output is a hybrid model".
 
 ## 3. What are we going to do about it?
-   - Mitigation table covering threats from all three strata in one prioritized
-     list — sharing one ID space and one risk-rating scale (qualitative L/M/H
-     by default; OWASP-RR or FMEA where the org requires — see `risk-rating.md`)
-   - Each row: threat ID → response (Mitigate/Eliminate/Transfer/Accept) → concrete control(s)
-   - Cross-stratum references where the same finding surfaced multiple times
-     (V3 ↔ T7 ↔ ATT&CK T1119 ↔ H-ISAC 2023-07) — never duplicate threats; cross-reference
-   - Derived security requirements (numbered, so they're tractable for tracking
-     in Polarion / Jira / GitHub Issues)
+   One prioritized mitigation table across all strata, sharing one ID space and
+   one risk scale: threat ID → response (Mitigate/Eliminate/Transfer/Accept) →
+   concrete control. Cross-reference recurring findings; never duplicate.
+   Derive numbered, testable security requirements from the mitigations.
 
 ## 4. Did we do a good enough job?
-   - Self-assessment checklist (covers all three strata — see §Self-assessment)
-   - Open questions and assumptions still to validate
-   - Recommended next review trigger (next feature, next architectural change, etc.)
+   Self-assessment checklist · open questions and assumptions to validate ·
+   next review trigger.
 ```
+
+Copy the full fillable structure — the pre-filled Q4 checklists and per-section guidance included — from `assets/threat-model-template.md` rather than rebuilding it. The CAPEC abstraction-level discipline and the STRIDE → CAPEC → CWE mapping are in `references/capec.md`; risk rating (qualitative L/M/H by default, OWASP-RR or FMEA where the org requires it) is in `references/risk-rating.md`.
 
 ID conventions (to keep cross-stratum references unambiguous — one prefix per namespace, no collisions):
 - Assets in §1 (the things worth protecting): `AS1`, `AS2`, ...
@@ -193,6 +154,8 @@ Symbol simplification follows Shostack's DFD3 convention (external entity, proce
 ### Threat enumeration
 
 The contextual core of the hybrid (§2.1.a in the document structure above) is **STRIDE-Per-Element on the DFD**. The other contextual passes (data-centric, asset-centric, user-needs-centric, process-centric, code-centric — at least one is always added per the system-type matrix) plus the operational stratum (ATT&CK and friends) and the strategic stratum (sector landscape) build out from there. This subsection covers the contextual core; the rest is in `references/methodologies.md` and `references/data-centric.md`.
+
+STRIDE is used here *generatively* — a per-element prompt to find threats, not a taxonomy to file them in. When a category is debatable ("Spoofing or Information Disclosure?"), record the threat and move on; the applicability table is a coverage check, not a categorization mandate. The generation-vs-characterization framing, the entry-point taxonomy, and the threat / vulnerability / risk distinction are in `references/centric-methods.md`.
 
 For each DFD element, run through the STRIDE categories that apply to that element type. The applicability table (which categories apply to each of External entity / Process / Data flow / Data store), the category prompts, per-element example threats, the **element-is-the-victim** framing rule, and the **Per-Element vs Per-Interaction** choice all live in `references/stride-prompts.md` — **read it before enumerating threats**. Write at least one concrete threat per applicable cell ("An attacker on the public internet sends crafted DICOM C-STORE requests to the PACS to overflow the parser" — not "DoS").
 
@@ -278,7 +241,7 @@ Quick reference for the most common supplements:
 - **OCTAVE / VAST** — only at org/portfolio level, not per-system.
 - **STPA-SafeSec** — for safety-critical control-loop systems where the worst case is physical harm (medical devices with control loops, ICS/SCADA/OT, automotive, aerospace, robotics). Two modes — **swap** the contextual core (joint safety+security artifact for FDA premarket cybersec / IEC 62304 / IEC 81001-5-1 / IEC 61508 / ISO 26262), or **supplement** alongside flow-centric + STRIDE (adds hazard scenarios cross-referencing threats and captures non-adversarial safety failures STRIDE misses). Mode-selection guidance: `references/stpa-safesec.md` § "Two modes".
 
-The operational stratum (ATT&CK, kill chain) and strategic stratum (sector ISAC, regulatory framing) are always added, not swapped in — sized to stakes but always present.
+For substantial systems the operational stratum (ATT&CK, kill chain) and strategic stratum (sector ISAC, regulatory framing) are added, not swapped in, and sized to stakes. For a genuinely low-stakes system they are omitted entirely — see § "The default output is a hybrid model".
 
 ## Domain notes
 

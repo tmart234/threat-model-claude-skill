@@ -5,9 +5,12 @@
 **Author(s)**:
 **Reviewer(s)**:
 **Status**: Draft / Reviewed / Approved
+**Scope**: Full hybrid (contextual + operational + strategic)  —or—  Contextual stratum only (low-stakes: <reason>)
 **Next review trigger**: <e.g. "next architectural change", "before v2.0 release", "annual">
 
-> This template is laid out as a **hybrid threat model** — the skill's default output, never a single-method document. Section 2 is split into three strata (Contextual / Operational / Strategic). All threats share one ID space and one risk-rating scale so Section 3 can prioritize across strata. The amount of content per stratum scales with the system's stakes; the *presence* of all three strata does not. Drop a stratum only deliberately, with a one-line "not applicable: <reason>".
+> This template is laid out as a **hybrid threat model** — the default output for any system with real stakes (production, regulated, medical-device, safety-relevant, or handling sensitive data). Section 2 is split into three strata (Contextual / Operational / Strategic); all threats share one ID space and one risk-rating scale so Section 3 can prioritize across them. Scale the *content* of each stratum to the system's stakes.
+>
+> **Low-stakes systems:** for a genuine side project / throwaway spike / single-trust-boundary internal tool with no sensitive data, delete sections 2.2 and 2.3 entirely and set the **Scope** line above to "Contextual stratum only". Do not keep 2.2 / 2.3 as empty "not applicable" stubs — an omitted section plus a one-line scope note is the honest artifact.
 >
 > Read `references/methodologies.md` § "Hybrid as default" before filling this out — the system-type matrix tells you which contextual supplements and which strategic references to add.
 
@@ -155,7 +158,7 @@ flowchart TD
 
 ### 2.2 Operational / Tactical stratum (generic adversary techniques + design-time chain)
 
-> Always include the **STRIDE → CAPEC → CWE → mitigation chain** for at least the top threats. CAPEC's payoff over ATT&CK at design time is the CAPEC → CWE bridge: each pattern names the weakness class, which gives the mitigation in §3 a traceable target. Pick CAPEC abstraction level by SDLC stage (Meta = early architecture, Standard = design review, Detailed = component-level — see `references/capec.md`). For domain-specific protocols where no Detailed pattern exists (DICOM, HL7, ICS protocols), cite the closest Standard or Meta pattern and **say so explicitly** in the row. Also include ATT&CK technique IDs on top threats; add kill-chain sequencing where it clarifies handoff to SOC / IR.
+> Substantial systems only — for a low-stakes model, delete §2.2 and §2.3 entirely (see the Scope note at the top). Include the **STRIDE → CAPEC → CWE → mitigation chain** for at least the top threats. CAPEC's payoff over ATT&CK at design time is the CAPEC → CWE bridge: each pattern names the weakness class, which gives the mitigation in §3 a traceable target. Pick CAPEC abstraction level by SDLC stage (Meta = early architecture, Standard = design review, Detailed = component-level — see `references/capec.md`). For domain-specific protocols where no Detailed pattern exists (DICOM, HL7, ICS protocols), cite the closest Standard or Meta pattern and **say so explicitly** in the row. Also include ATT&CK technique IDs on top threats; add kill-chain sequencing where it clarifies handoff to SOC / IR.
 
 | Threat ID | STRIDE | CAPEC (level) | CWE(s) | ATT&CK | Kill chain | CVE / CVSS | Detection / handoff notes |
 |-----------|--------|---------------|--------|--------|------------|------------|---------------------------|
@@ -165,7 +168,7 @@ flowchart TD
 
 ### 2.3 Strategic stratum (sector landscape)
 
-> Always include — even one paragraph. If genuinely nothing to add, write: *"Strategic: not applicable; <reason>."*
+> Substantial systems: include, scaling the depth to stakes. Low-stakes systems: delete this section entirely — see the Scope note at the top.
 
 - **Sector ISAC / threat-intel context**: <H-ISAC for medical, FS-ISAC for finance, E-ISAC for energy, MS-ISAC for state/local gov, CISA ICS-CERT for ICS — list relevant advisories>
 - **Regulatory framing**: <FDA premarket cybersecurity, IEC 62443, IEC 81001-5-1, HIPAA, GDPR, PCI, EU AI Act, NIST AI RMF — whichever apply>
@@ -197,6 +200,8 @@ flowchart TD
 ## 4. Did we do a good enough job?
 
 ### Self-assessment checklist
+
+> For a low-stakes (contextual-only) model, delete the "Operational stratum" and "Strategic stratum" checklist groups below, along with sections 2.2 and 2.3.
 
 **Diagram / setup**
 - [ ] DFD reflects the system as actually built / specified
